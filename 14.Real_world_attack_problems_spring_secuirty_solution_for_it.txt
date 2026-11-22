@@ -1,0 +1,1919 @@
+
+# SPRING SECURITY – COMPLETE WEB APPLICATION SECURITY NOTES
+## Angular + Spring Boot + JWT + REST APIs
+
+LEGEND:
+🔴 CRITICAL – Major security vulnerability
+🟠 HIGH – Serious security risk
+🟡 MEDIUM – Important security concern
+🟢 PROTECTION – Recommended security measure
+🔵 IMPORTANT – Concept to remember
+
+============================================================
+PART 1: UNDERSTANDING AUTHENTICATION AND AUTHORIZATION
+============================================================
+
+1. AUTHENTICATION
+
+Authentication answers:
+"WHO ARE YOU?"
+
+It verifies the identity of a user.
+
+Example:
+- User enters username and password.
+- Spring Security validates the credentials.
+- If valid, the user is authenticated.
+- Backend creates an authenticated session or issues a JWT.
+
+2. AUTHORIZATION
+
+Authorization answers:
+"WHAT ARE YOU ALLOWED TO DO?"
+
+Example:
+
+USER:
+- View profile
+- View own orders
+- Update own details
+
+ADMIN:
+- View all users
+- Delete users
+- Manage application settings
+
+A user can be authenticated but not authorized to perform a particular operation.
+
+🔵 Authentication and authorization are two different security concepts.
+
+
+============================================================
+PART 2: AUTHENTICATION ATTACKS
+============================================================
+
+1. 🔴 BRUTE-FORCE ATTACK
+
+WHAT IS IT?
+
+An attacker repeatedly tries different passwords until the correct password is discovered.
+
+Example:
+
+admin       -> password123
+admin       -> admin123
+admin       -> welcome123
+admin       -> qwerty123
+
+Attackers automate thousands or millions of login attempts.
+
+IMPACT:
+- Unauthorized account access.
+- Administrator account compromise.
+- Data theft.
+- Unauthorized operations.
+
+PREVENTION:
+- Login rate limiting.
+- Temporary account lockout or progressive delays.
+- CAPTCHA when suspicious activity occurs.
+- MFA.
+- Monitoring failed login attempts.
+- Strong password policies.
+
+SPRING SECURITY:
+
+AuthenticationManager and AuthenticationProvider handle authentication.
+
+However, comprehensive rate limiting is not automatically provided.
+
+Use Bucket4j, Redis or an API gateway for rate limiting.
+
+IMPORTANT:
+Avoid permanent account lockout based only on failed attempts because attackers can deliberately lock legitimate users out.
+
+
+2. 🔴 CREDENTIAL STUFFING
+
+WHAT IS IT?
+
+Attackers use username/password combinations leaked from other websites.
+
+Example:
+
+A user uses:
+Email: john@example.com
+Password: Welcome123
+
+The same credentials are used on multiple websites.
+
+If one website suffers a breach, attackers try those credentials against your application.
+
+PREVENTION:
+- MFA.
+- Login rate limiting.
+- Detection of suspicious login patterns.
+- Compromised-password checking.
+- Unique passwords.
+- Suspicious-login notifications.
+
+SPRING SECURITY:
+Provides authentication infrastructure, but credential-stuffing detection requires additional controls.
+
+
+3. 🟠 PASSWORD SPRAYING
+
+WHAT IS IT?
+
+Instead of trying many passwords against one user, attackers try one common password against many users.
+
+Example:
+
+admin       -> Welcome123
+john        -> Welcome123
+mary        -> Welcome123
+support     -> Welcome123
+
+PREVENTION:
+- Global and per-account rate limiting.
+- MFA.
+- Distributed login-failure detection.
+- Password policies.
+- IP and device reputation monitoring.
+
+
+4. 🔴 JWT THEFT AND TOKEN REPLAY
+
+WHAT IS IT?
+
+A JWT is normally a bearer token.
+
+Whoever possesses a valid bearer token can generally use it until it expires or is revoked.
+
+CURRENT APPLICATION ARCHITECTURE:
+
+Angular Browser
+      |
+      | Login
+      v
+Spring Boot
+      |
+      | Returns JWT
+      v
+Angular localStorage
+      |
+      | Authorization: Bearer JWT
+      v
+Spring Boot API
+
+An authenticated user can copy the JWT from localStorage and paste it into Postman.
+
+Postman sends:
+
+GET /api/account
+
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
+
+Spring Security accepts the request if the token is valid.
+
+WHY?
+
+Spring Security validates the identity and token, not the physical HTTP client.
+
+The request could come from:
+- Angular.
+- Postman.
+- curl.
+- Python.
+- Another server.
+
+A conventional bearer JWT does not prove which application is using it.
+
+PREVENTION:
+- Avoid storing sensitive access tokens in localStorage.
+- Use BFF architecture with server-managed sessions.
+- Use HttpOnly and Secure cookies where appropriate.
+- Use short-lived access tokens.
+- Implement refresh-token rotation.
+- Detect refresh-token reuse.
+- Implement revocation where necessary.
+- Consider DPoP or proof-of-possession tokens.
+
+IMPORTANT:
+HttpOnly cookies cannot be read by normal JavaScript, but a stolen cookie can still be replayed in Postman.
+
+DPoP binds token usage to a cryptographic key. A copied token alone is insufficient, although malicious code running inside the legitimate browser may still be able to use that key.
+
+
+5. 🔴 JWT SIGNATURE FORGERY AND ALGORITHM CONFUSION
+
+WHAT IS IT?
+
+JWT has three parts:
+
+HEADER.PAYLOAD.SIGNATURE
+
+Example:
+
+HEADER:
+{
+  "alg": "HS256",
+  "typ": "JWT"
+}
+
+PAYLOAD:
+{
+  "sub": "john",
+  "role": "USER",
+  "exp": 1790000000
+}
+
+The payload is Base64URL encoded, not encrypted.
+
+An attacker may decode the payload and change:
+
+{
+  "sub": "john",
+  "role": "ADMIN"
+}
+
+If the backend does not correctly validate the signature, privilege escalation may occur.
+
+PREVENTION:
+- Validate JWT signatures.
+- Trust only configured signing keys.
+- Allow only intended signing algorithms.
+- Validate expiration.
+- Validate issuer.
+- Validate audience.
+- Rotate signing keys.
+- Never trust unverified claims.
+
+SPRING SECURITY:
+
+Use OAuth2 Resource Server JWT support.
+
+Example:
+
+@Bean
+SecurityFilterChain securityFilterChain(HttpSecurity http)
+        throws Exception {
+
+    http
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/auth/**").permitAll()
+            .anyRequest().authenticated()
+        )
+        .oauth2ResourceServer(oauth -> oauth
+            .jwt(Customizer.withDefaults())
+        );
+
+    return http.build();
+}
+
+Configure trusted issuer:
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://identity.example.com
+
+IMPORTANT:
+Never verify a JWT by simply decoding its payload.
+
+
+6. 🔴 PASSWORD DATABASE COMPROMISE
+
+WHAT IS IT?
+
+An attacker gains access to the database containing user passwords.
+
+DANGEROUS STORAGE:
+
+username: john
+password: Welcome123
+
+Even ordinary SHA-256 hashing is unsuitable for password storage because it is too fast.
+
+PREVENTION:
+
+Use password hashing algorithms designed for passwords.
+
+BCrypt:
+
+@Bean
+public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder(12);
+}
+
+Argon2:
+
+@Bean
+public PasswordEncoder passwordEncoder() {
+    return new Argon2PasswordEncoder(
+        16,
+        32,
+        1,
+        65536,
+        3
+    );
+}
+
+PROTECTION:
+- Unique salts.
+- Expensive password hashing.
+- Appropriate work factors.
+- Database access restrictions.
+- Secure password reset procedures.
+
+============================================================
+PART 3: AUTHORIZATION ATTACKS
+============================================================
+
+7. 🔴 BROKEN ACCESS CONTROL
+
+WHAT IS IT?
+
+An authenticated user accesses functionality they are not authorized to use.
+
+Example:
+
+USER:
+GET /api/profile
+GET /api/orders
+
+ADMIN:
+GET /api/admin/users
+DELETE /api/users/{id}
+
+If an ordinary user accesses:
+
+DELETE /api/users/100
+
+and the backend does not check permissions, the user may delete another account.
+
+SPRING SECURITY:
+
+http.authorizeHttpRequests(auth -> auth
+    .requestMatchers("/api/admin/**").hasRole("ADMIN")
+    .requestMatchers("/api/user/**")
+        .hasAnyRole("USER", "ADMIN")
+    .anyRequest().authenticated()
+);
+
+Method-level security:
+
+@EnableMethodSecurity
+
+@PreAuthorize("hasRole('ADMIN')")
+public void deleteUser(Long userId) {
+    userRepository.deleteById(userId);
+}
+
+IMPORTANT:
+Frontend route guards and hidden buttons are not security controls.
+
+
+8. 🔴 PRIVILEGE ESCALATION
+
+WHAT IS IT?
+
+An ordinary user attempts to obtain administrator permissions.
+
+Example:
+
+POST /register
+
+{
+  "username": "john",
+  "password": "password123",
+  "role": "ADMIN"
+}
+
+If the backend blindly accepts the role, an attacker may create an administrator account.
+
+PREVENTION:
+
+The backend must assign the role.
+
+Example:
+
+user.setRole("ROLE_USER");
+
+Never trust role values supplied by the frontend.
+
+Restrict role modifications to authorized administrators.
+
+
+9. 🔴 IDOR – INSECURE DIRECT OBJECT REFERENCE
+
+WHAT IS IT?
+
+An attacker manipulates an object ID to access another user's data.
+
+Example:
+
+GET /api/orders/100
+
+Order 100 belongs to John.
+
+John changes the ID:
+
+GET /api/orders/101
+
+Order 101 belongs to Mary.
+
+If the backend only checks whether John is authenticated, he may access Mary's order.
+
+SPRING SECURITY:
+
+Authentication alone is insufficient.
+
+Perform object-level authorization.
+
+Example:
+
+@GetMapping("/orders/{id}")
+public Order getOrder(
+        @PathVariable Long id,
+        Authentication authentication) {
+
+    String username = authentication.getName();
+
+    return orderService.getOrderForUser(id, username);
+}
+
+Service:
+
+public Order getOrderForUser(
+        Long orderId,
+        String username) {
+
+    return orderRepository
+        .findByIdAndUserUsername(orderId, username)
+        .orElseThrow(() ->
+            new AccessDeniedException("Access denied")
+        );
+}
+
+IMPORTANT:
+Check ownership or delegated permission for every protected resource.
+
+
+10. 🟠 HORIZONTAL PRIVILEGE ESCALATION
+
+WHAT IS IT?
+
+A user accesses another user's resources at the same privilege level.
+
+Example:
+
+John -> USER
+Mary -> USER
+
+John accesses Mary's information.
+
+PREVENTION:
+- Ownership validation.
+- User-specific database queries.
+- Tenant restrictions.
+- Object-level authorization.
+
+
+11. 🔴 VERTICAL PRIVILEGE ESCALATION
+
+WHAT IS IT?
+
+A lower-privileged user accesses higher-privileged functionality.
+
+Example:
+
+USER -> ADMIN API
+
+PREVENTION:
+
+@PreAuthorize("hasRole('ADMIN')")
+
+Perform backend authorization on sensitive operations.
+
+
+============================================================
+PART 4: INJECTION ATTACKS
+============================================================
+
+12. 🔴 SQL INJECTION
+
+WHAT IS IT?
+
+An attacker supplies specially constructed input that changes the intended SQL query.
+
+UNSAFE CODE:
+
+String sql =
+    "SELECT * FROM users WHERE username = '"
+    + username + "'";
+
+This can allow unauthorized data access or modification.
+
+PREVENTION:
+
+Use parameterized queries.
+
+Spring Data JPA:
+
+@Query(
+    "SELECT u FROM User u WHERE u.username = :username"
+)
+Optional<User> findByUsername(
+    @Param("username") String username
+);
+
+Or:
+
+userRepository.findByUsername(username);
+
+PROTECTION:
+- Never concatenate untrusted input into SQL.
+- Validate input.
+- Use least-privilege database accounts.
+- Review native SQL.
+- Validate dynamic sorting and filtering.
+
+IMPORTANT:
+Spring Security does not automatically prevent SQL injection.
+
+
+13. 🟠 LDAP INJECTION
+
+WHAT IS IT?
+
+An attacker manipulates LDAP search filters through malicious input.
+
+PREVENTION:
+- Use safe LDAP APIs.
+- Escape filter values.
+- Validate usernames.
+- Avoid string concatenation in LDAP filters.
+
+Spring Security LDAP integration does not make unsafe custom filters safe.
+
+
+14. 🔴 OS COMMAND INJECTION
+
+WHAT IS IT?
+
+An attacker manipulates application input to execute unintended operating system commands.
+
+PREVENTION:
+- Avoid executing shell commands using user input.
+- Prefer Java APIs.
+- Use argument arrays.
+- Validate allowed values.
+- Run processes with limited permissions.
+
+Spring Security does not automatically prevent OS command injection.
+
+
+============================================================
+PART 5: BROWSER-BASED ATTACKS
+============================================================
+
+15. 🔴 CROSS-SITE SCRIPTING (XSS)
+
+WHAT IS IT?
+
+XSS occurs when an attacker executes malicious JavaScript in another user's browser under your application's origin.
+
+Example:
+
+<script>
+    alert('XSS');
+</script>
+
+POSSIBLE IMPACT:
+- Read JavaScript-accessible data.
+- Steal JWTs from localStorage.
+- Perform actions as the authenticated user.
+- Modify displayed content.
+- Capture user input.
+
+CURRENT ANGULAR + JWT RISK:
+
+localStorage.getItem("jwt")
+
+Malicious JavaScript running through XSS may read this JWT and send it to an attacker.
+
+The attacker can then use the JWT from Postman.
+
+ANGULAR PROTECTION:
+- Use Angular's built-in sanitization.
+- Avoid unsafe innerHTML.
+- Avoid bypassSecurityTrustHtml unless absolutely necessary.
+- Avoid unsafe DOM manipulation.
+- Keep third-party libraries updated.
+- Use Content Security Policy.
+- Consider Trusted Types.
+
+SPRING SECURITY CSP EXAMPLE:
+
+http.headers(headers -> headers
+    .contentSecurityPolicy(csp ->
+        csp.policyDirectives(
+            "default-src 'self'; " +
+            "script-src 'self'; " +
+            "object-src 'none'; " +
+            "base-uri 'self'; " +
+            "frame-ancestors 'none'"
+        )
+    )
+);
+
+IMPORTANT:
+CSP is an additional mitigation, not a replacement for fixing XSS.
+
+
+16. 🔴 CROSS-SITE REQUEST FORGERY (CSRF)
+
+WHAT IS IT?
+
+An attacker tricks a victim's browser into sending an unwanted authenticated request.
+
+Example:
+
+1. Mary logs into a banking application.
+2. Browser stores an authenticated session cookie.
+3. Mary visits a malicious website.
+4. Malicious website submits a transfer request.
+5. Browser may automatically attach the banking cookie.
+6. Backend may accept the request if CSRF protection is missing.
+
+PREVENTION:
+
+Spring Security provides CsrfFilter.
+
+Enable CSRF:
+
+http.csrf(Customizer.withDefaults());
+
+For Angular and cookie-based authentication:
+- Configure a CSRF token repository.
+- Make the CSRF token available to Angular.
+- Send it in the expected request header.
+- Validate it on state-changing requests.
+
+IMPORTANT:
+
+Bearer tokens explicitly supplied in the Authorization header generally have lower traditional CSRF risk.
+
+Cookie-based authentication requires careful CSRF protection.
+
+Never disable CSRF without understanding how credentials are transmitted.
+
+
+17. 🟠 CORS – CROSS-ORIGIN RESOURCE SHARING
+
+WHAT IS IT?
+
+CORS controls whether browser JavaScript from one origin can access responses from another origin.
+
+Example:
+
+Frontend:
+https://myfrontend.com
+
+Backend:
+https://api.example.com
+
+Attacker:
+https://malicious.com
+
+SPRING BOOT CONFIGURATION:
+
+@Bean
+CorsConfigurationSource corsConfigurationSource() {
+
+    CorsConfiguration config = new CorsConfiguration();
+
+    config.setAllowedOrigins(
+        List.of("https://myfrontend.com")
+    );
+
+    config.setAllowedMethods(
+        List.of("GET", "POST", "PUT", "DELETE")
+    );
+
+    config.setAllowedHeaders(
+        List.of("Authorization", "Content-Type")
+    );
+
+    config.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source =
+        new UrlBasedCorsConfigurationSource();
+
+    source.registerCorsConfiguration(
+        "/**",
+        config
+    );
+
+    return source;
+}
+
+Enable:
+
+http.cors(Customizer.withDefaults());
+
+WHAT CORS DOES NOT DO:
+
+- Does not authenticate users.
+- Does not block Postman.
+- Does not block curl.
+- Does not prevent manual Origin header spoofing.
+- Does not replace authorization.
+- Does not prevent server-to-server requests.
+
+IMPORTANT:
+CORS is a browser-enforced response access policy, not API authentication.
+
+
+18. 🟠 CLICKJACKING
+
+WHAT IS IT?
+
+An attacker embeds your application inside an iframe on another website.
+
+The victim believes they are clicking something on the attacker's website but actually interacts with your application.
+
+PREVENTION:
+
+http.headers(headers -> headers
+    .frameOptions(frame -> frame.deny())
+);
+
+Or:
+
+Content-Security-Policy: frame-ancestors 'none'
+
+Use appropriate exceptions if trusted embedding is required.
+
+
+19. 🟡 OPEN REDIRECT
+
+WHAT IS IT?
+
+An attacker manipulates an application redirect URL to send users to a malicious website.
+
+Example:
+
+https://myfrontend.com/login?redirect=https://malicious.com
+
+PREVENTION:
+- Validate redirect URLs.
+- Prefer relative paths.
+- Use trusted destination allowlists.
+- Avoid arbitrary user-supplied redirect destinations.
+
+
+============================================================
+PART 6: SESSION AND TOKEN ATTACKS
+============================================================
+
+20. 🔴 SESSION HIJACKING
+
+WHAT IS IT?
+
+An attacker steals another user's authenticated session identifier and reuses it.
+
+POSSIBLE SOURCES:
+- XSS.
+- Malware.
+- Insecure network communication.
+- Leaked logs.
+- Browser compromise.
+
+PREVENTION:
+- HTTPS.
+- Secure cookies.
+- HttpOnly cookies.
+- SameSite settings.
+- Session expiration.
+- Session rotation.
+- Session invalidation on logout.
+- Suspicious-session monitoring.
+
+Spring Security provides session management capabilities.
+
+Example:
+
+http.sessionManagement(session ->
+    session.sessionFixation(fixation ->
+        fixation.changeSessionId()
+    )
+);
+
+IMPORTANT:
+JWT-based stateless authentication does not automatically provide server-side session invalidation.
+
+
+21. 🟠 SESSION FIXATION
+
+WHAT IS IT?
+
+An attacker attempts to make a victim authenticate using a session identifier already known to the attacker.
+
+If the session identifier is not rotated after authentication, the attacker may reuse it.
+
+SPRING SECURITY:
+
+http.sessionManagement(session ->
+    session.sessionFixation(fixation ->
+        fixation.changeSessionId()
+    )
+);
+
+This is particularly relevant to session-based authentication.
+
+
+22. 🔴 REFRESH-TOKEN THEFT
+
+WHAT IS IT?
+
+An attacker steals a refresh token and uses it to obtain new access tokens.
+
+PREVENTION:
+- Refresh-token rotation.
+- Reuse detection.
+- Token expiration.
+- Token revocation.
+- Secure storage.
+- Client binding where appropriate.
+- Avoid storing refresh tokens in localStorage.
+
+Spring Security supports OAuth2 authorization-server capabilities, but rotation and reuse detection require suitable configuration and potentially custom logic.
+
+
+============================================================
+PART 7: API-SPECIFIC ATTACKS
+============================================================
+
+23. 🔴 BROKEN OBJECT PROPERTY LEVEL AUTHORIZATION
+
+WHAT IS IT?
+
+An API returns properties that a user is not authorized to see.
+
+Example:
+
+{
+  "id": 100,
+  "username": "john",
+  "email": "john@example.com",
+  "salary": 150000,
+  "isAdmin": true
+}
+
+A normal user may be allowed to see username and email but not salary or administrative properties.
+
+PREVENTION:
+- Use response DTOs.
+- Expose only required fields.
+- Apply property-level authorization.
+- Avoid returning JPA entities directly.
+- Never rely on frontend field hiding.
+
+
+24. 🔴 MASS ASSIGNMENT
+
+WHAT IS IT?
+
+An API blindly maps incoming JSON to a database entity.
+
+Example:
+
+{
+  "username": "john",
+  "email": "john@example.com",
+  "role": "ADMIN",
+  "accountBalance": 100000
+}
+
+An attacker may modify sensitive fields.
+
+PREVENTION:
+
+Use dedicated request DTOs.
+
+Example:
+
+public record RegisterRequest(
+    String username,
+    String email,
+    String password
+) {}
+
+Map only allowed properties.
+
+
+25. 🟠 API ENUMERATION
+
+WHAT IS IT?
+
+Attackers systematically discover user IDs, resource IDs and API endpoints.
+
+Example:
+
+/api/users/1
+/api/users/2
+/api/users/3
+/api/users/4
+
+PREVENTION:
+- Enforce authorization.
+- Apply rate limiting.
+- Monitor unusual access patterns.
+- Minimize unnecessary data exposure.
+- Return appropriate errors.
+
+UUIDs are not a substitute for authorization.
+
+
+26. 🔴 DENIAL OF SERVICE (DoS)
+
+WHAT IS IT?
+
+Attackers overwhelm your backend until legitimate users cannot access the application.
+
+EXAMPLES:
+- Excessive HTTP requests.
+- Expensive database queries.
+- Large file uploads.
+- Excessive concurrent requests.
+- Resource-intensive reports.
+
+PREVENTION:
+- Rate limiting.
+- Request size restrictions.
+- Connection limits.
+- Thread pool limits.
+- Query optimization.
+- Timeouts.
+- Reverse proxy protection.
+- Infrastructure-level DDoS protection.
+
+Spring Security is not a complete DDoS defense.
+
+
+27. 🟠 HTTP REQUEST SMUGGLING
+
+WHAT IS IT?
+
+A discrepancy in how a proxy and backend interpret HTTP request boundaries can allow attackers to manipulate request processing.
+
+PREVENTION:
+- Keep servers and proxies updated.
+- Reject malformed requests.
+- Configure trusted proxies correctly.
+- Ensure consistent HTTP parsing.
+- Avoid conflicting Content-Length and Transfer-Encoding handling.
+
+Spring Security is not a dedicated request-smuggling defense.
+
+
+28. 🔴 SERVER-SIDE REQUEST FORGERY (SSRF)
+
+WHAT IS IT?
+
+Your backend fetches a URL supplied by the user.
+
+Example:
+
+/api/fetch?url=http://internal-server/admin
+
+An attacker may try to access:
+- Internal network services.
+- Cloud metadata endpoints.
+- Private administrative interfaces.
+- Restricted resources.
+
+PREVENTION:
+- Validate URLs.
+- Use destination allowlists.
+- Restrict outbound network access.
+- Block private and reserved IP ranges where appropriate.
+- Protect against DNS rebinding.
+- Avoid unrestricted URL fetching.
+
+Spring Security does not automatically prevent SSRF.
+
+
+============================================================
+PART 8: FILE AND DATA ATTACKS
+============================================================
+
+29. 🔴 MALICIOUS FILE UPLOAD
+
+WHAT IS IT?
+
+An attacker uploads a file containing malicious content.
+
+Examples:
+- Executable files disguised as images.
+- HTML files containing XSS.
+- Oversized files.
+- Malware.
+- Dangerous archive contents.
+
+PREVENTION:
+- Validate file size.
+- Validate extension.
+- Validate actual file content and signatures.
+- Generate server-side filenames.
+- Store files outside the web root.
+- Prevent direct execution.
+- Scan files where appropriate.
+- Restrict download permissions.
+
+Spring Security protects upload endpoints through authentication and authorization, but file validation is an application responsibility.
+
+
+30. 🔴 PATH TRAVERSAL
+
+WHAT IS IT?
+
+An attacker manipulates file paths to access files outside the intended directory.
+
+Example:
+
+/download?file=../../../../etc/passwd
+
+PREVENTION:
+- Never trust user-supplied paths.
+- Normalize and validate paths.
+- Restrict access to dedicated directories.
+- Use server-generated file identifiers.
+- Avoid direct concatenation of user input into paths.
+
+
+31. 🔴 SENSITIVE DATA EXPOSURE
+
+WHAT IS IT?
+
+Your application accidentally exposes:
+- Passwords.
+- JWTs.
+- Refresh tokens.
+- API keys.
+- Personal information.
+- Financial information.
+- Internal exception details.
+
+COMMON SOURCES:
+- Logs.
+- API responses.
+- Browser storage.
+- Error messages.
+- Database backups.
+- Cloud storage misconfiguration.
+
+PREVENTION:
+- HTTPS.
+- Encrypt sensitive data at rest where appropriate.
+- Never log passwords or tokens.
+- Mask sensitive values.
+- Restrict log and backup access.
+- Use secrets management.
+- Return minimal DTOs.
+
+
+============================================================
+PART 9: IMPORTANT ADDITIONAL ATTACKS
+============================================================
+
+32. 🟠 DNS SPOOFING
+
+Redirecting users to fraudulent destinations.
+
+DEFENCE:
+- Secure DNS infrastructure.
+- HTTPS.
+- Certificate validation.
+
+
+33. 🔴 MAN-IN-THE-MIDDLE (MITM)
+
+An attacker intercepts or modifies network traffic.
+
+DEFENCE:
+- HTTPS everywhere.
+- Valid TLS certificates.
+- Secure TLS configuration.
+
+
+34. 🔴 REPLAY ATTACK
+
+An attacker captures and reuses a previously valid request.
+
+DEFENCE:
+- Nonces.
+- Timestamps.
+- Request identifiers.
+- DPoP.
+- Idempotency controls where appropriate.
+
+
+35. 🟠 TIMING ATTACK
+
+An attacker infers secret information from differences in execution time.
+
+DEFENCE:
+- Constant-time cryptographic operations.
+- Avoid exposing secret-dependent timing differences.
+
+
+36. 🔴 INSECURE DESERIALIZATION
+
+An attacker supplies malicious serialized objects.
+
+DEFENCE:
+- Avoid unsafe deserialization.
+- Use safe data formats.
+- Apply strict type allowlisting.
+- Keep libraries updated.
+
+
+37. 🔴 XML EXTERNAL ENTITY (XXE)
+
+An attacker exploits XML parsing to access external entities or files.
+
+DEFENCE:
+- Disable external entities.
+- Disable unsafe DTD processing.
+- Configure secure XML parsers.
+
+
+38. 🟠 HOST HEADER INJECTION
+
+An attacker manipulates an untrusted HTTP Host header.
+
+DEFENCE:
+- Validate allowed hostnames.
+- Configure trusted proxies.
+- Avoid constructing security-sensitive URLs from untrusted headers.
+
+
+39. 🔴 DEPENDENCY VULNERABILITIES
+
+An attacker exploits vulnerable third-party libraries.
+
+DEFENCE:
+- Dependency scanning.
+- Software composition analysis.
+- Keep Spring Boot and dependencies updated.
+- Remove unused libraries.
+
+
+40. 🔴 BUSINESS LOGIC ABUSE
+
+An authenticated user performs legitimate API operations in unintended ways.
+
+Examples:
+- Redeeming a coupon repeatedly.
+- Manipulating product quantities.
+- Bypassing payment steps.
+- Performing duplicate transfers.
+
+DEFENCE:
+- Server-side business-rule validation.
+- Transaction management.
+- Idempotency.
+- Concurrency controls.
+- Audit logging.
+
+
+41. 🟠 RACE CONDITIONS
+
+An attacker exploits concurrent operations to violate application rules.
+
+Example:
+Two concurrent requests attempt to withdraw the same account balance.
+
+DEFENCE:
+- Database transactions.
+- Optimistic locking.
+- Pessimistic locking where appropriate.
+- Atomic operations.
+- Unique constraints.
+
+
+42. 🔴 ACCOUNT TAKEOVER
+
+An attacker gains control of a legitimate user account.
+
+DEFENCE:
+- MFA.
+- Secure recovery.
+- Login anomaly detection.
+- Credential protection.
+- Session revocation.
+
+
+43. 🟠 OTP BRUTE FORCE
+
+An attacker repeatedly guesses one-time passwords.
+
+DEFENCE:
+- Attempt limits.
+- OTP expiration.
+- One-time use.
+- Rate limiting.
+- Strong OTP generation.
+
+
+44. 🔴 PASSWORD RESET ABUSE
+
+An attacker exploits an insecure password recovery process.
+
+DEFENCE:
+- Cryptographically random reset tokens.
+- Short token expiration.
+- Single-use tokens.
+- Secure verification.
+- Avoid revealing whether an account exists.
+
+
+45. 🟠 WEB CACHE POISONING
+
+An attacker causes a cache to store malicious responses.
+
+DEFENCE:
+- Correct cache keys.
+- Proper cache configuration.
+- Validate untrusted headers.
+- Restrict caching of sensitive content.
+
+
+46. 🟠 WEB CACHE DECEPTION
+
+An attacker tricks caching infrastructure into storing private content.
+
+DEFENCE:
+- Cache-control policies.
+- Correct routing.
+- Never cache sensitive authenticated responses publicly.
+
+
+============================================================
+PART 10: SECURITY HEADERS IN SPRING SECURITY
+============================================================
+
+Spring Security supports important HTTP security headers.
+
+EXAMPLE:
+
+@Bean
+SecurityFilterChain securityFilterChain(HttpSecurity http)
+        throws Exception {
+
+    http.headers(headers -> headers
+
+        .frameOptions(frame -> frame.deny())
+
+        .contentTypeOptions(Customizer.withDefaults())
+
+        .httpStrictTransportSecurity(hsts ->
+            hsts.includeSubDomains(true)
+                .maxAgeInSeconds(31536000)
+        )
+
+        .contentSecurityPolicy(csp ->
+            csp.policyDirectives(
+                "default-src 'self'; " +
+                "object-src 'none'; " +
+                "frame-ancestors 'none'"
+            )
+        )
+    );
+
+    return http.build();
+}
+
+IMPORTANT HEADERS:
+
+Strict-Transport-Security:
+Enforces HTTPS in supporting browsers.
+
+X-Content-Type-Options:
+Prevents MIME-type sniffing.
+
+X-Frame-Options:
+Helps prevent clickjacking.
+
+Content-Security-Policy:
+Restricts content execution and loading.
+
+Referrer-Policy:
+Controls referrer information leakage.
+
+Cache-Control:
+Helps prevent sensitive response caching.
+
+IMPORTANT:
+Spring Security configures several security headers by default. Additional policies must be configured deliberately.
+
+Enable HSTS only after HTTPS is properly deployed.
+
+
+============================================================
+PART 11: HOW SPRING SECURITY FILTER CHAIN WORKS
+============================================================
+
+UNDERSTAND THE REQUEST FLOW.
+
+Incoming HTTP Request
+          |
+          v
+DelegatingFilterProxy
+          |
+          v
+FilterChainProxy
+          |
+          v
+Matching SecurityFilterChain
+          |
+          v
+CORS processing
+          |
+          v
+CSRF processing, where applicable
+          |
+          v
+Authentication filters
+          |
+          v
+SecurityContextHolder
+          |
+          v
+AuthorizationFilter
+          |
+          v
+Controller
+          |
+          v
+Service
+          |
+          v
+Repository
+          |
+          v
+Database
+
+IMPORTANT COMPONENTS:
+
+1. DelegatingFilterProxy:
+Connects servlet filtering to Spring Security.
+
+2. FilterChainProxy:
+Delegates to the matching security filter chain.
+
+3. SecurityFilterChain:
+Defines security filters and rules.
+
+4. AuthenticationManager:
+Coordinates authentication.
+
+5. AuthenticationProvider:
+Performs a particular authentication mechanism.
+
+6. UserDetailsService:
+Loads user details.
+
+7. PasswordEncoder:
+Verifies and hashes passwords.
+
+8. SecurityContextHolder:
+Stores the current authenticated security context.
+
+9. Authentication:
+Represents the authenticated identity and authorities.
+
+10. AuthorizationFilter:
+Enforces request-level authorization.
+
+11. ExceptionTranslationFilter:
+Translates authentication and authorization exceptions into HTTP responses.
+
+12. CsrfFilter:
+Validates CSRF tokens.
+
+13. BearerTokenAuthenticationFilter:
+Processes bearer-token authentication.
+
+14. SessionManagementFilter:
+Handles applicable session-management behavior.
+
+IMPORTANT:
+Actual filter ordering depends on the configured security mechanisms.
+
+Method-level authorization uses separate method-security interceptors.
+
+
+============================================================
+PART 12: HTTP SECURITY RESPONSE CODES
+============================================================
+
+200 OK:
+Request successfully processed.
+
+401 UNAUTHORIZED:
+Missing, invalid or expired authentication.
+
+403 FORBIDDEN:
+Authenticated user lacks permission, or CSRF validation failed.
+
+404 NOT FOUND:
+Resource does not exist, or its existence is intentionally hidden.
+
+405 METHOD NOT ALLOWED:
+HTTP method is unsupported.
+
+429 TOO MANY REQUESTS:
+Rate limit exceeded.
+
+IMPORTANT DIFFERENCE:
+
+401:
+The user is not successfully authenticated.
+
+403:
+The user is authenticated but does not have the required permission.
+
+A CSRF validation failure commonly results in 403.
+
+
+============================================================
+PART 13: RECOMMENDED SPRING SECURITY CONFIGURATION
+============================================================
+
+The following is a simplified baseline for an Angular + Spring Boot JWT REST API.
+
+IMPORTANT:
+This assumes stateless bearer-token authentication where tokens are explicitly supplied through Authorization headers.
+
+@Configuration
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http) throws Exception {
+
+        http
+            .cors(Customizer.withDefaults())
+
+            // Appropriate only for the assumed
+            // stateless bearer-token architecture.
+            // Revisit for cookie-based authentication.
+            .csrf(csrf -> csrf.disable())
+
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(
+                    SessionCreationPolicy.STATELESS
+                )
+            )
+
+            .authorizeHttpRequests(auth -> auth
+
+                .requestMatchers(
+                    "/auth/login",
+                    "/auth/register"
+                ).permitAll()
+
+                .requestMatchers("/api/admin/**")
+                    .hasRole("ADMIN")
+
+                .requestMatchers("/api/user/**")
+                    .hasAnyRole("USER", "ADMIN")
+
+                .anyRequest().authenticated()
+            )
+
+            .oauth2ResourceServer(oauth ->
+                oauth.jwt(Customizer.withDefaults())
+            )
+
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.deny())
+                .contentTypeOptions(Customizer.withDefaults())
+            );
+
+        return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+
+        CorsConfiguration config = new CorsConfiguration();
+
+        config.setAllowedOrigins(
+            List.of("https://myfrontend.com")
+        );
+
+        config.setAllowedMethods(
+            List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "PATCH",
+                "OPTIONS"
+            )
+        );
+
+        config.setAllowedHeaders(
+            List.of(
+                "Authorization",
+                "Content-Type"
+            )
+        );
+
+        UrlBasedCorsConfigurationSource source =
+            new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(
+            "/**",
+            config
+        );
+
+        return source;
+    }
+}
+
+PRODUCTION REQUIREMENTS:
+- Configure JWT issuer.
+- Configure trusted signing keys.
+- Validate audience.
+- Restrict signing algorithms.
+- Configure token expiration.
+- Implement rate limiting.
+- Implement resource-level authorization.
+- Configure logging and monitoring.
+- Revisit CSRF if authentication changes to cookies.
+
+This is not a complete production security configuration.
+
+
+============================================================
+PART 14: RECOMMENDED ARCHITECTURE FOR ANGULAR + SPRING BOOT
+============================================================
+
+CURRENT ARCHITECTURE:
+
+Angular
+   |
+   | Login credentials
+   v
+Spring Boot
+   |
+   | JWT response
+   v
+Angular localStorage
+   |
+   | Authorization: Bearer JWT
+   v
+Spring Boot APIs
+
+PROBLEMS:
+- XSS can expose JWT.
+- JWT can be copied into Postman.
+- Bearer tokens can be replayed.
+- Stateless authentication makes immediate revocation more difficult.
+
+RECOMMENDED ARCHITECTURE:
+
+Angular Frontend
+       |
+       | HTTPS
+       | HttpOnly Secure session cookie
+       v
+Spring Boot BFF
+       |
+       | Server-managed session
+       | Authentication and authorization
+       v
+Protected APIs
+
+IMPLEMENTATION:
+
+1. Angular sends login credentials.
+2. Spring Boot authenticates the user.
+3. Backend creates a server-managed session.
+4. Backend sends an HttpOnly, Secure cookie.
+5. Angular does not store or read the session identifier.
+6. Browser automatically sends the cookie.
+7. Spring Security validates the session.
+8. Protected APIs perform authorization checks.
+
+EXAMPLE ANGULAR REQUEST:
+
+this.http.post(
+    'https://api.example.com/auth/login',
+    {
+        username: username,
+        password: password
+    },
+    { withCredentials: true }
+);
+
+SUBSEQUENT REQUEST:
+
+this.http.get(
+    'https://api.example.com/api/account',
+    { withCredentials: true }
+);
+
+EXAMPLE COOKIE:
+
+Set-Cookie:
+SESSION=<random-session-id>;
+HttpOnly;
+Secure;
+SameSite=Lax;
+Path=/
+
+For cross-site frontend/backend deployments, SameSite=None; Secure may be needed, with appropriate CSRF controls.
+
+IMPORTANT:
+- HttpOnly prevents ordinary JavaScript access to the cookie.
+- Secure requires HTTPS.
+- SameSite controls cross-site cookie sending.
+- CSRF protection is necessary for cookie-based authentication.
+- Stolen session cookies can still be replayed in Postman.
+
+FOR STRONGER TOKEN REPLAY PROTECTION:
+
+Consider DPoP (Demonstrating Proof of Possession).
+
+DPoP:
+1. Browser generates a cryptographic key pair.
+2. Private key is stored as a non-extractable Web Crypto key.
+3. Backend binds the token to the public key.
+4. Each request includes a signed proof.
+5. Backend validates proof and token binding.
+
+A copied token alone is insufficient.
+
+IMPORTANT:
+DPoP does not guarantee protection against malicious JavaScript executing within the legitimate browser.
+
+
+============================================================
+PART 15: PRODUCTION SECURITY CHECKLIST
+============================================================
+
+AUTHENTICATION:
+
+[ ] BCrypt or Argon2 password hashing.
+[ ] Login rate limiting.
+[ ] MFA for sensitive accounts.
+[ ] Secure password reset.
+[ ] JWT signature validation.
+[ ] Issuer validation.
+[ ] Audience validation.
+[ ] Expiration validation.
+[ ] Short-lived access tokens.
+[ ] Refresh-token rotation and reuse detection.
+
+AUTHORIZATION:
+
+[ ] Protect every private endpoint.
+[ ] Use @PreAuthorize for sensitive operations.
+[ ] Prevent IDOR.
+[ ] Validate resource ownership.
+[ ] Never trust frontend role values.
+[ ] Restrict tenant access.
+[ ] Use DTOs to prevent mass assignment.
+
+FRONTEND SECURITY:
+
+[ ] Avoid sensitive JWT storage in localStorage.
+[ ] Consider HttpOnly Secure cookies and BFF.
+[ ] Configure CSRF protection for cookie authentication.
+[ ] Restrict CORS origins.
+[ ] Configure Content Security Policy.
+[ ] Avoid unsafe DOM manipulation.
+[ ] Update Angular dependencies.
+
+BACKEND SECURITY:
+
+[ ] HTTPS everywhere.
+[ ] Input validation.
+[ ] Parameterized SQL.
+[ ] API rate limiting.
+[ ] File upload restrictions.
+[ ] SSRF protection.
+[ ] Path traversal protection.
+[ ] Request size limits.
+[ ] Timeouts.
+[ ] Safe error responses.
+
+INFRASTRUCTURE:
+
+[ ] Update Spring Boot and dependencies.
+[ ] Use secrets management.
+[ ] Restrict database access.
+[ ] Configure security headers.
+[ ] Monitor authentication failures.
+[ ] Never log credentials or tokens.
+[ ] Perform dependency scanning.
+[ ] Perform penetration testing.
+
+
+============================================================
+PART 16: COMMON SECURITY MISCONCEPTIONS
+============================================================
+
+MISCONCEPTION:
+CORS blocks Postman.
+
+REALITY:
+CORS is enforced by browsers.
+
+MISCONCEPTION:
+JWT is encrypted.
+
+REALITY:
+JWT payloads are normally encoded and signed, not encrypted.
+
+MISCONCEPTION:
+JWT authentication means the user is authorized.
+
+REALITY:
+Authentication and authorization are separate.
+
+MISCONCEPTION:
+Hiding an Angular button protects an API.
+
+REALITY:
+Backend authorization is required.
+
+MISCONCEPTION:
+HttpOnly cookies cannot be stolen.
+
+REALITY:
+They cannot be read by ordinary JavaScript, but stolen cookies can still be replayed.
+
+MISCONCEPTION:
+Stateless JWT means no security risks.
+
+REALITY:
+Token theft, replay and authorization vulnerabilities remain.
+
+MISCONCEPTION:
+HTTPS prevents all attacks.
+
+REALITY:
+HTTPS protects communication in transit, not compromised endpoints or business logic.
+
+MISCONCEPTION:
+UUIDs prevent IDOR.
+
+REALITY:
+Ownership checks are still necessary.
+
+MISCONCEPTION:
+Spring Security prevents SQL injection.
+
+REALITY:
+Safe database access and parameterized queries are required.
+
+MISCONCEPTION:
+Disabling CSRF is always safe for REST APIs.
+
+REALITY:
+It depends on how authentication credentials are transmitted.
+
+MISCONCEPTION:
+A valid Origin header proves browser identity.
+
+REALITY:
+Non-browser clients can forge the Origin header.
+
+
+============================================================
+PART 17: PRIORITIES FOR YOUR ANGULAR + SPRING BOOT APPLICATION
+============================================================
+
+PRIORITY 1 – XSS AND JWT THEFT
+
+Your JWT currently resides in localStorage.
+
+A successful XSS attack could steal it.
+
+Recommended:
+- Move toward BFF architecture.
+- Use HttpOnly session cookies.
+- Implement CSP.
+- Avoid unsafe Angular DOM operations.
+
+PRIORITY 2 – BROKEN ACCESS CONTROL AND IDOR
+
+Ensure every API checks:
+- User identity.
+- User role.
+- Required permission.
+- Resource ownership.
+
+PRIORITY 3 – JWT REPLAY
+
+Recommended:
+- Short-lived access tokens.
+- Refresh-token rotation.
+- Revocation.
+- Secure session management.
+- DPoP if appropriate.
+
+PRIORITY 4 – BRUTE FORCE AND CREDENTIAL STUFFING
+
+Recommended:
+- Rate limiting.
+- MFA.
+- Suspicious-login detection.
+- Secure password hashing.
+
+PRIORITY 5 – CSRF, CORS AND SECURITY HEADERS
+
+Recommended:
+- Strict CORS allowlist.
+- CSRF protection for cookie-based authentication.
+- CSP.
+- HSTS.
+- Secure cookie settings.
+
+
+============================================================
+FINAL TAKEAWAY
+============================================================
+
+SPRING SECURITY IS NOT A SINGLE CONFIGURATION THAT MAKES AN APPLICATION SECURE.
+
+It is a collection of security mechanisms that work together.
+
+A production application's security should contain:
+
+1. AUTHENTICATION:
+   Establish who the user is.
+
+2. AUTHORIZATION:
+   Establish what the user can access.
+
+3. INPUT VALIDATION:
+   Prevent malicious or unexpected input.
+
+4. BROWSER SECURITY:
+   Mitigate XSS, CSRF and clickjacking.
+
+5. TOKEN AND SESSION SECURITY:
+   Prevent credential theft and replay.
+
+6. DATABASE SECURITY:
+   Prevent injection and unauthorized data access.
+
+7. INFRASTRUCTURE SECURITY:
+   Protect servers, networks, secrets and dependencies.
+
+8. MONITORING:
+   Detect and respond to suspicious activity.
+
+MOST IMPORTANT PRINCIPLE:
+
+NEVER TRUST THE FRONTEND.
+
+Every security-sensitive decision must ultimately be enforced by the backend.
+
+============================================================
+OFFICIAL REFERENCES
+============================================================
+
+Spring Security Documentation:
+https://docs.spring.io/spring-security/reference/
+
+OWASP API Security Top 10:
+https://owasp.org/www-project-api-security/
+
+OWASP Web Security Testing Guide:
+https://owasp.org/www-project-web-security-testing-guide/
+
+OWASP Cheat Sheet Series:
+https://cheatsheetseries.owasp.org/
+
+OWASP Top 10:
+https://owasp.org/www-project-top-ten/
+
+END OF NOTES

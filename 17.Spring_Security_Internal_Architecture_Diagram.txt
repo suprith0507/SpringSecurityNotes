@@ -1,0 +1,631 @@
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                           🔐 SPRING SECURITY COMPLETE INTERNAL ARCHITECTURE 🔐                           ║
+║                     (LEARN THIS TOP-DOWN - EXACTLY HOW SPRING SECURITY WORKS)                           ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+🎯 BEFORE LEARNING ANY CLASSES, UNDERSTAND THE MAIN GOAL
+
+Spring Security exists to answer ONLY TWO QUESTIONS:
+
+🟢 Authentication ➜ WHO ARE YOU?
+🟢 Authorization  ➜ WHAT ARE YOU ALLOWED TO ACCESS?
+
+Everything inside Spring Security exists only to achieve these two goals.
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🌍 LEVEL 1 : 10,000 FEET VIEW (HIGHEST LEVEL OVERVIEW)
+
+Think of a Bank:
+
+👤 Customer
+     │
+     ▼
+┌──────────────┐ ➜ ┌──────────────┐ ➜ ┌──────────────┐ ➜ ┌──────────────┐
+│ Security     │   │ Identity     │   │ Permission   │   │ Bank Employee│
+│ Guard        │   │ Verification │   │ Check        │   │ Processing   │
+└──────────────┘   └──────────────┘   └──────────────┘   └──────────────┘
+
+Spring Security works exactly the same way.
+
+HTTP Request
+      │
+      ▼
+┌──────────────┐ ➜ ┌──────────────┐ ➜ ┌──────────────┐ ➜ ┌──────────────┐
+│ Authentication│  │ Authorization │  │ Controller   │  │ Business     │
+│ Check         │  │ Check         │  │              │  │ Logic        │
+└──────────────┘   └──────────────┘   └──────────────┘   └──────────────┘
+
+Remember:
+
+❌ Request DOES NOT directly reach Controller
+✅ Request MUST pass through Spring Security first
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🌍 LEVEL 2 : COMPLETE APPLICATION FLOW
+
+Browser
+   │
+   ▼
+┌────────────┐ ➜ ┌─────────────────┐ ➜ ┌─────────────┐ ➜ ┌───────────┐ ➜ ┌────────────┐
+│ Tomcat     │   │ Spring Security │   │ Controller  │   │ Service   │   │ Repository │
+└────────────┘   └─────────────────┘   └─────────────┘   └───────────┘   └────────────┘
+                                                                                  │
+                                                                                  ▼
+                                                                            ┌────────────┐
+                                                                            │ Database   │
+                                                                            └────────────┘
+
+Important Rule:
+
+✅ Security runs before Controller
+✅ Controller runs before Service
+✅ Service runs before Repository
+✅ Repository talks to Database
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🌍 LEVEL 3 : REAL SPRING SECURITY INTERNAL MODULES
+
+This is the MOST IMPORTANT ARCHITECTURE Diagram.
+
+HTTP Request
+      │
+      ▼
+┌────────────────────┐ ➜ ┌──────────────────┐ ➜ ┌──────────────────┐ ➜ ┌──────────────────┐
+│DelegatingFilterProxy│   │ FilterChainProxy │   │SecurityFilterChain│   │ Authentication   │
+└────────────────────┘   └──────────────────┘   └──────────────────┘   └──────────────────┘
+                                                                                   │
+                                                                                   ▼
+┌──────────────────┐ ➜ ┌──────────────────┐ ➜ ┌─────────────────────┐
+│ SecurityContext  │   │ Authorization    │   │ Controller          │
+└──────────────────┘   └──────────────────┘   └─────────────────────┘
+
+🔥 THESE ARE THE CORE BUILDING BLOCKS OF SPRING SECURITY
+
+1. DelegatingFilterProxy
+2. FilterChainProxy
+3. SecurityFilterChain
+4. Authentication Subsystem
+5. SecurityContext
+6. Authorization Subsystem
+
+Everything else belongs to one of these modules.
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🔥 LEVEL 4 : WHY FILTERS EXIST?
+
+Question:
+
+How can Spring Security stop requests BEFORE they reach the Controller?
+
+Answer:
+
+Servlet Filters.
+
+Normal Request Flow:
+
+Request
+   │
+   ▼
+Controller
+
+Secured Flow:
+
+Request
+   │
+   ▼
+┌──────────┐ ➜ ┌──────────┐ ➜ ┌──────────┐ ➜ ┌──────────┐
+│ Filter 1 │   │ Filter 2 │   │ Filter 3 │   │ Filter N │
+└──────────┘   └──────────┘   └──────────┘   └──────────┘
+                                                   │
+                                                   ▼
+                                            Controller
+
+Think Airport Security:
+
+Passenger
+   │
+   ▼
+Passport Check
+   │
+   ▼
+Bag Scan
+   │
+   ▼
+Body Scan
+   │
+   ▼
+Gate Entry
+
+Every security check = One Filter
+
+Spring Security = Collection Of Filters
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🔥 LEVEL 5 : DELEGATINGFILTERPROXY
+
+Purpose:
+
+Bridge between Tomcat and Spring Security.
+
+Problem:
+
+Tomcat Understands:
+
+✅ Servlet Filters
+
+Tomcat Does NOT Understand:
+
+❌ Spring Beans
+
+Spring Understands:
+
+✅ Beans
+
+Need a Translator.
+
+Architecture:
+
+┌───────────┐ ◄────────► ┌──────────────────────┐
+│ Tomcat    │            │ Spring Security      │
+│ World     │            │ Bean World           │
+└───────────┘            └──────────────────────┘
+            ▲
+            │
+            ▼
+┌──────────────────────┐
+│ DelegatingFilterProxy│
+└──────────────────────┘
+
+Think:
+
+🎯 Receptionist
+
+Tomcat Request
+      │
+      ▼
+DelegatingFilterProxy
+      │
+      ▼
+Spring Security
+
+That's ALL this class does.
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🔥 LEVEL 6 : FILTERCHAINPROXY
+
+Request enters Spring Security.
+
+Question:
+
+Which Filters Should Run?
+
+FilterChainProxy decides.
+
+Architecture:
+
+Request
+   │
+   ▼
+┌──────────────────────┐
+│  FilterChainProxy    │
+└──────────────────────┘
+             │
+             ▼
+┌─────────┐ ➜ ┌─────────┐ ➜ ┌─────────┐ ➜ ┌─────────┐
+│ FilterA │   │ FilterB │   │ FilterC │   │ FilterD │
+└─────────┘   └─────────┘   └─────────┘   └─────────┘
+
+Think:
+
+🎯 Security Manager
+
+Responsibilities:
+
+✅ Choose correct security chain
+✅ Execute filters in order
+✅ Manage filter execution
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🔥 LEVEL 7 : SECURITYFILTERCHAIN (HEART OF SPRING SECURITY)
+
+Most Important Class:
+
+SecurityFilterChain
+
+When you write:
+
+http
+.formLogin()
+.csrf()
+.authorizeHttpRequests()
+
+Spring builds:
+
+SecurityFilterChain
+
+Internally:
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ SecurityFilterChain                                                                                          │
+├──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬─────────────────┤
+│CSRF Filter   │Login Filter  │Logout Filter │JWT Filter    │Session Filter│Header Filter │Authorization   │
+└──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴─────────────────┘
+
+Think:
+
+SecurityFilterChain
+=
+List Of Security Filters
+
+This is the REAL HEART of Spring Security.
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🔥 LEVEL 8 : AUTHENTICATION SUBSYSTEM (WHO ARE YOU?)
+
+Suppose User Logs In:
+
+Username : suprith
+Password : admin123
+
+Authentication Flow:
+
+┌─────────────────────────────┐
+│UsernamePasswordAuthFilter   │
+└─────────────────────────────┘
+                │
+                ▼
+┌─────────────────────────────┐
+│AuthenticationManager        │
+└─────────────────────────────┘
+                │
+                ▼
+┌─────────────────────────────┐
+│AuthenticationProvider       │
+└─────────────────────────────┘
+                │
+                ▼
+┌─────────────────────────────┐
+│UserDetailsService           │
+└─────────────────────────────┘
+                │
+                ▼
+┌─────────────────────────────┐
+│Database                     │
+└─────────────────────────────┘
+                │
+                ▼
+┌─────────────────────────────┐
+│PasswordEncoder              │
+└─────────────────────────────┘
+                │
+                ▼
+Authenticated User
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🔥 LEVEL 9 : AUTHENTICATIONMANAGER
+
+Think:
+
+AuthenticationManager = Manager
+
+NOT Actual Worker.
+
+Architecture:
+
+Login Request
+      │
+      ▼
+┌─────────────────────────┐
+│ AuthenticationManager   │
+└─────────────────────────┘
+              │
+              ▼
+     Delegates Work
+              │
+              ▼
+┌─────────────────────────┐
+│ AuthenticationProvider  │
+└─────────────────────────┘
+
+Think:
+
+🏢 Office Receptionist
+
+Receptionist Doesn't Solve Problem.
+
+Receptionist Sends You To Correct Person.
+
+That's AuthenticationManager.
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🔥 LEVEL 10 : AUTHENTICATIONPROVIDER
+
+Actual Login Happens Here.
+
+AuthenticationManager
+          │
+          ▼
+┌─────────────────────────┐
+│ AuthenticationProvider  │
+└─────────────────────────┘
+          │
+          ▼
+Verify User
+Verify Password
+Verify Account Status
+          │
+          ▼
+Authentication Success
+
+Built-in Providers:
+
+✅ DaoAuthenticationProvider
+✅ JwtAuthenticationProvider
+✅ OAuth2AuthenticationProvider
+✅ LDAPAuthenticationProvider
+
+Think:
+
+🎯 Real Authentication Engine
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🔥 LEVEL 11 : USERDETAILSSERVICE
+
+AuthenticationProvider Needs User.
+
+Who loads User?
+
+UserDetailsService
+
+Flow:
+
+AuthenticationProvider
+          │
+          ▼
+UserDetailsService
+          │
+          ▼
+SELECT * FROM USERS
+          │
+          ▼
+Build UserDetails Object
+          │
+          ▼
+Return User Information
+
+UserDetails Contains:
+
+✅ Username
+✅ Password
+✅ Roles
+✅ Authorities
+✅ Enabled Status
+✅ Locked Status
+
+Think:
+
+🎯 User Loader
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🔥 LEVEL 12 : PASSWORDENCODER
+
+Database Stores:
+
+❌ password123
+
+Should Store:
+
+✅ $2a$10$dkjsdhjksdhjks...
+
+Flow:
+
+Entered Password
+       │
+       ▼
+BCrypt Hashing
+       │
+       ▼
+Compare
+       │
+       ▼
+Stored Hash
+
+Common Encoders:
+
+🥇 BCryptPasswordEncoder
+🥈 Argon2PasswordEncoder
+🥉 SCryptPasswordEncoder
+🏅 PBKDF2PasswordEncoder
+
+Most Used:
+
+🏆 BCryptPasswordEncoder
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🔥 LEVEL 13 : SECURITYCONTEXT (WHERE LOGGED-IN USER IS STORED)
+
+After Successful Login:
+
+Spring Creates:
+
+Authentication Object
+
+Then Stores It Here:
+
+SecurityContextHolder
+          │
+          ▼
+SecurityContext
+          │
+          ▼
+Authentication
+          │
+          ▼
+Logged-In User
+
+Visual Flow:
+
+┌──────────────────────┐ ➜ ┌────────────────────┐ ➜ ┌──────────────────┐
+│SecurityContextHolder │   │SecurityContext     │   │Authentication    │
+└──────────────────────┘   └────────────────────┘   └──────────────────┘
+
+Think:
+
+🪪 Current Logged-In User Memory
+
+Whenever Spring Needs User:
+
+SecurityContextHolder.getContext().getAuthentication()
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🔥 LEVEL 14 : AUTHORIZATION SUBSYSTEM (WHAT CAN YOU ACCESS?)
+
+Authentication Answered:
+
+✅ WHO ARE YOU?
+
+Now Spring Must Answer:
+
+✅ WHAT ARE YOU ALLOWED TO ACCESS?
+
+Flow:
+
+Request
+   │
+   ▼
+┌─────────────────────┐ ➜ ┌─────────────────────┐ ➜ ┌─────────────────────┐
+│AuthorizationFilter  │   │AuthorizationManager │   │Role Check          │
+└─────────────────────┘   └─────────────────────┘   └─────────────────────┘
+                                                             │
+                                                             ▼
+                                                    Allow / Deny
+
+Example:
+
+User Has:
+
+ROLE_USER
+
+Trying To Access:
+
+/admin/delete
+
+Needed:
+
+ROLE_ADMIN
+
+Result:
+
+❌ 403 Forbidden
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🔥 LEVEL 15 : ROLE & AUTHORITY MODEL
+
+Authentication
+        │
+        ▼
+┌───────────────────────┐
+│ GrantedAuthorities    │
+└───────────────────────┘
+        │
+        ├── ROLE_ADMIN
+        ├── ROLE_USER
+        ├── CREATE_EMPLOYEE
+        ├── DELETE_EMPLOYEE
+        └── UPDATE_EMPLOYEE
+
+ROLE = Collection Of Permissions
+
+Example:
+
+ROLE_ADMIN
+      │
+      ├── CREATE_USER
+      ├── DELETE_USER
+      ├── UPDATE_USER
+      └── VIEW_REPORTS
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🏆 COMPLETE SPRING SECURITY EXECUTION FLOW (REMEMBER THIS FOREVER)
+
+HTTP REQUEST
+      │
+      ▼
+DelegatingFilterProxy
+      │
+      ▼
+FilterChainProxy
+      │
+      ▼
+SecurityFilterChain
+      │
+      ▼
+Authentication Filter
+      │
+      ▼
+AuthenticationManager
+      │
+      ▼
+AuthenticationProvider
+      │
+      ▼
+UserDetailsService
+      │
+      ▼
+Database
+      │
+      ▼
+PasswordEncoder Verification
+      │
+      ▼
+Authentication Success
+      │
+      ▼
+SecurityContextHolder
+      │
+      ▼
+AuthorizationFilter
+      │
+      ▼
+AuthorizationManager
+      │
+      ▼
+Role / Authority Check
+      │
+      ▼
+Access Granted
+      │
+      ▼
+Controller
+      │
+      ▼
+Service
+      │
+      ▼
+Repository
+      │
+      ▼
+Database
+      │
+      ▼
+Response Returned
+
+🎯 GOLDEN INTERVIEW SUMMARY:
+
+Spring Security is fundamentally a filter-based framework. Every request first enters DelegatingFilterProxy, then FilterChainProxy, which executes a SecurityFilterChain containing multiple security filters. Authentication is performed using AuthenticationManager → AuthenticationProvider → UserDetailsService → PasswordEncoder. Once authenticated, the user is stored inside SecurityContextHolder. Authorization then checks user roles and authorities through AuthorizationFilter and AuthorizationManager. Only after successful authentication and authorization is the request allowed to reach the Controller.

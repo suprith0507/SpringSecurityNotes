@@ -1,0 +1,519 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║             🌍 CYBER SECURITY MASTER COURSE - PART 1 : THE BIG PICTURE 🌍                                      ║
+║                         (FROM ZERO TO ARCHITECT MINDSET)                                                        ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 1 : WHAT IS SECURITY?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Before "Cyber Security", understand "Security".
+
+Imagine:
+
+🏠 House
+🏦 Bank
+🏢 Office
+🚗 Car
+💻 Application
+
+All have something valuable.
+
+Security simply means:
+
+🛡️ Protecting valuable assets from unauthorized access, modification, destruction, or theft.
+
+Simple Formula:
+
+┌──────────────────────────┐
+│ Asset + Threat = Need For│
+│          Security        │
+└──────────────────────────┘
+
+Examples:
+
+House      → Protect Family
+Bank       → Protect Money
+Company    → Protect Data
+Application→ Protect Information
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 2 : WHAT IS CYBER SECURITY?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Cyber Security is:
+
+🛡️ Protection of digital systems, networks, applications, devices, identities and data from attacks.
+
+Simple Definition:
+
+┌───────────────────────────────────────────────────────────┐
+│ Cyber Security = Security For Digital Assets             │
+└───────────────────────────────────────────────────────────┘
+
+Examples:
+
+✅ Customer Data
+✅ Banking Transactions
+✅ APIs
+✅ Servers
+✅ Databases
+✅ Cloud Infrastructure
+✅ Source Code
+✅ Authentication Systems
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 3 : WHY CYBER SECURITY EXISTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Imagine:
+
+No Security Exists
+
+User
+ │
+ ▼
+Application
+ │
+ ▼
+Database
+
+Anyone Can:
+
+❌ Read Data
+❌ Modify Data
+❌ Delete Data
+❌ Stop Service
+❌ Impersonate Users
+❌ Steal Money
+
+Therefore Security Exists.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 4 : THE THREE PILLARS OF SECURITY (CIA TRIAD)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Every security topic ultimately protects one of these.
+
+╔══════════════════════════════════════════════════════════╗
+║ C → Confidentiality                                     ║
+║ I → Integrity                                           ║
+║ A → Availability                                        ║
+╚══════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔵 CONFIDENTIALITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Goal:
+
+Only authorized people should see data.
+
+Example:
+
+Bank Balance
+
+Customer
+   ✅ Can View
+
+Random Person
+   ❌ Cannot View
+
+Technologies:
+
+✅ Encryption
+✅ Authentication
+✅ Authorization
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟢 INTEGRITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Goal:
+
+Data should not be changed illegally.
+
+Example:
+
+Account Balance
+
+1000£
+
+Attacker changes to
+
+50000£
+
+Integrity Broken
+
+Protection:
+
+✅ Hashing
+✅ Digital Signatures
+✅ Access Control
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟠 AVAILABILITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Goal:
+
+System should be available when needed.
+
+Example:
+
+Amazon
+Netflix
+Bank API
+
+Must stay online.
+
+Attack Example:
+
+DDoS
+
+System becomes unavailable.
+
+Availability Broken.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 5 : WHO ARE WE PROTECTING AGAINST?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Attackers Can Be:
+
+┌─────────────┬────────────────────────────┐
+│ Type        │ Example                    │
+├─────────────┼────────────────────────────┤
+│ Hacker      │ External Attacker          │
+│ Insider     │ Employee                   │
+│ Competitor  │ Business Rival             │
+│ Criminal    │ Financial Gain             │
+│ Nation State│ Cyber Warfare              │
+│ Script Kiddie│ Amateur Learning          │
+└─────────────┴────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 6 : THE COMPLETE SECURITY UNIVERSE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Developers Think:
+
+Browser
+  │
+  ▼
+Spring Boot
+  │
+  ▼
+Database
+
+Real World:
+
+Internet
+ │
+ ▼
+DNS
+ │
+ ▼
+CDN
+ │
+ ▼
+DDoS Protection
+ │
+ ▼
+Firewall
+ │
+ ▼
+Load Balancer
+ │
+ ▼
+WAF
+ │
+ ▼
+API Gateway
+ │
+ ▼
+Spring Security
+ │
+ ▼
+Application
+ │
+ ▼
+Database
+ │
+ ▼
+Cloud Infrastructure
+
+Every Layer Can Be Attacked.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 7 : THE 8 MAJOR SECURITY DOMAINS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+╔═══════════╦══════════════╦══════════════╦══════════════╦══════════════╗
+║ PHYSICAL  ║ NETWORK      ║ INFRA        ║ CLOUD        ║ PLATFORM     ║
+╚═══════════╩══════════════╩══════════════╩══════════════╩══════════════╝
+
+╔══════════════╦══════════════╦══════════════╗
+║ APPLICATION  ║ API          ║ HUMAN        ║
+╚══════════════╩══════════════╩══════════════╝
+
+These are the 8 worlds of cyber security.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+1️⃣ PHYSICAL SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Protects:
+
+✅ Buildings
+✅ Servers
+✅ Hardware
+
+Threats:
+
+❌ Server Theft
+❌ USB Attacks
+❌ Datacenter Intrusion
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+2️⃣ NETWORK SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Protects:
+
+✅ Traffic
+✅ Network Paths
+✅ Communication
+
+Threats:
+
+❌ DDoS
+❌ MITM
+❌ DNS Poisoning
+❌ Port Scanning
+
+Technologies:
+
+Firewall
+IPS
+IDS
+VPN
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+3️⃣ INFRASTRUCTURE SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Protects:
+
+✅ Linux
+✅ Windows
+✅ Docker
+✅ Kubernetes
+
+Threats:
+
+❌ Container Escape
+❌ SSH Abuse
+❌ Root Access
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+4️⃣ CLOUD SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Protects:
+
+✅ AWS
+✅ Azure
+✅ GCP
+
+Threats:
+
+❌ Public Buckets
+❌ IAM Misconfiguration
+❌ Key Leakage
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+5️⃣ PLATFORM SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Protects:
+
+✅ NGINX
+✅ API Gateway
+✅ Kafka
+✅ Load Balancers
+
+Threats:
+
+❌ Misconfiguration
+❌ Exposed Services
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+6️⃣ APPLICATION SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Protects:
+
+✅ Java Applications
+✅ Spring Boot
+✅ .NET
+✅ NodeJS
+
+Threats:
+
+❌ SQL Injection
+❌ XSS
+❌ CSRF
+❌ SSRF
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+7️⃣ API SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Modern Security's Hottest Area
+
+Threats:
+
+❌ IDOR
+❌ Broken Auth
+❌ JWT Abuse
+❌ API Enumeration
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+8️⃣ HUMAN SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The Most Dangerous Layer
+
+Threats:
+
+❌ Phishing
+❌ Social Engineering
+❌ Fake Calls
+❌ Fake Login Pages
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 8 : WHO DEFINES SECURITY STANDARDS?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Different Organizations Focus On Different Domains.
+
+╔════════════════════════════════════════════════════════════════════════╗
+║ ORGANIZATION                 | SPECIALIZATION                        ║
+╠════════════════════════════════════════════════════════════════════════╣
+║ OWASP                        | Application Security                  ║
+║ NIST                         | Overall Security Frameworks           ║
+║ CIS                          | Infrastructure Benchmarks             ║
+║ MITRE                        | Attack Classification                 ║
+║ ISO 27001                    | Enterprise Security Governance        ║
+║ PCI-DSS                      | Payment Card Security                 ║
+║ Cloud Security Alliance      | Cloud Security                        ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+No single organization covers everything.
+
+Security is too huge.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 9 : WHERE OWASP FITS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Cyber Security
+      │
+      ▼
+Application Security
+      │
+      ▼
+OWASP
+      │
+      ▼
+OWASP Top 10
+      │
+      ▼
+Application Risks
+
+Examples:
+
+✅ Broken Access Control
+✅ Injection
+✅ Security Misconfiguration
+✅ SSRF
+✅ Authentication Failures
+
+OWASP is NOT:
+
+❌ Network Security Standard
+❌ Cloud Security Standard
+❌ Physical Security Standard
+
+OWASP focuses on:
+
+✅ Web Applications
+✅ APIs
+✅ Application Design
+✅ Application Code
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 10 : THE DEFENSE-IN-DEPTH PHILOSOPHY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Modern Security Principle:
+
+Never Trust One Layer.
+
+Architecture:
+
+╔══════╗→╔════════╗→╔═══════╗→╔═════════╗→╔══════════╗→╔════════╗→╔════════╗
+║ DNS  ║ ║Firewall║ ║  WAF  ║ ║Gateway  ║ ║Security  ║ ║Spring  ║ ║Database║
+╚══════╝ ╚════════╝ ╚═══════╝ ╚═════════╝ ╚══════════╝ ╚════════╝ ╚════════╝
+
+If One Layer Fails,
+Another Layer Protects.
+
+This Concept Is Called:
+
+🛡️ DEFENSE IN DEPTH
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 FINAL SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Security
+  ↓
+Protect Valuable Assets
+
+Cyber Security
+  ↓
+Protect Digital Assets
+
+CIA Triad
+  ↓
+Confidentiality + Integrity + Availability
+
+Security Domains
+  ↓
+Physical
+Network
+Infrastructure
+Cloud
+Platform
+Application
+API
+Human
+
+Standards
+  ↓
+OWASP → Application Security
+NIST → Enterprise Security
+CIS → Infrastructure Security
+MITRE → Attack Knowledge Base
+ISO27001 → Governance
+
+Most Important Rule:
+
+"Security is not a single feature.
+Security is multiple layers working together so that an attacker has to defeat
+many defenses before reaching the asset."
+
+🚀 END OF PART 1 : SECURITY FUNDAMENTALS & SECURITY LANDSCAPE
+🚀 NEXT STAGE : THREATS, ATTACKERS, ATTACK SURFACES, THREAT MODELLING & HOW HACKERS ACTUALLY THINK

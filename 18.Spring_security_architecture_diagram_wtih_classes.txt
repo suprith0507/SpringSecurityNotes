@@ -1,0 +1,983 @@
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                     🔐 BUILDING SPRING SECURITY FROM SCRATCH (FRAMEWORK DEVELOPER VIEW) 🔐                     ║
+║                Think Like a Spring Security Developer, NOT Like a Spring Security User                          ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+🎯 ULTIMATE GOAL
+
+Spring Security internally is nothing but a collection of Java Objects collaborating with each other.
+
+The ENTIRE architecture can be reduced to:
+
+HTTP Request
+    │
+    ▼
+DelegatingFilterProxy
+    │
+    ▼
+FilterChainProxy
+    │
+    ▼
+SecurityFilterChain
+    │
+    ▼
+Authentication Filters
+    │
+    ▼
+AuthenticationManager
+    │
+    ▼
+AuthenticationProvider
+    │
+    ▼
+UserDetailsService
+    │
+    ▼
+PasswordEncoder
+    │
+    ▼
+SecurityContextHolder
+    │
+    ▼
+AuthorizationManager
+    │
+    ▼
+Controller
+
+Every class below participates in this pipeline.
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟩 STEP 1 : HTTP REQUEST ENTERS TOMCAT
+
+Request:
+
+POST /login
+
+username=admin
+password=secret
+
+Tomcat receives request.
+
+Tomcat only understands:
+
+Servlet
+Filter
+FilterChain
+
+Tomcat DOES NOT know:
+
+AuthenticationManager
+UserDetailsService
+SecurityContextHolder
+
+Therefore Spring Security needs an entry point.
+
+Flow:
+
+HTTP Request
+      │
+      ▼
+┌────────────────────────────┐
+│ Tomcat Servlet Container   │
+└────────────────────────────┘
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟦 STEP 2 : DELEGATINGFILTERPROXY
+
+Class:
+
+org.springframework.web.filter.DelegatingFilterProxy
+
+Inheritance:
+
+Object
+  │
+  ▼
+GenericFilterBean
+  │
+  ▼
+DelegatingFilterProxy
+
+Purpose:
+
+Bridge Tomcat World ↔ Spring World
+
+Think:
+
+Tomcat Security Receptionist
+
+Simplified Source Code:
+
+public class DelegatingFilterProxy
+        implements Filter {
+
+    private Filter delegate;
+
+    @Override
+    public void doFilter(
+            ServletRequest req,
+            ServletResponse res,
+            FilterChain chain) {
+
+        delegate.doFilter(req,res,chain);
+    }
+}
+
+Actual Flow:
+
+HTTP Request
+      │
+      ▼
+DelegatingFilterProxy
+      │
+      ▼
+Spring Security Bean
+
+Responsibilities:
+
+✅ Receive Request
+✅ Locate Spring Bean
+✅ Forward Request
+
+Does NOT:
+
+❌ Authenticate User
+❌ Authorize User
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟦 STEP 3 : FILTERCHAINPROXY
+
+Class:
+
+org.springframework.security.web.FilterChainProxy
+
+Inheritance:
+
+Object
+   │
+   ▼
+GenericFilterBean
+   │
+   ▼
+FilterChainProxy
+
+Internal Structure:
+
+public class FilterChainProxy
+          implements Filter {
+
+     private List<SecurityFilterChain>
+                     filterChains;
+}
+
+Think:
+
+Security Director
+
+Flow:
+
+DelegatingFilterProxy
+      │
+      ▼
+FilterChainProxy
+      │
+      ▼
+Choose SecurityFilterChain
+      │
+      ▼
+Execute Filters
+
+Internal Algorithm:
+
+for(SecurityFilterChain chain : chains){
+
+      if(chain.matches(request)){
+
+            chain.executeFilters();
+      }
+}
+
+Responsibilities:
+
+✅ Select Security Chain
+✅ Manage Filters
+✅ Execute Filters In Order
+
+Does NOT:
+
+❌ Check Password
+❌ Query Database
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟦 STEP 4 : SECURITYFILTERCHAIN
+
+Interface:
+
+SecurityFilterChain
+
+Implementation:
+
+DefaultSecurityFilterChain
+
+Created By:
+
+@Bean
+public SecurityFilterChain chain(
+          HttpSecurity http)
+          throws Exception {
+
+      http
+         .formLogin()
+         .csrf()
+         .authorizeHttpRequests();
+
+      return http.build();
+}
+
+IMPORTANT:
+
+Most people think this configures security.
+
+Reality:
+
+This BUILDS a SecurityFilterChain object.
+
+Internally:
+
+SecurityFilterChain
+           │
+           ▼
+List<Filter>
+
+Visual:
+
+┌──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+│ CSRF     │ Login    │ Logout   │ Session  │ JWT      │ Authz    │
+│ Filter   │ Filter   │ Filter   │ Filter   │ Filter   │ Filter   │
+└──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+Think:
+
+🎯 SecurityFilterChain = List<Security Filters>
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟨 STEP 5 : USERNAMEPASSWORDAUTHENTICATIONFILTER
+
+Class:
+
+UsernamePasswordAuthenticationFilter
+
+Inheritance:
+
+Object
+ │
+ ▼
+GenericFilterBean
+ │
+ ▼
+AbstractAuthenticationProcessingFilter
+ │
+ ▼
+UsernamePasswordAuthenticationFilter
+
+Purpose:
+
+Read Login Request
+
+Input:
+
+POST /login
+
+username=admin
+password=secret
+
+Pseudo Source:
+
+public Authentication
+attemptAuthentication(
+      HttpServletRequest request){
+
+     String username =
+            request.getParameter("username");
+
+     String password =
+            request.getParameter("password");
+
+     UsernamePasswordAuthenticationToken token
+          = new UsernamePasswordAuthenticationToken(
+                 username,
+                 password);
+
+     return authenticationManager
+                  .authenticate(token);
+}
+
+Responsibilities:
+
+✅ Extract Username
+✅ Extract Password
+✅ Create Authentication Object
+
+Does NOT:
+
+❌ Verify Password
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟨 STEP 6 : AUTHENTICATION OBJECT
+
+Interface:
+
+Authentication
+
+Implementation:
+
+UsernamePasswordAuthenticationToken
+
+Think:
+
+Login Request Container
+
+Before Authentication:
+
+Authentication token =
+new UsernamePasswordAuthenticationToken(
+     "admin",
+     "secret"
+);
+
+Contains:
+
+┌─────────────────────────────┐
+│ Principal   = admin         │
+│ Credentials = secret        │
+│ Authorities = empty         │
+│ authenticated = false       │
+└─────────────────────────────┘
+
+After Authentication:
+
+┌─────────────────────────────┐
+│ Principal   = admin         │
+│ Credentials = null          │
+│ Authorities = ROLE_ADMIN    │
+│ authenticated = true        │
+└─────────────────────────────┘
+
+Think:
+
+Passport Of Current User
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟧 STEP 7 : AUTHENTICATIONMANAGER
+
+Interface:
+
+AuthenticationManager
+
+Method:
+
+Authentication authenticate(
+          Authentication auth);
+
+Implementation:
+
+ProviderManager
+
+Think:
+
+Manager
+
+Source:
+
+public interface
+AuthenticationManager {
+
+      Authentication authenticate(
+               Authentication auth);
+}
+
+Responsibilities:
+
+✅ Accept Authentication Request
+✅ Find Correct Provider
+
+Does NOT:
+
+❌ Query Database
+❌ Compare Password
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟧 STEP 8 : PROVIDERMANAGER
+
+Class:
+
+ProviderManager
+
+Implementation:
+
+AuthenticationManager
+
+Source:
+
+public class ProviderManager
+          implements AuthenticationManager {
+
+       List<AuthenticationProvider>
+                      providers;
+}
+
+Visual:
+
+┌────────────────┐
+│ ProviderManager│
+└────────────────┘
+          │
+          ├────► DaoAuthenticationProvider
+          │
+          ├────► JwtAuthenticationProvider
+          │
+          ├────► OAuth2AuthenticationProvider
+          │
+          └────► LdapAuthenticationProvider
+
+Pseudo Code:
+
+for(provider : providers){
+
+      if(provider.supports(authentication)){
+
+            return provider.authenticate(
+                         authentication);
+      }
+}
+
+Think:
+
+Dispatch Center
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟥 STEP 9 : AUTHENTICATIONPROVIDER
+
+Interface:
+
+AuthenticationProvider
+
+Most Common Implementation:
+
+DaoAuthenticationProvider
+
+Method:
+
+Authentication authenticate(
+       Authentication auth);
+
+Pseudo Source:
+
+public Authentication authenticate(
+                 Authentication auth){
+
+     UserDetails user =
+           userDetailsService
+             .loadUserByUsername(
+                    auth.getName());
+
+     passwordEncoder.matches(
+             auth.getCredentials(),
+             user.getPassword());
+
+     return authenticatedObject;
+}
+
+Responsibilities:
+
+✅ Real Login Verification
+✅ Calls UserDetailsService
+✅ Calls PasswordEncoder
+
+This is:
+
+🎯 THE ACTUAL LOGIN ENGINE
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟥 STEP 10 : USERDETAILSSERVICE
+
+Interface:
+
+UserDetailsService
+
+Method:
+
+UserDetails loadUserByUsername(
+                  String username);
+
+Custom Implementation:
+
+@Service
+public class MyUserDetailsService
+      implements UserDetailsService {
+
+    @Override
+    public UserDetails
+    loadUserByUsername(String username){
+
+       User user =
+             repository
+               .findByUsername(username);
+
+       return User.builder()
+                 .username(user.getUsername())
+                 .password(user.getPassword())
+                 .roles("ADMIN")
+                 .build();
+    }
+}
+
+Flow:
+
+DaoAuthenticationProvider
+            │
+            ▼
+UserDetailsService
+            │
+            ▼
+Repository
+            │
+            ▼
+Database
+
+Responsibilities:
+
+✅ Load User
+✅ Load Password
+✅ Load Roles
+
+Does NOT:
+
+❌ Compare Password
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟥 STEP 11 : USERDETAILS
+
+Interface:
+
+UserDetails
+
+Think:
+
+User Loaded From Database
+
+Contains:
+
+┌───────────────────────────┐
+│ username                  │
+│ password                  │
+│ authorities               │
+│ accountNonExpired         │
+│ accountNonLocked          │
+│ credentialsNonExpired     │
+│ enabled                   │
+└───────────────────────────┘
+
+Spring's Default Implementation:
+
+org.springframework.security.core.userdetails.User
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟪 STEP 12 : PASSWORDENCODER
+
+Interface:
+
+PasswordEncoder
+
+Methods:
+
+String encode(CharSequence rawPassword)
+
+boolean matches(
+       CharSequence rawPassword,
+       String encodedPassword)
+
+Common Implementations:
+
+✅ BCryptPasswordEncoder
+✅ Argon2PasswordEncoder
+✅ SCryptPasswordEncoder
+✅ PBKDF2PasswordEncoder
+
+Most Popular:
+
+BCryptPasswordEncoder
+
+Example:
+
+PasswordEncoder encoder =
+      new BCryptPasswordEncoder();
+
+String hash =
+      encoder.encode("admin123");
+
+Flow:
+
+Entered Password
+        │
+        ▼
+PasswordEncoder
+        │
+        ▼
+Hash Generated
+        │
+        ▼
+Compare With DB Hash
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟪 STEP 13 : AUTHENTICATION SUCCESS
+
+When Password Matches:
+
+Spring Creates:
+
+UsernamePasswordAuthenticationToken
+
+New State:
+
+┌────────────────────────────────┐
+│ username = admin               │
+│ authorities = ROLE_ADMIN       │
+│ authenticated = true           │
+└────────────────────────────────┘
+
+This object now represents:
+
+✅ Logged-In User
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟩 STEP 14 : SECURITYCONTEXTHOLDER
+
+Class:
+
+SecurityContextHolder
+
+Purpose:
+
+Store Logged-In User
+
+Internal Structure:
+
+SecurityContextHolder
+          │
+          ▼
+SecurityContext
+          │
+          ▼
+Authentication
+
+Real Internals:
+
+ThreadLocal<SecurityContext>
+
+Visual:
+
+Request Thread
+       │
+       ▼
+ThreadLocal
+       │
+       ▼
+SecurityContext
+       │
+       ▼
+Authentication
+
+Storage:
+
+SecurityContextHolder
+   .getContext()
+   .setAuthentication(auth);
+
+Reading User:
+
+Authentication auth =
+SecurityContextHolder
+      .getContext()
+      .getAuthentication();
+
+Think:
+
+🧠 Memory Of Current User
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟩 STEP 15 : AUTHORIZATIONFILTER
+
+Class:
+
+AuthorizationFilter
+
+Purpose:
+
+User Is Authenticated.
+
+Can He Access Resource?
+
+Flow:
+
+Authentication Exists
+         │
+         ▼
+AuthorizationFilter
+         │
+         ▼
+AuthorizationManager
+         │
+         ▼
+Decision
+
+Pseudo:
+
+authorizationManager.check(
+        authentication,
+        request);
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟩 STEP 16 : AUTHORIZATIONMANAGER
+
+Interface:
+
+AuthorizationManager<T>
+
+Method:
+
+AuthorizationDecision check(
+      Supplier<Authentication>,
+      T object);
+
+Example:
+
+Request:
+
+/admin/delete
+
+Current User:
+
+ROLE_USER
+
+Rule:
+
+.hasRole("ADMIN")
+
+Process:
+
+AuthorizationManager
+          │
+          ▼
+Role Comparison
+          │
+          ▼
+Access Denied
+
+Result:
+
+403 Forbidden
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟨 STEP 17 : GRANTEDAUTHORITY
+
+Interface:
+
+GrantedAuthority
+
+Implementation:
+
+SimpleGrantedAuthority
+
+Example:
+
+new SimpleGrantedAuthority(
+          "ROLE_ADMIN");
+
+Authentication Object:
+
+Authentication
+      │
+      ▼
+Collection<GrantedAuthority>
+      │
+      ├── ROLE_ADMIN
+      ├── ROLE_USER
+      ├── CREATE_USER
+      ├── DELETE_USER
+      └── UPDATE_USER
+
+Think:
+
+Permission Container
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🏆 COMPLETE EXECUTION SEQUENCE (MEMORIZE THIS)
+
+HTTP Request
+   │
+   ▼
+DelegatingFilterProxy
+   │
+   ▼
+FilterChainProxy
+   │
+   ▼
+SecurityFilterChain
+   │
+   ▼
+UsernamePasswordAuthenticationFilter
+   │
+   ▼
+UsernamePasswordAuthenticationToken
+   │
+   ▼
+AuthenticationManager
+   │
+   ▼
+ProviderManager
+   │
+   ▼
+DaoAuthenticationProvider
+   │
+   ▼
+UserDetailsService
+   │
+   ▼
+Repository
+   │
+   ▼
+Database
+   │
+   ▼
+UserDetails
+   │
+   ▼
+PasswordEncoder.matches()
+   │
+   ▼
+Authenticated Token Created
+   │
+   ▼
+SecurityContextHolder
+   │
+   ▼
+AuthorizationFilter
+   │
+   ▼
+AuthorizationManager
+   │
+   ▼
+GrantedAuthority Check
+   │
+   ▼
+Controller
+   │
+   ▼
+Service
+   │
+   ▼
+Repository
+   │
+   ▼
+Database
+   │
+   ▼
+Response
+
+🎯 ULTIMATE MEMORY FORMULA
+
+DelegatingFilterProxy = Tomcat ↔ Spring Bridge
+FilterChainProxy = Security Director
+SecurityFilterChain = List Of Filters
+UsernamePasswordAuthenticationFilter = Login Request Reader
+AuthenticationToken = Login Data Container
+AuthenticationManager(ProviderManager) = Coordinator
+AuthenticationProvider(DaoAuthenticationProvider) = Login Engine
+UserDetailsService = User Loader
+UserDetails = User Information Object
+PasswordEncoder = Password Verifier
+SecurityContextHolder = Logged-In User Storage
+AuthorizationFilter = Access Checker
+AuthorizationManager = Permission Engine
+GrantedAuthority = Permission Model
+
+If you can reproduce the final execution sequence above from memory, you've understood the core of Spring Security better than most developers who use it daily.
+
+===========================================
+
+
+com.securityclone
+
+├── Main
+├── ServletContainer
+├── DelegatingFilterProxy
+├── FilterChainProxy
+├── SecurityFilterChain
+├── Filter
+│
+├── authentication
+│   ├── Authentication
+│   ├── UsernamePasswordAuthenticationToken
+│   ├── AuthenticationManager
+│   ├── ProviderManager
+│   ├── AuthenticationProvider
+│   ├── DaoAuthenticationProvider
+│   ├── UserDetails
+│   ├── UserDetailsService
+│   ├── PasswordEncoder
+│   └── BCryptPasswordEncoder
+│
+├── authorization
+│   ├── GrantedAuthority
+│   ├── AuthorizationManager
+│   └── AuthorizationFilter
+│
+├── context
+│   ├── SecurityContext
+│   └── SecurityContextHolder
+│
+└── controller
+    └── EmployeeController
+	
+	==============================
+	
+	Request
+ ↓
+DelegatingFilterProxy
+ ↓
+FilterChainProxy
+ ↓
+UsernamePasswordAuthenticationFilter
+ ↓
+ProviderManager
+ ↓
+DaoAuthenticationProvider
+ ↓
+UserDetailsService
+ ↓
+PasswordEncoder
+ ↓
+SecurityContextHolder
+ ↓
+AuthorizationManager
+ ↓
+Controller

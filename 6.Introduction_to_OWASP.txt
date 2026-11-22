@@ -1,0 +1,544 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║       🎬 CYBER SECURITY MASTER COURSE - PART 6 : WHY OWASP EXISTS 🎬                                            ║
+║         APPLICATION SECURITY • WEB SECURITY • OWASP • SPRING BOOT SECURITY                                      ║
+║               (WHY THE INDUSTRY NARROWED DOWN TO APPLICATION SECURITY)                                          ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 THE BIG QUESTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+By Now We Know:
+
+✅ Physical Security
+✅ Network Security
+✅ Infrastructure Security
+✅ Cloud Security
+✅ Platform Security
+✅ Browser Security
+✅ Application Security
+✅ API Security
+✅ Human Security
+
+Question:
+
+Why Did OWASP Focus On
+Application Security Instead Of Everything?
+
+Answer:
+
+Because The Internet Changed.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 1 : THE EVOLUTION OF COMPUTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1980s
+
+╔══════════════╗
+║ Single PC    ║
+╚══════════════╝
+
+Main Concern:
+
+✅ Physical Security
+
+If Somebody Stole Computer
+Game Over
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1990s
+
+╔══════════╗→╔══════════╗
+║ Computer ║ ║ Network  ║
+╚══════════╝ ╚══════════╝
+
+Main Concern:
+
+✅ Network Security
+
+Questions:
+
+Can Somebody Read Traffic?
+Can Somebody Attack Network?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2000s
+
+Internet Boom
+
+╔════════════╗→╔════════════╗→╔════════════╗
+║ Browser    ║ ║ Web App    ║ ║ Database   ║
+╚════════════╝ ╚════════════╝ ╚════════════╝
+
+New Problem:
+
+Applications Become Public.
+
+Now Anyone On Earth Can Access Them.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 2 : THE INTERNET CHANGED EVERYTHING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Old World
+
+Attacker Needed:
+
+✅ Physical Access
+✅ Network Access
+
+Modern World
+
+Attacker Needs:
+
+✅ Browser
+✅ Internet Connection
+
+That's It.
+
+Attack Surface Exploded.
+
+Before:
+
+100 Employees
+
+Could Access System.
+
+After Internet:
+
+8 Billion Potential Users.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 3 : WEB APPLICATIONS BECAME THE NEW BATTLEFIELD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Modern Architecture
+
+User
+ │
+ ▼
+Browser
+ │
+ ▼
+Internet
+ │
+ ▼
+Application
+ │
+ ▼
+Database
+
+Question:
+
+Where Is The Most Exposed Layer?
+
+Answer:
+
+Application Layer
+
+Because It Is Directly Exposed
+To The Entire Internet.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 4 : WHY NETWORK SECURITY ALONE FAILED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Old Thinking:
+
+╔══════════╗→╔══════════╗→╔══════════╗
+║ Firewall ║ ║ App      ║ ║ Database ║
+╚══════════╝ ╚══════════╝ ╚══════════╝
+
+"We Have Firewall.
+We Are Safe."
+
+Wrong.
+
+Attacker Simply Uses:
+
+✅ Login Screen
+✅ Search Box
+✅ Contact Form
+✅ File Upload
+✅ REST API
+
+No Need To Break Firewall.
+
+Application Itself Became Entry Point.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 5 : APPLICATIONS INTRODUCED NEW ATTACK TYPES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Network Security Could Handle:
+
+✅ IP Traffic
+✅ Ports
+✅ Protocols
+
+Network Security Could NOT Understand:
+
+❌ SQL Queries
+❌ Business Logic
+❌ Banking Rules
+❌ Application Workflows
+
+Example:
+
+Firewall Sees:
+
+HTTP Request
+
+Application Sees:
+
+Delete Customer Account
+
+Huge Difference.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 6 : THE BIRTH OF APPLICATION SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Industry Realization:
+
+"We Secured Networks.
+But Applications Keep Getting Breached."
+
+New Security Category Created:
+
+╔══════════════════════════════╗
+║ APPLICATION SECURITY         ║
+╚══════════════════════════════╝
+
+Focus:
+
+✅ Source Code
+✅ Business Logic
+✅ Authentication
+✅ Authorization
+✅ User Input
+✅ Session Management
+✅ API Security
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 7 : WHAT IS AN APPLICATION VULNERABILITY?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Definition:
+
+A flaw in application design,
+implementation or configuration that can be abused.
+
+Examples:
+
+╔══════════════════════════════════════════════╗
+║ Missing Authorization                        ║
+║ Unsafe Input Processing                      ║
+║ Weak Session Handling                        ║
+║ Poor Authentication                          ║
+║ Sensitive Data Exposure                      ║
+║ Dangerous Business Logic                     ║
+╚══════════════════════════════════════════════╝
+
+Notice:
+
+These Are NOT Network Problems.
+
+These Are Application Problems.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 8 : OWASP IS CREATED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+Web Applications Are Getting Breached.
+
+Developers Need Guidance.
+
+Result:
+
+╔══════════════════════════════════╗
+║ OWASP                            ║
+║ Open Worldwide Application       ║
+║ Security Project                 ║
+╚══════════════════════════════════╝
+
+Mission:
+
+Improve Application Security.
+
+Not Network Security.
+
+Not Cloud Security.
+
+Not Physical Security.
+
+Application Security.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 9 : WHAT OWASP ACTUALLY DOES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Many Developers Think:
+
+OWASP = Top 10
+
+Wrong.
+
+OWASP Is An Entire Ecosystem.
+
+Provides:
+
+✅ OWASP Top 10
+✅ API Security Top 10
+✅ Secure Coding Guides
+✅ Security Testing Guides
+✅ Threat Modeling Guides
+✅ Developer Education
+
+OWASP Top 10 Is Just One Deliverable.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 10 : OWASP TOP 10 IS NOT "TOP 10 ATTACKS"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Important Concept.
+
+Many People Think:
+
+OWASP Top 10
+       ↓
+Top 10 Attacks
+
+WRONG
+
+Actual Meaning:
+
+OWASP Top 10
+       ↓
+Top 10 Application Security Risks
+
+Difference:
+
+Attack
+      ↓
+What Attacker Does
+
+Risk
+      ↓
+Weakness That Allows Attack
+
+OWASP Focuses On Risks.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 11 : WHY BROWSERS, APIS AND APPLICATIONS BECAME MAIN TARGETS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Today:
+
+User
+ │
+ ▼
+Browser
+ │
+ ▼
+API
+ │
+ ▼
+Application
+ │
+ ▼
+Database
+
+Every Request Travels Through Them.
+
+Therefore Attackers Focus On:
+
+╔══════════════════════════════════╗
+║ Browser Security                 ║
+║ API Security                     ║
+║ Application Security             ║
+╚══════════════════════════════════╝
+
+Because These Layers Directly Process User Input.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 12 : WHERE SPRING BOOT FITS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Complete Security Universe
+
+╔══════════╦══════════╦══════════╦══════════╦══════════╗
+║ Physical ║ Network  ║ Infra    ║ Cloud    ║ Platform ║
+╚══════════╩══════════╩══════════╩══════════╩══════════╝
+
+╔══════════╦══════════╦══════════╦══════════╗
+║ Browser  ║ App      ║ API      ║ Human    ║
+╚══════════╩══════════╩══════════╩══════════╝
+
+Spring Boot Lives Mainly In:
+
+✅ Application Security
+✅ API Security
+
+Sometimes:
+
+✅ Browser Security
+
+Examples:
+
+Spring Security
+JWT
+OAuth2
+CORS
+CSRF
+Authorization
+Authentication
+
+All Live Here.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 13 : WHY SPRING DEVELOPERS MUST CARE ABOUT OWASP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Because Most Spring Vulnerabilities Fall Into OWASP Categories.
+
+Example:
+
+Missing @PreAuthorize
+      ↓
+Broken Access Control
+
+Unsafe Query Construction
+      ↓
+Injection
+
+Exposed Actuator
+      ↓
+Security Misconfiguration
+
+Weak Authentication
+      ↓
+Authentication Failure
+
+Therefore:
+
+Spring Security
+      ↓
+Implementation
+
+OWASP
+      ↓
+Conceptual Security Model
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 14 : THE ZOOM-IN EFFECT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PART 1-5
+
+Showed Entire Battlefield
+
+╔══════════════════════════════╗
+║ CYBER SECURITY              ║
+╚══════════════════════════════╝
+
+NOW
+
+We Zoom In
+
+╔══════════════════════════════╗
+║ APPLICATION SECURITY        ║
+╚══════════════════════════════╝
+
+THEN
+
+We Zoom Again
+
+╔══════════════════════════════╗
+║ OWASP TOP 10                ║
+╚══════════════════════════════╝
+
+THEN
+
+We Zoom Again
+
+╔══════════════════════════════╗
+║ SPRING SECURITY             ║
+╚══════════════════════════════╝
+
+This Is The Learning Funnel.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 FINAL SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Cyber Security
+      ↓
+Many Security Domains
+
+Most Internet Applications Are Attacked Through
+
+Browser
+ ↓
+API
+ ↓
+Application
+
+Industry Created
+
+Application Security
+      ↓
+To Protect Web Applications
+
+OWASP Created
+      ↓
+To Improve Application Security
+
+OWASP Top 10
+      ↓
+Top 10 Application Risks
+
+Spring Boot Lives Mainly In
+
+✅ Browser Security
+✅ Application Security
+✅ API Security
+
+Therefore Every Serious Spring Developer
+Must Understand OWASP.
+
+══════════════════════════════════════════════════════════════════════════════
+🚀 PART 7 (NEXT TOPIC)
+══════════════════════════════════════════════════════════════════════════════
+
+🎬 OWASP TOP 10 DEEP DIVE
+
+Before Learning Individual Risks We Will Learn:
+
+✅ How HTTP Requests Travel
+✅ Browser → API → Controller → Service → Database
+✅ Where Trust Is Broken
+✅ Where User Input Enters
+✅ Where Validation Must Exist
+✅ Where Authentication Happens
+✅ Where Authorization Happens
+
+Then We Will Study:
+
+✅ Every OWASP Top 10 Risk
+✅ Why It Happens
+✅ Which Layer Is Responsible
+✅ How Spring Boot Applications Become Vulnerable
+✅ How Spring Security Prevents Them
+
+Only After That Will We Start Individual Risks Like:
+
+🥇 Broken Access Control
+🥈 Injection
+🥉 Cryptographic Failures
+...

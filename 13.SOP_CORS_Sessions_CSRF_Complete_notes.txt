@@ -1,0 +1,870 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║      🛡️ BROWSER SECURITY MASTER NOTES : CSRF + XSS + CORS COMPLETE GUIDE 🛡️                                   ║
+║          (ARCHITECT VIEW • SPRING SECURITY VIEW • END-TO-END UNDERSTANDING)                                     ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 FIRST UNDERSTAND THE BROWSER SECURITY MODEL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Developers Learn:
+
+✅ CSRF
+✅ XSS
+✅ CORS
+
+Separately.
+
+Big Mistake.
+
+These 3 concepts are tightly connected.
+
+Browser Security Model:
+
+╔════════════╗→╔════════════╗→╔════════════╗→╔════════════╗
+║ Browser    ║ ║ Cookies    ║ ║ SOP        ║ ║ Security   ║
+║            ║ ║ Sessions   ║ ║ (Origin)   ║ ║ Controls   ║
+╚════════════╝ ╚════════════╝ ╚════════════╝ ╚════════════╝
+
+Security Controls:
+
+✅ CSRF
+✅ XSS Protection
+✅ CORS
+✅ CSP
+✅ Security Headers
+
+All exist because browser is a trust boundary.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 1 : HOW SESSION LOGIN WORKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+User Logs Into:
+
+bank.com
+
+      │
+      ▼
+
+Authentication Success
+
+      │
+      ▼
+
+Server Creates Session
+
+SESSION=ABC123
+
+      │
+      ▼
+
+Browser Stores Cookie
+
+SESSION=ABC123
+
+Future Requests:
+
+GET /accounts
+
+POST /transfer
+
+GET /profile
+
+Browser Automatically Sends:
+
+Cookie:
+SESSION=ABC123
+
+Server Sees:
+
+SESSION=ABC123
+      │
+      ▼
+Authenticated User
+
+Important:
+
+Browser Sends Session Automatically.
+
+User does not manually add it.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 2 : SAME ORIGIN POLICY (SOP)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The Foundation Of Browser Security.
+
+Question:
+
+Can One Website Read Another Website's Data?
+
+Browser Says:
+
+❌ NO
+
+Example:
+
+bank.com
+
+and
+
+evil.com
+
+Browser Isolation:
+
+╔══════════════╗
+║ bank.com     ║
+╚══════╤═══════╝
+       │
+  Same Origin
+   Boundary
+       │
+╔══════▼═══════╗
+║ Browser      ║
+╚══════╤═══════╝
+       │
+╔══════▼═══════╗
+║ evil.com     ║
+╚══════════════╝
+
+Result:
+
+evil.com CANNOT read:
+
+✅ bank.com HTML
+✅ bank.com Forms
+✅ bank.com DOM
+✅ bank.com Hidden Fields
+✅ bank.com Internal Data
+
+This security rule is called:
+
+🛡️ Same Origin Policy
+
+Without SOP:
+
+Internet Would Be Chaos.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 3 : WHAT IS CSRF?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CSRF = Cross Site Request Forgery
+
+🎯 Target:
+
+User Intention
+
+🎯 Core Problem:
+
+Application trusts browser request because valid session exists.
+
+Question:
+
+Can browser send authenticated requests without user intention?
+
+If Yes:
+
+CSRF Risk Exists.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 4 : REAL CSRF STORY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+User Logs Into:
+
+bank.com
+
+Browser Contains:
+
+SESSION=ABC123
+
+User Opens:
+
+evil.com
+
+Developer Assumption:
+
+Attacker Must Know:
+
+SESSION=ABC123
+
+Wrong.
+
+Attacker Never Needs To Know Session.
+
+Browser Already Knows Session.
+
+Browser Automatically Sends:
+
+SESSION=ABC123
+
+to bank.com
+
+because request targets:
+
+bank.com
+
+Bank Sees:
+
+Valid Session
+
+and may trust request.
+
+Notice:
+
+❌ Session Was Not Stolen
+❌ Session Was Not Read
+❌ Session Was Not Hacked
+
+Browser Sent It Automatically.
+
+This Is Pure CSRF.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 5 : WHY SESSION ID CANNOT SOLVE CSRF
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Common Doubt:
+
+"Session ID Is Secret."
+
+So
+
+"CSRF Should Not Work."
+
+Wrong.
+
+Attacker Does Not Need To Know:
+
+SESSION=ABC123
+
+Browser Sends It Automatically.
+
+Therefore:
+
+Session Cookie
+      ≠
+Proof Of User Intention
+
+This Is Why CSRF Exists.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 6 : WHAT IS A CSRF TOKEN?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Server Creates:
+
+SESSION=ABC123
+
+AND
+
+CSRF=XYZ999
+
+Application Requires:
+
+SESSION Cookie
+       +
+CSRF Token
+
+Request:
+
+SESSION=ABC123
+CSRF=XYZ999
+
+Validation:
+
+╔════════════════════╗
+║ Session Valid ?    ║
+╚═══════╤════════════╝
+        │ YES
+        ▼
+╔════════════════════╗
+║ Token Valid ?      ║
+╚═══════╤════════════╝
+        │ YES
+        ▼
+ Process Request
+
+Now Server Verifies:
+
+✅ Identity
+✅ Intent
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 7 : WHY CSRF TOKEN WORKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+User Visits:
+
+evil.com
+
+Browser Automatically Sends:
+
+SESSION=ABC123
+
+BUT DOES NOT AUTOMATICALLY SEND:
+
+CSRF=XYZ999
+
+Request Looks Like:
+
+SESSION=ABC123
+NO TOKEN
+
+Server Checks:
+
+✅ Session Exists
+
+❌ Token Missing
+
+Request Rejected
+
+Important:
+
+Session Cookie Proves:
+
+"WHO ARE YOU?"
+
+CSRF Token Proves:
+
+"DID YOU INTENTIONALLY SUBMIT THIS REQUEST?"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 8 : WHY evil.com CANNOT READ CSRF TOKEN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Answer:
+
+Same Origin Policy.
+
+evil.com Can:
+
+✅ Trigger Requests
+
+BUT
+
+Cannot:
+
+❌ Read bank.com Forms
+❌ Read bank.com Pages
+❌ Read bank.com Hidden Fields
+❌ Read bank.com CSRF Tokens
+
+This Is The Fundamental Assumption
+Behind CSRF Protection.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 9 : WHAT IS XSS?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+XSS = Cross Site Scripting
+
+🎯 Target:
+
+Browser
+
+🎯 Core Problem:
+
+Browser Treats Untrusted Data
+As Executable Content.
+
+Question:
+
+Can browser execute something
+that should have been treated as ordinary data?
+
+If Yes:
+
+XSS Risk Exists.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 10 : REAL XSS STORY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Social Media Application
+
+User Posts Comment
+
+      │
+      ▼
+
+Comment Stored
+
+      │
+      ▼
+
+Comment Displayed
+
+      │
+      ▼
+
+Browser Renders Content
+
+Question:
+
+Can browser interpret content
+as executable instead of harmless text?
+
+If Yes:
+
+XSS Risk Exists.
+
+Who Is Attacked?
+
+❌ Database
+
+❌ Server
+
+✅ User Browser
+
+Impact:
+
+✅ Read Page Data
+✅ Manipulate Browser
+✅ Steal Information
+✅ Impersonate User
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 11 : XSS VS CSRF
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This Is The Most Important Relationship.
+
+CSRF Attacker:
+
+✅ Can Make Browser Send Requests
+
+❌ Cannot Read Application Pages
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+XSS Attacker:
+
+✅ Can Execute Code
+✅ Can Read Page Data
+✅ Can Access Browser Context
+
+Much Stronger Capability.
+
+Think:
+
+CSRF Attacker
+
+Outside House
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+XSS Attacker
+
+Inside House
+
+Huge Difference.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 12 : CAN XSS DEFEAT CSRF?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Suppose:
+
+SESSION=ABC123
+
+CSRF=XYZ999
+
+Looks Secure.
+
+Now XSS Exists.
+
+Attacker Code Runs Inside:
+
+bank.com
+
+Browser Thinks:
+
+✅ This Code Belongs To bank.com
+
+Now Attacker May Access:
+
+✅ DOM
+✅ Forms
+✅ Page Data
+✅ User Context
+✅ Possibly Visible CSRF Token
+
+Now CSRF Protection Becomes Less Useful.
+
+Why?
+
+Not Because CSRF Failed.
+
+But Because:
+
+Attacker Has Higher Privileges.
+
+XSS Breaks Assumptions
+That CSRF Relies On.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 13 : WHAT IS CORS?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚨 Most Misunderstood Topic
+
+Important:
+
+CORS Is NOT An Attack.
+
+CORS = Cross Origin Resource Sharing
+
+It Is A Browser Security Mechanism.
+
+Purpose:
+
+Control Which Websites
+Can Access Other Websites.
+
+Question:
+
+Can website A access website B?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 14 : REAL CORS EXAMPLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Frontend:
+
+https://app.company.com
+
+Backend:
+
+https://api.company.com
+
+Browser Wants To Call:
+
+api.company.com
+
+Browser Asks:
+
+"Is This Allowed?"
+
+Server Responds:
+
+Access-Control-Allow-Origin
+
+Browser Decides:
+
+✅ Allow
+or
+❌ Block
+
+Important:
+
+Spring Boot Does Not Enforce CORS.
+
+Browser Does.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 15 : WHY CORS EXISTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Without CORS:
+
+Any Website Could Read Data
+From Any Website.
+
+Example:
+
+evil.com
+
+could read:
+
+bank.com account information
+
+Browser Prevents This Through:
+
+✅ Same Origin Policy
+
+Problem:
+
+Legitimate Applications Need Cross-Origin Access.
+
+Example:
+
+Frontend:
+app.company.com
+
+Backend:
+api.company.com
+
+Different Origins.
+
+Need Controlled Access.
+
+Solution:
+
+✅ CORS
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 16 : CORS MISCONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+Application Trusts Too Many Origins.
+
+Example:
+
+Application Says:
+
+"Every Origin Allowed"
+
+Browser Security Boundary Becomes Weak.
+
+Question:
+
+Can Untrusted Websites Read Responses?
+
+If Configuration Too Permissive:
+
+Risk Increases.
+
+Impact:
+
+✅ Data Exposure
+✅ Trust Boundary Expansion
+
+CORS Is About:
+
+WHO MAY READ RESPONSES
+
+NOT
+
+WHO MAY SEND REQUESTS
+
+Very Important Difference.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 17 : CSRF VS CORS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Developers Mix Them Up.
+
+╔══════════════════════╦══════════════════════════════╗
+║ CSRF                 ║ CORS                        ║
+╠══════════════════════╬══════════════════════════════╣
+║ Protects Intent      ║ Protects Cross-Origin Data  ║
+║ Uses Token           ║ Uses Browser Policy         ║
+║ Session Oriented     ║ Origin Oriented             ║
+║ Stops Forged Actions ║ Controls Response Access    ║
+╚══════════════════════╩══════════════════════════════╝
+
+Question:
+
+Can Browser Send Request?
+
+CSRF Doesn't Care.
+
+CORS Doesn't Stop Request Sending.
+
+Question:
+
+Can Browser Read Response?
+
+CORS Cares.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 18 : SECURITY LEVEL HIERARCHY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+LEVEL 1
+
+CORS Abuse
+
+Browser Cross-Origin Problems
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+LEVEL 2
+
+CSRF
+
+Forged Requests
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+LEVEL 3
+
+Session Theft
+
+Identity Problems
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+LEVEL 4
+
+XSS
+
+Browser Context Compromise
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+LEVEL 5
+
+Full Browser Compromise
+
+Game Mostly Over
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 19 : WHY WE NEED ALL THREE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Can CORS Alone Secure Application?
+
+❌ No
+
+Can CSRF Alone Secure Application?
+
+❌ No
+
+Can XSS Protection Alone Secure Application?
+
+❌ No
+
+Need:
+
+✅ Authentication
+✅ Authorization
+✅ Session Security
+✅ CORS
+✅ CSRF Protection
+✅ XSS Protection
+✅ CSP
+✅ HTTPS
+✅ Monitoring
+
+Every Layer Solves Different Problem.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 20 : COMPLETE RELATIONSHIP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Same Origin Policy
+         │
+         ▼
+     Creates Isolation
+
+         │
+         ▼
+
+      CORS
+         │
+         ▼
+Controls Cross-Origin Access
+
+         │
+         ▼
+
+      CSRF
+         │
+         ▼
+Protects Request Intent
+
+         │
+         ▼
+
+      XSS
+         │
+         ▼
+Threatens Browser Trust Model
+
+         │
+         ▼
+
+       CSP
+         │
+         ▼
+Helps Reduce XSS Impact
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 INTERVIEW SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟦 SESSION COOKIE
+
+Answers:
+
+✅ Who Are You?
+
+Browser Sends Automatically.
+
+────────────────────────────────────
+
+🟩 CSRF TOKEN
+
+Answers:
+
+✅ Did The User Intentionally Generate This Request?
+
+Works Because:
+
+✅ Browser Sends Session Automatically
+
+BUT
+
+❌ Browser Does Not Automatically Provide CSRF Token
+
+AND
+
+❌ Cross-Origin Sites Cannot Read Token Due To SOP
+
+────────────────────────────────────
+
+🟨 CORS
+
+Answers:
+
+✅ Which Origins May Read Responses?
+
+CORS Is Browser Security.
+
+Not Server Security.
+
+────────────────────────────────────
+
+🟥 XSS
+
+Answers:
+
+❌ What Happens If Untrusted Content Executes?
+
+XSS Runs Inside Trusted Browser Context.
+
+Much Stronger Than CSRF.
+
+May Defeat Assumptions That CSRF Relies On.
+
+────────────────────────────────────
+
+🏆 GOLDEN LESSON
+
+There Is No Magic Security Feature.
+
+Security = Layers.
+
+CORS Protects:
+✅ Cross-Origin Access
+
+CSRF Protects:
+✅ Request Intent
+
+XSS Protection Protects:
+✅ Browser Trust
+
+Authentication Protects:
+✅ Identity
+
+Authorization Protects:
+✅ Permissions
+
+All Of Them Together Create Secure Applications.

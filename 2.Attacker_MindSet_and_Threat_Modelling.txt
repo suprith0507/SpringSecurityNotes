@@ -1,0 +1,503 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║        🎬 CYBER SECURITY MASTER COURSE - PART 2 : HOW ATTACKERS THINK 🎬                                        ║
+║            THREATS • ATTACKERS • ATTACK SURFACES • THREAT MODELING                                               ║
+║                   (FROM DEVELOPER MINDSET TO ATTACKER MINDSET)                                                   ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 1 : THE BIG SECURITY REALIZATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Developers Think:
+"How do I make this feature work?"
+
+Security Engineers Think:
+"How can this feature be abused?"
+
+Architects Think:
+"How can somebody move from Internet to Database?"
+
+Hackers Think:
+"Where is the weakest link?"
+
+Same System → Different Viewpoints
+
+╔══════════════╦══════════════════════════════════════════════════════╗
+║ PERSON       ║ PRIMARY QUESTION                                   ║
+╠══════════════╬══════════════════════════════════════════════════════╣
+║ Developer    ║ How do I build it?                                 ║
+║ Tester       ║ Does it work?                                      ║
+║ Security Eng ║ How can it fail securely?                          ║
+║ Architect    ║ How can an attacker move through the system?       ║
+║ Attacker     ║ What is the weakest link?                          ║
+╚══════════════╩══════════════════════════════════════════════════════╝
+
+Security starts when you stop thinking like a developer and begin thinking like an attacker.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 2 : WHAT IS A THREAT?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Definition:
+
+🛡️ A threat is anything capable of causing harm to an asset.
+
+Formula:
+
+┌─────────────┐ + ┌─────────────┐ = ┌─────────────┐
+│ Asset       │   │ Threat      │   │ Potential   │
+│ Valuable    │   │ Danger      │   │ Damage      │
+└─────────────┘   └─────────────┘   └─────────────┘
+
+Examples:
+
+╔══════════════════════╦══════════════════════╗
+║ ASSET                ║ THREAT               ║
+╠══════════════════════╬══════════════════════╣
+║ Customer Data        ║ Theft                ║
+║ Database             ║ Ransomware           ║
+║ API                  ║ DDoS                ║
+║ User Accounts        ║ Password Theft       ║
+║ Source Code          ║ Insider Leak         ║
+║ Money                ║ Fraud                ║
+╚══════════════════════╩══════════════════════╝
+
+IMPORTANT:
+
+Threat ≠ Attack
+
+Threat = Possibility
+Attack = Actual Action
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 3 : WHAT IS A VULNERABILITY?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Definition:
+
+🛡️ Vulnerability = Weakness
+
+House Example:
+
+┌──────────────────────┐
+│ Front Door Unlocked  │
+└──────────────────────┘
+
+Vulnerability.
+
+Application Example:
+
+@GetMapping("/admin/users")
+public List<User> getUsers(){
+    return userService.getUsers();
+}
+
+No Authorization
+
+Vulnerability.
+
+Formula:
+
+┌──────────┐ + ┌──────────────────┐ = ┌────────────────────┐
+│ Threat   │   │ Vulnerability    │   │ Exploitable Risk   │
+└──────────┘   └──────────────────┘   └────────────────────┘
+
+Threat without vulnerability:
+No practical attack.
+
+Vulnerability without threat:
+No immediate danger.
+
+Together:
+Potential incident.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 4 : WHAT IS RISK?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Definition:
+
+Risk measures:
+
+"What is the probability and impact of damage?"
+
+Formula:
+
+Risk = Likelihood × Impact
+
+Examples:
+
+╔═══════════════════════════╦═══════════╦═══════════╦══════════╗
+║ Scenario                  ║ Likelihood║ Impact    ║ Risk     ║
+╠═══════════════════════════╬═══════════╬═══════════╬══════════╣
+║ SQL Injection             ║ High      ║ High      ║ High     ║
+║ DDoS                      ║ Medium    ║ High      ║ High     ║
+║ Typo In Log Message       ║ High      ║ Low       ║ Low      ║
+║ Earthquake                ║ Low       ║ Very High ║ Medium   ║
+╚═══════════════════════════╩═══════════╩═══════════╩══════════╝
+
+Security teams manage:
+
+✅ Risk
+
+Not just vulnerabilities.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 5 : WHO ARE THE ATTACKERS?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+╔══════════════╦══════════════════════════════════════════════════════╗
+║ ATTACKER     ║ MOTIVATION                                         ║
+╠══════════════╬══════════════════════════════════════════════════════╣
+║ Cybercriminal║ Money                                               ║
+║ Nation State ║ Espionage / Warfare                                 ║
+║ Insider      ║ Revenge / Theft                                     ║
+║ Competitor   ║ Business Advantage                                  ║
+║ Hacktivist   ║ Political / Ideological Motives                     ║
+║ Script Kiddie║ Curiosity / Learning                                ║
+╚══════════════╩══════════════════════════════════════════════════════╝
+
+Reality:
+
+Most breaches happen because of:
+
+❌ Weak Passwords
+❌ Misconfiguration
+❌ Missing Security Controls
+❌ Human Mistakes
+❌ Unpatched Systems
+
+Not because attackers are magical geniuses.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 6 : HOW ATTACKERS ACTUALLY THINK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Developer Thinking:
+
+Feature → Code → Deploy
+
+Attacker Thinking:
+
+Discover → Analyze → Find Weakness → Exploit Opportunity
+
+Typical Attacker Journey:
+
+╔════════════╗→╔════════════╗→╔════════════╗→╔════════════╗→╔════════════╗
+║ Target     ║ ║ Information║ ║ Find Weak ║ ║ Gain       ║ ║ Steal      ║
+║ Selection  ║ ║ Gathering  ║ ║ Points    ║ ║ Access     ║ ║ Value      ║
+╚════════════╝ ╚════════════╝ ╚════════════╝ ╚════════════╝ ╚════════════╝
+
+Typical Questions:
+
+❓ What software is running?
+❓ What APIs exist?
+❓ Which ports are exposed?
+❓ Which technology versions are used?
+❓ Which services are public?
+❓ Which credentials may be leaked?
+❓ Who can be socially engineered?
+❓ Which component is weakest?
+
+IMPORTANT:
+
+Attackers usually attack knowledge gaps before systems.
+
+First they learn.
+Then they attack.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 7 : ATTACK SURFACE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Definition:
+
+Attack Surface = Everything an attacker can interact with.
+
+Example:
+
+╔══════════╦══════════╦══════════╦══════════╦════════════╗
+║ Login    ║ APIs     ║ Swagger  ║ Actuator ║ Upload     ║
+╚══════════╩══════════╩══════════╩══════════╩════════════╝
+
+Every box increases attack surface.
+
+Rule:
+
+More Exposure
+      ↓
+More Attack Surface
+      ↓
+More Security Work
+
+Goal:
+
+Reduce unnecessary exposure.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 8 : ATTACK SURFACE OF A MODERN SPRING BOOT APPLICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Internet
+   │
+   ▼
+
+╔══════╦══════════╦══════════╦══════════╦══════════╦══════════╗
+║ DNS  ║ Firewall ║ Gateway  ║ Swagger  ║ Actuator ║ APIs     ║
+╚══════╩══════════╩══════════╩══════════╩══════════╩══════════╝
+
+                          │
+                          ▼
+
+╔══════════╦══════════╦══════════╦══════════╗
+║ JWT      ║ Cookies  ║ Database ║ Storage  ║
+╚══════════╩══════════╩══════════╩══════════╝
+
+Every Component
+     ↓
+Potential Entry Point
+     ↓
+Potential Attack Surface
+
+Examples:
+
+✅ Login Endpoint
+✅ JWT Validation
+✅ Password Reset Flow
+✅ Swagger UI
+✅ Actuator
+✅ File Upload APIs
+✅ REST APIs
+✅ Gateway
+✅ DNS
+✅ Cloud Storage
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 9 : WHAT IS THREAT MODELING?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Definition:
+
+🎯 Thinking about attacks before attackers do.
+
+Security Design Process:
+
+╔══════════╗→╔══════════╗→╔══════════╗→╔══════════╗
+║ Asset    ║ ║ Threat   ║ ║ Impact   ║ ║ Control  ║
+╚══════════╝ ╚══════════╝ ╚══════════╝ ╚══════════╝
+
+Question:
+
+How can this system fail?
+
+before
+
+The system is deployed.
+
+This is one of the most important skills of security architects.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 10 : SIMPLE THREAT MODELING EXAMPLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+System:
+
+User
+ │
+ ▼
+Web Application
+ │
+ ▼
+Database
+
+Step 1: Identify Assets
+
+✅ Customer Data
+✅ Accounts
+✅ Transactions
+✅ Money
+
+Step 2: Identify Threats
+
+✅ Fraud
+✅ Account Takeover
+✅ Data Theft
+✅ Service Disruption
+
+Step 3: Estimate Impact
+
+High
+
+Step 4: Add Controls
+
+✅ MFA
+✅ Authorization
+✅ Encryption
+✅ Audit Logging
+✅ Alerting
+
+Threat Modeling =
+Thinking Through Failure Before Failure Happens.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 11 : STRIDE MODEL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+One of Microsoft's Most Famous Threat Modeling Frameworks.
+
+STRIDE
+
+╔══════╦══════════════════════════════════════════════════════════════╗
+║ S    ║ Spoofing Identity                                           ║
+║ T    ║ Tampering With Data                                         ║
+║ R    ║ Repudiation                                                 ║
+║ I    ║ Information Disclosure                                      ║
+║ D    ║ Denial Of Service                                           ║
+║ E    ║ Elevation Of Privilege                                      ║
+╚══════╩══════════════════════════════════════════════════════════════╝
+
+Meaning:
+
+S → Pretending To Be Someone Else
+
+T → Modifying Data Illegally
+
+R → Denying Actions Later
+
+I → Leaking Confidential Data
+
+D → Making Systems Unavailable
+
+E → Obtaining Higher Privileges
+
+Use STRIDE As A Checklist:
+
+"What happens if someone spoofed?"
+"What happens if someone tampered?"
+"What happens if data leaked?"
+"What happens if service becomes unavailable?"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 12 : HOW SECURITY ARCHITECTS VIEW SYSTEMS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Developer View:
+
+Controller
+Service
+Repository
+
+Architect View:
+
+╔══════╦══════╦══════╦══════╦══════╦══════╦══════╗
+║ User ║ DNS  ║ WAF  ║Gateway║ Auth ║ API  ║ DB   ║
+╚══════╩══════╩══════╩══════╩══════╩══════╩══════╝
+
+At Every Component Ask:
+
+❓ What can go wrong?
+❓ How can trust be broken?
+❓ What happens if compromised?
+❓ How do we detect abuse?
+❓ What is the blast radius?
+❓ What is the business impact?
+
+Architects think in attack paths.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 13 : THE GOLDEN SECURITY MINDSET
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Never Ask:
+
+❌ Can this system be attacked?
+
+Everything can.
+
+Ask:
+
+✅ How difficult is the attack?
+✅ How expensive is the attack?
+✅ How likely is it?
+✅ How quickly can we detect it?
+✅ How quickly can we recover?
+
+Security Goal:
+
+Not Impossible To Attack
+
+But
+
+Difficult To Attack
+Expensive To Attack
+Easy To Detect
+Easy To Recover
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 FINAL SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Threat
+ ↓
+Potential Danger
+
+Vulnerability
+ ↓
+Weakness
+
+Threat + Vulnerability
+ ↓
+Risk
+
+Attack Surface
+ ↓
+Everything Exposed To Attackers
+
+Threat Modeling
+ ↓
+Thinking Like An Attacker Before Production
+
+STRIDE
+ ↓
+Spoofing
+Tampering
+Repudiation
+Information Disclosure
+Denial Of Service
+Elevation Of Privilege
+
+Most Important Lesson:
+
+"A hacker rarely begins by attacking.
+A hacker begins by understanding the system.
+
+A security engineer's job is to understand the system
+better than the attacker."
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🚀 NEXT TOPIC (PART 3)
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+SECURITY ARCHITECTURE & CIA TRIAD IN ACTION
+
+Topics:
+
+✅ Identification
+✅ Authentication
+✅ Authorization
+✅ Accountability
+✅ Non-Repudiation
+✅ Trust Boundaries
+✅ Defense In Depth
+✅ Encryption
+✅ Hashing
+✅ Digital Signatures
+✅ Session Security
+✅ Why HTTPS Exists
+✅ Why JWT Exists
+✅ Why OAuth2 Exists
+✅ Why MFA Exists
+
+This is the foundation required before learning
+OWASP Top 10, Spring Security, JWT, OAuth2,
+API Security, DDoS Protection and Zero Trust Architecture.

@@ -1,0 +1,552 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║         🎬 CYBER SECURITY MASTER COURSE - PART 7 : BEFORE THE OWASP TOP 10 🎬                                  ║
+║              HOW WEB APPLICATIONS WORK • WHERE TRUST BREAKS • ATTACK PATHS                                      ║
+║                  (UNDERSTANDING THE BATTLEFIELD BEFORE THE WAR)                                                  ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 WHY THIS PART EXISTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Developers Learn:
+
+OWASP Risk
+     ↓
+Mitigation
+
+Memorization.
+
+Bad Approach.
+
+Architects Learn:
+
+How request travels
+     ↓
+Where trust is broken
+     ↓
+Where attackers interact
+     ↓
+Where vulnerabilities appear
+     ↓
+OWASP
+
+This Part Explains:
+
+"What actually happens when a user talks to a web application?"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 1 : THE MODERN WEB APPLICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Applications Look Like:
+
+╔════════╗→╔════════╗→╔════════════╗→╔════════════╗→╔═══════════╗
+║ Browser║ ║Internet║ ║API Gateway ║ ║Application ║ ║Database   ║
+╚════════╝ ╚════════╝ ╚════════════╝ ╚════════════╝ ╚═══════════╝
+
+Example:
+
+Browser
+  ↓
+https://bank.com/accounts
+
+  ↓
+
+Spring Boot Application
+
+  ↓
+
+Database
+
+Every Data Breach Happens Somewhere
+Inside This Flow.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 2 : THE REQUEST JOURNEY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+User Clicks:
+
+Get Accounts
+
+Journey:
+
+╔══════╗→╔══════╗→╔══════╗→╔══════╗→╔══════╗→╔══════╗
+║User  ║ ║Browser║ ║Network║ ║API   ║ ║App   ║ ║DB    ║
+╚══════╝ ╚══════╝ ╚══════╝ ╚══════╝ ╚══════╝ ╚══════╝
+
+Response Returns:
+
+╔══════╗←╔══════╗←╔══════╗←╔══════╗←╔══════╗←╔══════╗
+║User  ║ ║Browser║ ║Network║ ║API   ║ ║App   ║ ║DB    ║
+╚══════╝ ╚══════╝ ╚══════╝ ╚══════╝ ╚══════╝ ╚══════╝
+
+Every Step Introduces Security Risks.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 3 : TRUST IS THE ROOT OF ALL SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Security Is Basically:
+
+Managing Trust.
+
+Question:
+
+What Can We Trust?
+
+Internet?
+
+❌ No
+
+Browser?
+
+❌ No
+
+User Input?
+
+❌ No
+
+Request Headers?
+
+❌ No
+
+JWT?
+
+✅ After Verification
+
+Database?
+
+✅ Usually Trusted
+
+Golden Rule:
+
+Everything arriving from outside
+must be assumed malicious
+until validated.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 4 : TRUST BOUNDARIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+One Of The Most Important Concepts.
+
+Architecture:
+
+╔══════════════╗│╔══════════════╗
+║ Untrusted    ║│║ Trusted      ║
+║ Internet     ║│║ Internal App ║
+╚══════════════╝│╚══════════════╝
+                ▲
+                │
+        TRUST BOUNDARY
+
+Every Time Data Crosses
+A Trust Boundary
+
+You Must:
+
+✅ Validate
+✅ Authenticate
+✅ Authorize
+✅ Sanitize
+
+Trust Boundaries Exist At:
+
+Internet → Gateway
+
+Gateway → Application
+
+Application → Database
+
+User → Browser
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 5 : USER INPUT IS THE BIGGEST ATTACK SURFACE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Question:
+
+Where Do Most Attacks Enter?
+
+Answer:
+
+User Input
+
+Examples:
+
+╔════════════════════════════╗
+║ Login Form                ║
+║ Search Field              ║
+║ Query Parameters          ║
+║ Path Variables            ║
+║ HTTP Headers              ║
+║ Cookies                   ║
+║ File Uploads              ║
+║ JSON Request Body         ║
+╚════════════════════════════╝
+
+Developer Sees:
+
+User Data
+
+Security Engineer Sees:
+
+Potential Attack Data
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 6 : APPLICATION DATA FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Typical Spring Boot Flow
+
+╔══════════╗→╔════════════╗→╔════════════╗→╔════════════╗→╔════════╗
+║ Browser  ║ ║ Controller ║ ║ Service    ║ ║ Repository ║ ║ DB     ║
+╚══════════╝ ╚════════════╝ ╚════════════╝ ╚════════════╝ ╚════════╝
+
+Security Questions:
+
+Controller
+
+❓ Input Validated?
+
+Service
+
+❓ Authorization Checked?
+
+Repository
+
+❓ Safe Database Access?
+
+Database
+
+❓ Sensitive Data Protected?
+
+Every Layer Has Responsibility.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 7 : WHERE AUTHENTICATION HAPPENS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Authentication Answers:
+
+Who Are You?
+
+Example:
+
+╔══════════╗→╔════════════╗→╔════════════╗
+║ Request  ║ ║ Security   ║ ║ User       ║
+║ Arrives  ║ ║ Validation ║ ║ Authenticated║
+╚══════════╝ ╚════════════╝ ╚════════════╝
+
+Only After Success:
+
+Request Proceeds.
+
+Failure:
+
+❌ Request Rejected
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 8 : WHERE AUTHORIZATION HAPPENS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Authentication
+
+Means:
+
+Who Are You?
+
+Authorization
+
+Means:
+
+What Can You Do?
+
+Example:
+
+User Logged In
+       │
+       ▼
+
+Delete User API
+
+       │
+       ▼
+
+Permission Check
+
+       │
+ ┌─────┴─────┐
+ ▼           ▼
+
+ALLOW      DENY
+
+Most Serious Breaches Are
+Authorization Failures.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 9 : THE INPUT VALIDATION LAYER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Rule:
+
+Validate Everything.
+
+Examples:
+
+Name
+
+Expected:
+
+John
+
+Unexpected:
+
+Very Large Input
+Unexpected Characters
+Malformed Data
+
+Validation Checks:
+
+✅ Length
+✅ Format
+✅ Range
+✅ Type
+✅ Business Rules
+
+Purpose:
+
+Reduce Dangerous Input.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 10 : THE OUTPUT ENCODING LAYER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Security Is Not Only Input.
+
+Output Matters Too.
+
+Flow:
+
+Input
+  ↓
+Database
+  ↓
+Output
+  ↓
+Browser
+
+Question:
+
+Can Browser Interpret Data
+Unexpectedly?
+
+If Yes
+
+Potential Browser-Based Attacks.
+
+Therefore:
+
+Output Must Be Handled Safely.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 11 : THE SESSION & TOKEN LAYER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After Login
+
+Application Needs To Remember User.
+
+Options:
+
+╔════════════════════╦════════════════════╗
+║ Session            ║ JWT               ║
+╠════════════════════╬════════════════════╣
+║ Server Stores State║ Token Stores State║
+╚════════════════════╩════════════════════╝
+
+Security Questions:
+
+✅ Can Token Be Trusted?
+
+✅ Can Session Be Stolen?
+
+✅ Can User Be Impersonated?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 12 : THE DATABASE TRUST PROBLEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Developers Often Think:
+
+Database Is Safe.
+
+Reality:
+
+Database Trust Depends On:
+
+Application Security.
+
+Flow:
+
+User Input
+      ↓
+Application
+      ↓
+Database
+
+Question:
+
+Can User Influence Query?
+
+If Yes
+
+Potential Data Risks Exist.
+
+Application Security
+And Database Security
+Are Closely Connected.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 13 : THE THREE LOCATIONS WHERE MOST WEB RISKS APPEAR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most OWASP Risks Appear Here:
+
+╔════════════════════════════════════════════╗
+║ 1. Identity Layer                         ║
+║ Authentication                            ║
+║ Authorization                             ║
+╚════════════════════════════════════════════╝
+
+╔════════════════════════════════════════════╗
+║ 2. Data Layer                             ║
+║ User Input                                ║
+║ Validation                                ║
+║ Data Access                               ║
+╚════════════════════════════════════════════╝
+
+╔════════════════════════════════════════════╗
+║ 3. Configuration Layer                    ║
+║ Security Rules                            ║
+║ Deployment Settings                       ║
+║ Secrets                                   ║
+╚════════════════════════════════════════════╝
+
+Remember This.
+
+It Explains Most Real Vulnerabilities.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 14 : THE BIG SECURITY EQUATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Untrusted Input
+        │
+        ▼
+
+Application Logic
+        │
+        ▼
+
+Sensitive Assets
+
+Security Exists To Protect:
+
+Sensitive Assets
+
+From
+
+Untrusted Input
+
+This Is The Entire Purpose
+Of Application Security.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 15 : HOW OWASP THINKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OWASP Looks At An Application And Asks:
+
+❓ Can Users Access Data They Shouldn't?
+
+❓ Can Input Be Misused?
+
+❓ Is Authentication Weak?
+
+❓ Are Permissions Broken?
+
+❓ Is Sensitive Data Exposed?
+
+❓ Are Configurations Unsafe?
+
+If Yes
+
+Security Risk Exists.
+
+OWASP Is Simply A Structured Way
+Of Thinking About Application Risk.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 FINAL SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Browser
+ ↓
+Input Enters
+
+Trust Boundary
+ ↓
+Validation Required
+
+Authentication
+ ↓
+Who Are You?
+
+Authorization
+ ↓
+What Can You Do?
+
+Application Logic
+ ↓
+Process Request
+
+Database
+ ↓
+Protect Assets
+
+Most OWASP Risks Emerge In:
+
+✅ Identity Layer
+✅ Input/Data Layer
+✅ Configuration Layer
+
+Most Important Lesson:
+
+"Applications Become Vulnerable Whenever
+Untrusted Input Is Given More Trust Than It Deserves."
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    🚀 PART 8 (NEXT TOPIC) 🚀                             ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║ OWASP TOP 10 - COMPLETE DEEP DIVE                                        ║
+║                                                                            ║
+║ 1. Broken Access Control                                                   ║
+║ 2. Cryptographic Failures                                                  ║
+║ 3. Injection                                                               ║
+║ 4. Insecure Design                                                         ║
+║ 5. Security Misconfiguration                                               ║
+║ 6. Vulnerable Components                                                   ║
+║ 7. Identification & Authentication Failures                               ║
+║ 8. Software & Data Integrity Failures                                     ║
+║ 9. Logging & Monitoring Failures                                          ║
+║10. Server-Side Request Forgery (SSRF)                                     ║
+║                                                                            ║
+║ And for each we'll cover:                                                  ║
+║ ✅ Why it exists                                                           ║
+║ ✅ Real-world mindset                                                      ║
+║ ✅ Where it appears in Spring Boot                                        ║
+║ ✅ Which layer is responsible                                             ║
+║ ✅ Which Spring Security features help                                    ║
+╚════════════════════════════════════════════════════════════════════════════╝

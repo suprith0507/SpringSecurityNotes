@@ -1,0 +1,622 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║        🎬 CYBER SECURITY MASTER COURSE - PART 4 : ATTACK LIFECYCLE & BREACH ANATOMY 🎬                         ║
+║          CYBER KILL CHAIN • RECON • ACCESS • PERSISTENCE • EXFILTRATION                                         ║
+║              (HOW REAL ATTACKS EVOLVE FROM START TO FINISH)                                                     ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 1 : THE BIGGEST SECURITY REALIZATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Movies often show:
+
+"Hacker types for 30 seconds"
+
+      │
+      ▼
+
+"System Hacked"
+
+Reality:
+
+Real compromises are usually a chain of events.
+
+Attackers rarely break systems immediately.
+
+Instead they:
+
+Learn
+Explore
+Collect Information
+Gain Access
+Expand Access
+Reach Valuable Assets
+
+Think of attacks as journeys.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 2 : THE ATTACK LIFECYCLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Typical Enterprise Attack:
+
+╔════════╦════════════╦════════════╦════════════╦════════════╦════════════╗
+║ Recon  ║ Access     ║ Persistence║ Privileges ║ Movement   ║ Objectives ║
+╚════════╩════════════╩════════════╩════════════╩════════════╩════════════╝
+
+Or Simplified:
+
+Identify Target
+      ↓
+Gather Information
+      ↓
+Gain Entry
+      ↓
+Stay Inside
+      ↓
+Move Around
+      ↓
+Reach Valuable Assets
+      ↓
+Steal Data / Create Impact
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 3 : CYBER KILL CHAIN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+One of the most famous security models.
+
+Purpose:
+
+Understand attack progression.
+
+High-Level View:
+
+╔══════════╦══════════╦══════════╦══════════╦══════════╦══════════╗
+║ Recon    ║ Entry    ║ Execute  ║ Persist  ║ Expand   ║ Achieve  ║
+╚══════════╩══════════╩══════════╩══════════╩══════════╩══════════╝
+
+Security Teams Use It To Ask:
+
+❓ Where can we detect attackers?
+
+❓ Where can we stop attackers?
+
+Rule:
+
+Earlier Detection
+      ↓
+Less Damage
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 4 : RECONNAISSANCE (RECON)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Definition:
+
+Information Gathering Phase.
+
+Goal:
+
+Understand Target.
+
+Questions:
+
+❓ What company is this?
+
+❓ Which technologies are used?
+
+❓ Which domains exist?
+
+❓ Which APIs are exposed?
+
+❓ Which employees exist?
+
+❓ Which cloud providers are used?
+
+At This Stage:
+
+No break-in yet.
+
+Just learning.
+
+Attackers Love:
+
+✅ Public Information
+✅ Public Documentation
+✅ Public Metadata
+✅ Public Endpoints
+
+Most attacks start with information gathering.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 5 : ENUMERATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Recon Finds:
+
+"The City"
+
+Enumeration Finds:
+
+"The Streets"
+
+Example:
+
+Recon:
+
+Company has Spring Boot APIs.
+
+Enumeration:
+
+Which APIs?
+
+Which Authentication Method?
+
+Which Versions?
+
+Which Actuator Endpoints?
+
+Which Swagger Documents?
+
+Enumeration is deeper discovery.
+
+Architecture:
+
+Target
+  │
+  ▼
+Discover Accessible Services
+  │
+  ▼
+Map Environment
+  │
+  ▼
+Find Weak Points
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 6 : ATTACK SURFACE DISCOVERY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Now attacker builds a map.
+
+Example:
+
+╔════════╦══════════╦══════════╦══════════╦══════════╗
+║ Login  ║ APIs     ║ Swagger  ║ Uploads  ║ Actuator ║
+╚════════╩══════════╩══════════╩══════════╩══════════╝
+
+Every Item:
+
+Potential Opportunity
+
+Questions:
+
+❓ Which component is outdated?
+
+❓ Which configuration is weak?
+
+❓ Which endpoint exposes information?
+
+The larger the attack surface,
+the larger the security challenge.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 7 : INITIAL ACCESS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Goal:
+
+Obtain Initial Foothold.
+
+This means:
+
+Attacker gains first level of access.
+
+Examples (High Level):
+
+✅ Compromised Credentials
+✅ Human Error
+✅ Security Misconfiguration
+✅ Unpatched Vulnerabilities
+✅ Exposed Secrets
+
+Important:
+
+Initial Access ≠ Full Control
+
+Think:
+
+Front Door Opened
+
+Not House Owned.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 8 : PERSISTENCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Attacker Now Asks:
+
+"What happens if I lose access?"
+
+Goal:
+
+Maintain Access.
+
+Concept:
+
+Initial Access
+       │
+       ▼
+Stay Accessible
+       │
+       ▼
+Return Later
+
+Why?
+
+Because most attacks are not completed immediately.
+
+Persistence ensures continued presence.
+
+Defense:
+
+✅ Monitoring
+✅ Auditing
+✅ Alerting
+✅ Configuration Integrity
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 9 : PRIVILEGE ESCALATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Attacker Has:
+
+Low-Level Access
+
+But Wants:
+
+High-Level Access
+
+Example:
+
+╔══════════════╗→╔══════════════╗→╔══════════════╗
+║ Guest        ║ ║ User         ║ ║ Administrator║
+╚══════════════╝ ╚══════════════╝ ╚══════════════╝
+
+Goal:
+
+Increase Power.
+
+Why?
+
+More permissions.
+
+More visibility.
+
+More impact.
+
+Security Principle:
+
+Least Privilege
+
+Every user gets only necessary permissions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 10 : LATERAL MOVEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most systems are not single machines anymore.
+
+Enterprise Environment:
+
+╔══════════╦══════════╦══════════╦══════════╗
+║ API      ║ Database ║ Cache    ║ Storage  ║
+╚══════════╩══════════╩══════════╩══════════╝
+
+Once inside one system:
+
+Attackers may attempt to move toward others.
+
+Concept:
+
+System A
+      ↓
+System B
+      ↓
+System C
+      ↓
+High Value Asset
+
+Defenders Want:
+
+Segmentation
+
+Attackers Want:
+
+Reachability
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 11 : CROWN JEWELS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Every organization has:
+
+"Crown Jewels"
+
+Most Valuable Assets.
+
+Examples:
+
+✅ Customer Data
+✅ Banking Records
+✅ Intellectual Property
+✅ Source Code
+✅ Trade Secrets
+✅ Payment Systems
+
+Question:
+
+Why attack?
+
+Usually because of crown jewels.
+
+Everything before this stage was preparation.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 12 : DATA EXFILTRATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Exfiltration Means:
+
+Data Leaving Organization.
+
+Process:
+
+Company Data
+      │
+      ▼
+Unauthorized Access
+      │
+      ▼
+Information Leaves Boundary
+
+Consequences:
+
+❌ Reputation Damage
+❌ Compliance Violations
+❌ Financial Loss
+❌ Customer Impact
+
+Security Teams Focus Heavily On:
+
+Detection
+
+Because prevention may not always succeed.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 13 : DEFENSE PERSPECTIVE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Security Teams Think:
+
+"Where can we stop attackers?"
+
+Attacker Journey:
+
+╔══════╗→╔══════╗→╔══════╗→╔══════╗→╔══════╗→╔══════╗
+║Recon ║ ║Access║ ║Persist║ ║Expand║ ║Move  ║ ║Steal ║
+╚══════╝ ╚══════╝ ╚══════╝ ╚══════╝ ╚══════╝ ╚══════╝
+
+Defense Journey:
+
+╔══════╗→╔══════╗→╔══════╗→╔══════╗→╔══════╗→╔══════╗
+║Detect║ ║Alert ║ ║Contain║ ║Block ║ ║Recover║ ║Improve║
+╚══════╝ ╚══════╝ ╚══════╝ ╚══════╝ ╚══════╝ ╚══════╝
+
+Security is not only prevention.
+
+Detection matters equally.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 14 : MITRE ATT&CK FRAMEWORK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OWASP Answers:
+
+"What Can Go Wrong In Applications?"
+
+MITRE ATT&CK Answers:
+
+"How Do Attackers Behave?"
+
+Think:
+
+OWASP
+   ↓
+Vulnerabilities
+
+MITRE ATT&CK
+   ↓
+Attacker Behaviors
+
+MITRE helps security teams understand:
+
+✅ Tactics
+✅ Techniques
+✅ Attack Patterns
+✅ Detection Opportunities
+
+OWASP and MITRE complement each other.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 15 : REAL ATTACK VS MOVIE ATTACK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Movie Attack:
+
+Hack
+ ↓
+Done
+
+Real Attack:
+
+Recon
+ ↓
+Enumeration
+ ↓
+Target Understanding
+ ↓
+Initial Access
+ ↓
+Persistence
+ ↓
+Privilege Escalation
+ ↓
+Lateral Movement
+ ↓
+Objective Achievement
+ ↓
+Data Exfiltration
+ ↓
+Cover Tracks
+
+Real attacks are campaigns.
+
+Not single events.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 16 : HOW AN ARCHITECT SHOULD THINK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Traditional Developer:
+
+Controller
+ ↓
+Service
+ ↓
+Repository
+
+Security Architect:
+
+Internet
+ ↓
+DNS
+ ↓
+Firewall
+ ↓
+WAF
+ ↓
+Gateway
+ ↓
+Authentication
+ ↓
+Application
+ ↓
+Database
+ ↓
+Storage
+
+At Each Stage Ask:
+
+❓ What if compromised?
+
+❓ What data is exposed?
+
+❓ What trust boundary exists?
+
+❓ What monitoring exists?
+
+❓ How do we recover?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 17 : IMPORTANT LESSON
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Successful Attacks Do NOT Exploit:
+
+Super Advanced Technology.
+
+Most Successful Attacks Exploit:
+
+✅ Human Error
+✅ Weak Passwords
+✅ Missing Patches
+✅ Excessive Permissions
+✅ Misconfiguration
+✅ Lack Of Visibility
+
+Technology is only one piece.
+
+Process and people matter equally.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 FINAL SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Attack Lifecycle:
+
+Reconnaissance
+      ↓
+Enumeration
+      ↓
+Attack Surface Discovery
+      ↓
+Initial Access
+      ↓
+Persistence
+      ↓
+Privilege Escalation
+      ↓
+Lateral Movement
+      ↓
+Reach Crown Jewels
+      ↓
+Data Exfiltration
+      ↓
+Cover Tracks
+
+Most Important Lesson:
+
+"A breach is usually not a single attack.
+A breach is a sequence of successful decisions,
+mistakes, and missed detections."
+
+Security Teams Win By:
+
+✅ Reducing Attack Surface
+✅ Limiting Privileges
+✅ Detecting Early
+✅ Segmenting Systems
+✅ Protecting Crown Jewels
+✅ Monitoring Continuously
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🚀 PART 5 (NEXT TOPIC)
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🎬 CYBER SECURITY MASTER COURSE - PART 5 :
+OWASP TOP 10 & APPLICATION SECURITY FUNDAMENTALS
+
+Topics:
+
+✅ Why OWASP Exists
+✅ Web Application Architecture
+✅ Request Journey Inside Application
+✅ Broken Access Control
+✅ Injection
+✅ Cryptographic Failures
+✅ SSRF
+✅ Security Misconfiguration
+✅ Identification & Authentication Failures
+✅ Vulnerable Components
+✅ Logging & Monitoring Failures
+✅ Mapping Every OWASP Risk To Spring Boot
+
+This is where we transition from
+"How attackers think"
+
+to
+
+"What vulnerabilities inside applications
+allow attackers to succeed?"

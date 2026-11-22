@@ -1,0 +1,641 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║            🎬 CYBER SECURITY MASTER COURSE - PART 8 : OWASP TOP 10 MASTERCLASS 🎬                              ║
+║         APPLICATION SECURITY RISKS • SPRING BOOT MAPPING • ARCHITECT VIEW                                      ║
+║            (THE MOST IMPORTANT WEB APPLICATION SECURITY KNOWLEDGE)                                              ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 BEFORE WE START
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OWASP Top 10 IS NOT:
+
+❌ Top 10 Attacks
+❌ Top 10 Hacking Methods
+❌ Top 10 Network Attacks
+
+OWASP Top 10 IS:
+
+✅ Top 10 Web Application Security Risks
+
+Important Difference:
+
+Attack
+   ↓
+Action Performed By Attacker
+
+Risk
+   ↓
+Weakness Inside Application
+
+OWASP focuses on:
+
+"Why did the application allow the attack?"
+
+Not
+
+"How did the attacker attack?"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 1 : OWASP TOP 10 OVERVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current OWASP Categories:
+
+╔══════════════════════════════════════════════════════╗
+║ A01 Broken Access Control                           ║
+║ A02 Cryptographic Failures                          ║
+║ A03 Injection                                       ║
+║ A04 Insecure Design                                 ║
+║ A05 Security Misconfiguration                       ║
+║ A06 Vulnerable & Outdated Components                ║
+║ A07 Identification & Authentication Failures        ║
+║ A08 Software & Data Integrity Failures              ║
+║ A09 Security Logging & Monitoring Failures          ║
+║ A10 Server Side Request Forgery (SSRF)              ║
+╚══════════════════════════════════════════════════════╝
+
+Most Real Breaches Usually Involve:
+
+✅ Access Control Problems
+✅ Authentication Problems
+✅ Misconfigurations
+✅ Injection
+✅ Human Errors
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🥇 A01 : BROKEN ACCESS CONTROL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Critical OWASP Risk.
+
+Question:
+
+✅ Who are you?
+✅ What are you allowed to access?
+
+Application Fails To Enforce Rules.
+
+Architecture:
+
+User
+ │
+ ▼
+
+Protected Resource
+
+Missing Access Check
+
+ │
+ ▼
+
+Unauthorized Access
+
+Examples:
+
+✅ View Other User Records
+✅ Access Admin APIs
+✅ Download Someone Else's Files
+✅ Modify Unauthorized Data
+
+Spring Boot Examples:
+
+❌ Missing @PreAuthorize
+
+❌ Missing Ownership Checks
+
+❌ Missing Role Validation
+
+Bad:
+
+@GetMapping("/admin/users")
+public List<User> getUsers(){}
+
+Good:
+
+@PreAuthorize("hasRole('ADMIN')")
+
+Mental Model:
+
+Authentication Says
+
+"Who Are You?"
+
+Authorization Says
+
+"What Are You Allowed To Do?"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🥈 A02 : CRYPTOGRAPHIC FAILURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Goal:
+
+Protect Confidential Data.
+
+Example Assets:
+
+✅ Passwords
+✅ Tokens
+✅ Personal Information
+✅ Bank Details
+
+Failures:
+
+❌ Plain Text Passwords
+❌ Weak Encryption
+❌ Weak TLS
+❌ Sensitive Data Exposure
+
+Bad:
+
+password = "admin123"
+
+stored directly in DB
+
+Good:
+
+BCrypt
+Argon2
+
+Used Instead
+
+Mental Model:
+
+Data Exists
+
+┌──────────┐
+│ Sensitive│
+└────┬─────┘
+     ▼
+
+Must Be Protected
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🥉 A03 : INJECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+One Of The Most Famous Risks.
+
+Root Cause:
+
+Application mixes:
+
+✅ User Data
+
+with
+
+✅ Commands
+
+Examples:
+
+✅ SQL Injection
+✅ NoSQL Injection
+✅ LDAP Injection
+✅ OS Command Injection
+
+Concept:
+
+User Input
+      │
+      ▼
+Interpreter
+      │
+      ▼
+Execution
+
+Application cannot distinguish:
+
+Data
+or
+Command
+
+Spring Protection:
+
+✅ JPA
+✅ Prepared Statements
+✅ Parameterized Queries
+✅ Validation
+
+Mental Model:
+
+Input Must Never Become Executable Instructions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎖️ A04 : INSECURE DESIGN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Difficult Category.
+
+Problem:
+
+Code may be correct.
+
+Design is wrong.
+
+Example:
+
+Bank System Allows:
+
+Transfer Money
+
+without
+
+Second Verification
+
+Code Works Perfectly.
+
+Design Is Insecure.
+
+Difference:
+
+Bug:
+Implementation Mistake
+
+Insecure Design:
+Architecture Mistake
+
+Architect Responsibility:
+
+✅ Threat Modeling
+✅ Security Reviews
+✅ Abuse Case Analysis
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎖️ A05 : SECURITY MISCONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Common Enterprise Issue.
+
+Application Is Secure.
+
+Configuration Is Not.
+
+Examples:
+
+╔══════════════════════════════════════════════╗
+║ Public Actuator                             ║
+║ Public Swagger                              ║
+║ Debug Mode Enabled                          ║
+║ Default Passwords                           ║
+║ Exposed Admin Consoles                      ║
+║ Excessive Permissions                       ║
+╚══════════════════════════════════════════════╝
+
+Spring Boot Example:
+
+management.endpoints.web.exposure.include=*
+
+Internet Accessible
+
+Bad.
+
+Mental Model:
+
+Secure Code
++
+Unsafe Configuration
+=
+Breach
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎖️ A06 : VULNERABLE & OUTDATED COMPONENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Modern Applications Depend On:
+
+✅ Spring Boot
+✅ Jackson
+✅ Logback
+✅ Hibernate
+✅ Kafka Libraries
+
+Question:
+
+Can You Trust Dependencies?
+
+Risk:
+
+Old Vulnerable Library.
+
+Architecture:
+
+Application
+     │
+     ▼
+Dependency
+     │
+     ▼
+Known Vulnerability
+
+Spring Developers Must:
+
+✅ Update Dependencies
+✅ Monitor CVEs
+✅ Upgrade Frameworks
+
+Mental Model:
+
+Your Security Is Limited By
+Your Weakest Dependency.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎖️ A07 : IDENTIFICATION & AUTHENTICATION FAILURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Question:
+
+Can Attackers Pretend To Be Someone Else?
+
+Problems:
+
+✅ Weak Passwords
+✅ Credential Stuffing
+✅ Session Failures
+✅ Account Enumeration
+✅ Missing MFA
+
+Architecture:
+
+User
+ │
+ ▼
+
+Authentication Layer
+
+ │
+ ▼
+
+Identity Established
+
+If Authentication Weak
+
+Identity Cannot Be Trusted
+
+Mental Model:
+
+Never Trust Identity Until Verified.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎖️ A08 : SOFTWARE & DATA INTEGRITY FAILURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Concern:
+
+Can We Trust Software?
+
+Can We Trust Data?
+
+Examples:
+
+✅ Supply Chain Risks
+✅ Untrusted Dependencies
+✅ Unsigned Updates
+✅ CI/CD Tampering
+
+Pipeline:
+
+Developer
+   │
+   ▼
+Build
+   │
+   ▼
+Deploy
+   │
+   ▼
+Production
+
+Question:
+
+Can Anything Be Altered Along The Way?
+
+Integrity Failures Occur When:
+
+Trust Assumptions Are Wrong.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎖️ A09 : SECURITY LOGGING & MONITORING FAILURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Question:
+
+Can We Detect Attacks?
+
+Many Organizations Have:
+
+✅ Firewalls
+✅ Security Controls
+
+But No Visibility.
+
+Examples:
+
+❌ Login Failures Not Logged
+❌ Privilege Escalation Not Logged
+❌ Suspicious Activity Not Monitored
+
+Result:
+
+Attack Happens
+
+Months Later
+
+Organization Discovers It.
+
+Mental Model:
+
+Prevention Is Important.
+
+Detection Is Equally Important.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎖️ A10 : SERVER SIDE REQUEST FORGERY (SSRF)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Question:
+
+Can User Make Server Talk To Other Systems?
+
+Concept:
+
+User Input
+    │
+    ▼
+
+Application
+
+    │
+    ▼
+
+Makes Request Somewhere Else
+
+Risk:
+
+Application becomes a proxy.
+
+Architecture:
+
+User
+ │
+ ▼
+
+Spring Boot
+
+ │
+ ▼
+
+External/Internal Resource
+
+Application Trusts User-Supplied Destination.
+
+Dangerous Pattern.
+
+Mental Model:
+
+Never Blindly Trust User-Provided Targets.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 2 : THE REAL ROOT CAUSES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most OWASP Risks Actually Come From Only Few Core Problems.
+
+╔══════════════════════════════════════╗
+║ Missing Authorization               ║
+║ Weak Authentication                 ║
+║ Trusting User Input                 ║
+║ Poor Design Decisions               ║
+║ Dangerous Configuration             ║
+║ Lack Of Monitoring                  ║
+╚══════════════════════════════════════╝
+
+Almost Everything Maps Back To These.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 3 : OWASP TO SPRING BOOT MAPPING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+╔═════════════════════════╦═════════════════════════════════════╗
+║ OWASP                  ║ Spring Boot Example                 ║
+╠═════════════════════════╬═════════════════════════════════════╣
+║ Access Control         ║ Missing @PreAuthorize              ║
+║ Cryptographic Failure  ║ Plain Text Passwords               ║
+║ Injection              ║ Unsafe Query Construction          ║
+║ Insecure Design        ║ Bad Architecture Decisions         ║
+║ Misconfiguration       ║ Public Actuator                    ║
+║ Vulnerable Components  ║ Old Spring Libraries              ║
+║ Authentication Failure ║ Weak Login Process                ║
+║ Integrity Failure      ║ Unsafe CI/CD                      ║
+║ Logging Failure        ║ Missing Audit Logs                ║
+║ SSRF                   ║ Blind External Calls              ║
+╚═════════════════════════╩═════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 4 : THE BIG PICTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Cyber Security
+      │
+      ▼
+Application Security
+      │
+      ▼
+OWASP
+      │
+      ▼
+OWASP Top 10
+      │
+      ▼
+Spring Boot Security
+      │
+      ▼
+Spring Security Implementation
+
+This Is Why OWASP Matters.
+
+It Bridges:
+
+Architecture
+     ↓
+Security Concepts
+     ↓
+Framework Implementation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 FINAL SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+A01 Broken Access Control
+ ↓
+Permission Problems
+
+A02 Cryptographic Failures
+ ↓
+Protection Problems
+
+A03 Injection
+ ↓
+Untrusted Input Problems
+
+A04 Insecure Design
+ ↓
+Architecture Problems
+
+A05 Security Misconfiguration
+ ↓
+Configuration Problems
+
+A06 Vulnerable Components
+ ↓
+Dependency Problems
+
+A07 Authentication Failures
+ ↓
+Identity Problems
+
+A08 Integrity Failures
+ ↓
+Trust Problems
+
+A09 Logging Failures
+ ↓
+Visibility Problems
+
+A10 SSRF
+ ↓
+Server Trust Problems
+
+MASTER FORMULA:
+
+Most Successful Breaches Happen Because An Application:
+
+✅ Trusted The Wrong Thing
+✅ Failed To Verify Something
+✅ Exposed Something It Shouldn't
+✅ Allowed Something It Shouldn't
+
+OWASP Top 10 Is Simply A Structured Catalog Of Those Mistakes.
+
+══════════════════════════════════════════════════════════════════════════════
+🚀 PART 9 (NEXT TOPIC)
+══════════════════════════════════════════════════════════════════════════════
+
+🎬 APPLICATION SECURITY RISKS DEEP DIVE
+
+Before Spring Security We Should Go Deeper Into:
+
+✅ Broken Access Control (Most Important OWASP Risk)
+✅ Browser Security Risks
+✅ XSS
+✅ CSRF
+✅ Clickjacking
+✅ Session Hijacking
+✅ CORS
+✅ Authentication vs Authorization Failures
+✅ API Security Top 10
+✅ Why Most Modern Breaches Are Authorization Problems
+
+This is where you'll start understanding why Spring Security's
+Filter Chain, SecurityContext, AuthenticationManager,
+JWT Validation, Method Security, CORS, CSRF and OAuth2 exist.

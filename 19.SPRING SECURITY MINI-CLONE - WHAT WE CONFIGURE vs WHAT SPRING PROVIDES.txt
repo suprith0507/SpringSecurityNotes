@@ -1,0 +1,799 @@
+com.securityclone
+
+├── Main
+├── ServletContainer
+├── DelegatingFilterProxy
+├── FilterChainProxy
+├── SecurityFilterChain
+├── Filter
+│
+├── authentication
+│   ├── Authentication
+│   ├── UsernamePasswordAuthenticationToken
+│   ├── AuthenticationManager
+│   ├── ProviderManager
+│   ├── AuthenticationProvider
+│   ├── DaoAuthenticationProvider
+│   ├── UserDetails
+│   ├── UserDetailsService
+│   ├── PasswordEncoder
+│   └── BCryptPasswordEncoder
+│
+├── authorization
+│   ├── GrantedAuthority
+│   ├── AuthorizationManager
+│   └── AuthorizationFilter
+│
+├── context
+│   ├── SecurityContext
+│   └── SecurityContextHolder
+│
+└── controller
+    └── EmployeeController
+	
+	==============================
+	
+	
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                 🔐 SPRING SECURITY MINI-CLONE - WHAT WE CONFIGURE vs WHAT SPRING PROVIDES 🔐               ║
+║                     (MEMORIZE THIS TO UNDERSTAND REAL SPRING SECURITY PROJECTS)                            ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+🎯 MOST IMPORTANT INTERVIEW QUESTION
+
+When Spring Security Starts, Which Classes Are:
+
+✅ WRITTEN / CONFIGURED BY US
+✅ ALREADY PROVIDED BY SPRING SECURITY
+
+Remember:
+
+In Real Life Most Of These Classes Are ALREADY INSIDE SPRING SECURITY JARS.
+We Usually Configure Them Instead Of Writing Them.
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🌍 COMPLETE EXECUTION FLOW
+
+HTTP Request
+   │
+   ▼
+DelegatingFilterProxy
+   │
+   ▼
+FilterChainProxy
+   │
+   ▼
+SecurityFilterChain
+   │
+   ▼
+UsernamePasswordAuthenticationFilter
+   │
+   ▼
+UsernamePasswordAuthenticationToken
+   │
+   ▼
+AuthenticationManager
+   │
+   ▼
+ProviderManager
+   │
+   ▼
+DaoAuthenticationProvider
+   │
+   ▼
+UserDetailsService
+   │
+   ▼
+Database
+   │
+   ▼
+UserDetails
+   │
+   ▼
+PasswordEncoder.matches()
+   │
+   ▼
+Authenticated Token Created
+   │
+   ▼
+SecurityContextHolder
+   │
+   ▼
+AuthorizationFilter
+   │
+   ▼
+AuthorizationManager
+   │
+   ▼
+Role Check
+   │
+   ▼
+Controller
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟢 LAYER 1 : DELEGATINGFILTERPROXY
+
+Class:
+
+org.springframework.web.filter.DelegatingFilterProxy
+
+Purpose:
+
+Tomcat ➜ Spring Bridge
+
+Do We Write It?
+
+❌ NO
+
+Do We Configure It?
+
+❌ NO
+
+Who Creates It?
+
+✅ Spring Boot Auto Configuration
+
+Real Life:
+
+spring-boot-starter-security
+        ↓
+Auto Registers
+        ↓
+DelegatingFilterProxy
+        ↓
+Tomcat Uses It
+
+Your Code:
+
+NOTHING
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟢 LAYER 2 : FILTERCHAINPROXY
+
+Class:
+
+org.springframework.security.web.FilterChainProxy
+
+Purpose:
+
+Master Security Director
+
+Do We Write It?
+
+❌ NO
+
+Do We Configure It?
+
+❌ NO
+
+Who Creates It?
+
+✅ Spring Security
+
+Internal:
+
+FilterChainProxy
+      │
+      ▼
+List<SecurityFilterChain>
+
+Your Code:
+
+NOTHING
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟡 LAYER 3 : SECURITYFILTERCHAIN
+
+Class:
+
+SecurityFilterChain
+
+Purpose:
+
+Defines Security Rules
+
+Do We Write It?
+
+✅ YES
+
+This Is The MAIN Security Class We Configure.
+
+Example:
+
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http)
+            throws Exception {
+
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/admin/**")
+                .hasRole("ADMIN")
+                .anyRequest()
+                .authenticated())
+            .formLogin();
+
+        return http.build();
+    }
+}
+
+What Happens Internally?
+
+http.build()
+      │
+      ▼
+DefaultSecurityFilterChain
+      │
+      ▼
+List<Security Filters Created
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟡 LAYER 4 : USERNAMEPASSWORDAUTHENTICATIONFILTER
+
+Class:
+
+UsernamePasswordAuthenticationFilter
+
+Purpose:
+
+Reads Login Request
+
+Do We Write It?
+
+❌ NO
+
+Who Creates It?
+
+✅ Spring Security
+
+Request:
+
+POST /login
+username=admin
+password=admin123
+
+Filter Reads:
+
+request.getParameter("username")
+
+request.getParameter("password")
+
+Then Creates:
+
+UsernamePasswordAuthenticationToken
+
+Your Code:
+
+NONE
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟢 LAYER 5 : USERNAMEPASSWORDAUTHENTICATIONTOKEN
+
+Class:
+
+UsernamePasswordAuthenticationToken
+
+Purpose:
+
+Container Holding Login Data
+
+Do We Write It?
+
+❌ NO
+
+Created By:
+
+UsernamePasswordAuthenticationFilter
+
+Before Authentication:
+
+UsernamePasswordAuthenticationToken
+
+username = admin
+password = admin123
+authenticated = false
+
+After Authentication:
+
+username = admin
+ROLE_ADMIN
+authenticated = true
+
+Your Code:
+
+NONE
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟡 LAYER 6 : AUTHENTICATIONMANAGER
+
+Interface:
+
+AuthenticationManager
+
+Default Implementation:
+
+ProviderManager
+
+Purpose:
+
+Authentication Coordinator
+
+Do We Write It?
+
+❌ NO
+
+Do We Configure It?
+
+Sometimes.
+
+Usually Spring Boot Creates It.
+
+Real Flow:
+
+AuthenticationManager
+        │
+        ▼
+ProviderManager
+
+Your Code:
+
+Usually NONE
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟡 LAYER 7 : PROVIDERMANAGER
+
+Class:
+
+ProviderManager
+
+Purpose:
+
+Select AuthenticationProvider
+
+Do We Write It?
+
+❌ NO
+
+Who Creates It?
+
+✅ Spring Security
+
+Internally:
+
+ProviderManager
+       │
+       ├── DaoAuthenticationProvider
+       ├── JwtAuthenticationProvider
+       ├── OAuth2AuthenticationProvider
+       └── LDAPAuthenticationProvider
+
+Your Code:
+
+NONE
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟠 LAYER 8 : DAOAUTHENTICATIONPROVIDER
+
+Class:
+
+DaoAuthenticationProvider
+
+Purpose:
+
+Actual Username Password Validation
+
+Do We Write It?
+
+❌ NO
+
+Usually Auto Created.
+
+Internally Calls:
+
+UserDetailsService
+
+PasswordEncoder
+
+Flow:
+
+DaoAuthenticationProvider
+         │
+         ▼
+UserDetailsService
+         │
+         ▼
+PasswordEncoder
+         │
+         ▼
+Authentication Success
+
+Your Code:
+
+Usually NONE
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟥 LAYER 9 : USERDETAILSSERVICE
+
+Interface:
+
+UserDetailsService
+
+Purpose:
+
+Load User
+
+THIS IS USUALLY OUR FIRST CUSTOM CLASS.
+
+✅ WE IMPLEMENT THIS
+
+Example:
+
+@Service
+public class MyUserDetailsService
+       implements UserDetailsService {
+
+    @Override
+    public UserDetails
+    loadUserByUsername(String username){
+
+        User user =
+            repository
+              .findByUsername(username);
+
+        return User.builder()
+                .username(user.getUsername())
+                .password(user.getPassword())
+                .roles("ADMIN")
+                .build();
+    }
+}
+
+Responsibilities:
+
+✅ Fetch User
+✅ Fetch Password
+✅ Fetch Roles
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟥 LAYER 10 : USERDETAILS
+
+Interface:
+
+UserDetails
+
+Spring Default Implementation:
+
+org.springframework.security.core.userdetails.User
+
+Do We Write It?
+
+❌ Usually No
+
+Can We Create Custom One?
+
+✅ Yes
+
+Contains:
+
+username
+password
+authorities
+accountNonLocked
+enabled
+
+Most Projects:
+
+return User.builder()
+      .username(...)
+      .password(...)
+      .roles(...)
+      .build();
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟥 LAYER 11 : PASSWORDENCODER
+
+Interface:
+
+PasswordEncoder
+
+Implementation:
+
+BCryptPasswordEncoder
+
+Do We Configure It?
+
+✅ YES
+
+Real Code:
+
+@Bean
+public PasswordEncoder
+passwordEncoder() {
+
+     return new BCryptPasswordEncoder();
+}
+
+Spring Uses It.
+
+You Don't Call It Manually During Login.
+
+DaoAuthenticationProvider Uses It.
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟣 LAYER 12 : SECURITYCONTEXTHOLDER
+
+Class:
+
+SecurityContextHolder
+
+Purpose:
+
+Stores Logged-In User
+
+Do We Write It?
+
+❌ NO
+
+Do We Configure It?
+
+❌ NO
+
+Who Uses It?
+
+✅ Spring Security
+
+Who Reads It?
+
+✅ Controllers
+✅ Services
+✅ Filters
+
+Example:
+
+Authentication auth =
+SecurityContextHolder
+   .getContext()
+   .getAuthentication();
+
+String username =
+auth.getName();
+
+Most Common Usage:
+
+Get Current User
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟣 LAYER 13 : AUTHORIZATIONFILTER
+
+Class:
+
+AuthorizationFilter
+
+Purpose:
+
+Can User Access URL?
+
+Do We Write It?
+
+❌ NO
+
+Do We Configure It?
+
+Indirectly Via:
+
+.authorizeHttpRequests()
+
+Example:
+
+http.authorizeHttpRequests(auth ->
+    auth
+        .requestMatchers("/admin/**")
+        .hasRole("ADMIN")
+        .anyRequest()
+        .authenticated());
+
+Spring Converts This To Authorization Rules.
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟣 LAYER 14 : AUTHORIZATIONMANAGER
+
+Interface:
+
+AuthorizationManager
+
+Purpose:
+
+Permission Decision Engine
+
+Do We Write It?
+
+❌ Normally No
+
+Spring Creates It.
+
+Checks:
+
+ROLE_ADMIN?
+ROLE_USER?
+HAS_AUTHORITY?
+
+Returns:
+
+ALLOW
+or
+DENY
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🟣 LAYER 15 : GRANTEDAUTHORITY
+
+Interface:
+
+GrantedAuthority
+
+Implementation:
+
+SimpleGrantedAuthority
+
+Represents Permissions.
+
+Example:
+
+ROLE_ADMIN
+
+CREATE_EMPLOYEE
+
+DELETE_EMPLOYEE
+
+VIEW_REPORTS
+
+Usually Created For Us.
+
+Example:
+
+User.builder()
+    .roles("ADMIN")
+    .build();
+
+Spring Automatically Creates:
+
+ROLE_ADMIN
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🏆 REAL WORLD PROJECT - WHAT WE ACTUALLY WRITE
+
+1️⃣ Security Configuration
+
+@Configuration
+public class SecurityConfig {
+
+   @Bean
+   SecurityFilterChain
+   securityFilterChain(HttpSecurity http)
+   throws Exception {
+
+        return http.build();
+   }
+}
+
+✅ WE WRITE THIS
+
+────────────────────────────────────────
+
+2️⃣ UserDetailsService
+
+@Service
+public class MyUserDetailsService
+       implements UserDetailsService {
+
+}
+
+✅ WE WRITE THIS
+
+────────────────────────────────────────
+
+3️⃣ PasswordEncoder Bean
+
+@Bean
+public PasswordEncoder
+passwordEncoder(){
+
+     return new BCryptPasswordEncoder();
+}
+
+✅ WE WRITE THIS
+
+────────────────────────────────────────
+
+4️⃣ User Entity
+
+@Entity
+public class User {
+
+}
+
+✅ WE WRITE THIS
+
+────────────────────────────────────────
+
+5️⃣ User Repository
+
+@Repository
+public interface UserRepository {
+
+}
+
+✅ WE WRITE THIS
+
+────────────────────────────────────────
+
+6️⃣ Optional JWT Filter
+
+public class JwtAuthenticationFilter {
+
+}
+
+✅ WE MAY WRITE THIS
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🎯 FINAL MEMORY TABLE
+
+SPRING PROVIDES:
+✅ DelegatingFilterProxy
+✅ FilterChainProxy
+✅ DefaultSecurityFilterChain
+✅ UsernamePasswordAuthenticationFilter
+✅ UsernamePasswordAuthenticationToken
+✅ AuthenticationManager
+✅ ProviderManager
+✅ DaoAuthenticationProvider
+✅ User
+✅ SecurityContextHolder
+✅ AuthorizationFilter
+✅ AuthorizationManager
+✅ GrantedAuthority
+✅ Session Management
+✅ CSRF Infrastructure
+
+WE USUALLY PROVIDE:
+✅ SecurityConfig
+✅ SecurityFilterChain Bean Configuration
+✅ User Entity
+✅ UserRepository
+✅ UserDetailsService Implementation
+✅ PasswordEncoder Bean
+✅ JWT Filter (if JWT used)
+✅ Custom AuthenticationProvider (rare)
+✅ Custom Authorization Logic (rare)
+
+🏆 INTERVIEW ONE-LINER:
+
+In a real Spring Security application, 90% of the security engine (DelegatingFilterProxy, FilterChainProxy, AuthenticationManager, ProviderManager, DaoAuthenticationProvider, SecurityContextHolder, AuthorizationManager, Filters, Sessions, CSRF, etc.) is already implemented by Spring Security. Developers mainly provide SecurityFilterChain configuration, UserDetailsService implementation, PasswordEncoder bean, User repository/entity, and optionally JWT filters or custom authentication providers.	
+	
+	
+	
+	
+	
+	
+	
+	

@@ -1,0 +1,666 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║      🎬 CYBER SECURITY MASTER COURSE - PART 3 : SECURITY ARCHITECTURE FOUNDATION 🎬                            ║
+║      IDENTITY • AUTHENTICATION • AUTHORIZATION • TRUST • CRYPTOGRAPHY • HTTPS                                  ║
+║                   (WHY MODERN SECURITY SYSTEMS EXIST)                                                           ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 1 : THE SECURITY PIPELINE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Every secure system ultimately asks:
+
+1. Who are you?
+2. How do I verify that?
+3. What are you allowed to do?
+4. How do I prove what you did?
+5. How do I protect the data?
+
+Everything in security exists to answer these questions.
+
+Security Pipeline:
+
+╔══════════════╗→╔══════════════╗→╔══════════════╗→╔══════════════╗→╔══════════════╗
+║Identification║ ║Authentication║ ║Authorization ║ ║Accountability║ ║Protection    ║
+╚══════════════╝ ╚══════════════╝ ╚══════════════╝ ╚══════════════╝ ╚══════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 2 : IDENTIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Identification means:
+
+🪪 Claiming an identity.
+
+Example:
+
+Login Screen
+
+Username:
+john
+
+At this point system DOES NOT know
+whether you are John.
+
+You are only claiming:
+
+"I am John"
+
+Examples:
+
+✅ Username
+✅ Email
+✅ Employee Id
+✅ Account Number
+
+Question Answered:
+
+❓ Who do you claim to be?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 3 : AUTHENTICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Authentication means:
+
+✅ Verifying identity claim.
+
+Example:
+
+Username = john
+
+Password = password123
+
+System verifies.
+
+Now identity is trusted.
+
+Question Answered:
+
+❓ Are you really John?
+
+Authentication Pipeline:
+
+╔════════════╗→╔════════════╗→╔════════════╗→╔════════════╗
+║ Username   ║ ║ Password   ║ ║ Verification║ ║ Identity  ║
+║ Entered    ║ ║ Entered    ║ ║ Success     ║ ║ Trusted   ║
+╚════════════╝ ╚════════════╝ ╚════════════╝ ╚════════════╝
+
+Common Authentication Factors:
+
+╔════════════════════╦══════════════════════════════╗
+║ Factor             ║ Example                      ║
+╠════════════════════╬══════════════════════════════╣
+║ Something You Know ║ Password                     ║
+║ Something You Have ║ Mobile Device                ║
+║ Something You Are  ║ Fingerprint                  ║
+╚════════════════════╩══════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 4 : MULTI FACTOR AUTHENTICATION (MFA)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Password Alone:
+
+┌───────────────┐
+│ Password      │
+└───────────────┘
+
+Single Layer.
+
+MFA:
+
+┌───────────────┐→┌───────────────┐
+│ Password      │ │ OTP/Fingerprint│
+└───────────────┘ └───────────────┘
+
+Two Layers.
+
+Even if password leaks:
+
+Attacker still needs second factor.
+
+This dramatically reduces account takeover risk.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 5 : AUTHORIZATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Authentication Answers:
+
+✅ Who Are You?
+
+Authorization Answers:
+
+✅ What Are You Allowed To Do?
+
+Example:
+
+User Authenticated Successfully
+
+Role = USER
+
+Permissions:
+
+✅ View Profile
+✅ Update Profile
+
+❌ Delete Users
+❌ Shutdown System
+
+Authorization Architecture:
+
+╔══════╗→╔══════════════╗→╔════════════╗
+║ User ║ ║ Role Check   ║ ║ Permission ║
+╚══════╝ ╚══════════════╝ ╚════════════╝
+
+Example:
+
+ADMIN
+
+✅ Create User
+✅ Delete User
+✅ Read User
+
+USER
+
+✅ Read Own Data
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 6 : AUTHENTICATION VS AUTHORIZATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+╔══════════════════════╦══════════════════════╗
+║ AUTHENTICATION       ║ AUTHORIZATION        ║
+╠══════════════════════╬══════════════════════╣
+║ Who Are You ?        ║ What Can You Do ?    ║
+║ Identity Verification║ Permission Check     ║
+║ Login                ║ Access Decision      ║
+║ Happens First        ║ Happens Second       ║
+╚══════════════════════╩══════════════════════╝
+
+Example:
+
+John Logs In
+      │
+      ▼
+Authentication Success
+      │
+      ▼
+Authorization Check
+      │
+      ▼
+Can John Delete Users?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 7 : ACCOUNTABILITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Accountability means:
+
+✅ Actions can be traced back to users.
+
+Without logs:
+
+User Deletes Data
+
+Nobody Knows Who Did It.
+
+Problem.
+
+With logs:
+
+User Deletes Data
+        │
+        ▼
+Audit Log Generated
+        │
+        ▼
+Evidence Exists
+
+Examples:
+
+✅ Audit Logging
+✅ Security Logging
+✅ SIEM Systems
+
+Question Answered:
+
+❓ Who did this action?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 8 : NON-REPUDIATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Repudiation Means:
+
+❌ "I didn't do it."
+
+Non-Repudiation Means:
+
+✅ User Cannot Deny Action.
+
+Example:
+
+Digital Banking Transfer
+
+User Signs Transaction
+
+System Stores Evidence
+
+Later:
+
+User Claims
+
+"I never transferred money."
+
+Evidence Exists.
+
+Non-Repudiation Ensures:
+
+✅ Traceability
+✅ Proof
+✅ Legal Validity
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 9 : TRUST BOUNDARIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+One of the most important architect concepts.
+
+Trust Boundary =
+Point where trust level changes.
+
+Example:
+
+Internet
+    │
+    ▼
+Firewall
+    │
+    ▼
+Application
+
+Boundary Here.
+
+Architecture:
+
+╔══════════╗│╔══════════╗
+║Untrusted ║│║ Trusted  ║
+║ Internet ║│║ Internal ║
+╚══════════╝│╚══════════╝
+            ▲
+            │
+      TRUST BOUNDARY
+
+At Every Trust Boundary:
+
+✅ Validate
+✅ Authenticate
+✅ Authorize
+✅ Sanitize
+
+Never blindly trust incoming data.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 10 : DEFENSE IN DEPTH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Golden Security Principle:
+
+Never Trust One Protection Layer.
+
+Wrong Thinking:
+
+┌───────────┐
+│ Password  │
+└───────────┘
+
+Only One Layer.
+
+Correct Architecture:
+
+╔══════╗→╔════════╗→╔══════╗→╔════════╗→╔═══════╗→╔══════╗
+║ DNS  ║ ║Firewall║ ║ WAF  ║ ║ Gateway║ ║Security║ ║ DB   ║
+╚══════╝ ╚════════╝ ╚══════╝ ╚════════╝ ╚═══════╝ ╚══════╝
+
+If One Layer Fails,
+Others Remain.
+
+This is defense-in-depth.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 11 : WHY ENCRYPTION EXISTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+Data Travels Through Networks.
+
+Without Encryption:
+
+"HELLO"
+
+can be read.
+
+With Encryption:
+
+"x83@!#KJH!sh"
+
+meaningless to observers.
+
+Purpose:
+
+✅ Confidentiality
+
+Formula:
+
+Plaintext
+    │
+    ▼
+Encryption
+    │
+    ▼
+Ciphertext
+    │
+    ▼
+Decryption
+    │
+    ▼
+Original Data
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 12 : SYMMETRIC ENCRYPTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Uses SAME KEY.
+
+╔══════╗→╔════════╗→╔════════╗→╔══════╗
+║ Data ║ ║ Secret ║ ║ Secret ║ ║ Data ║
+║      ║ ║ Key    ║ ║ Key    ║ ║      ║
+╚══════╝ ╚════════╝ ╚════════╝ ╚══════╝
+
+Fast.
+
+Used For:
+
+✅ Bulk Data Encryption
+
+Problem:
+
+How Do We Safely Share The Key?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 13 : ASYMMETRIC ENCRYPTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Uses Two Keys.
+
+╔══════════════╗→╔══════════════╗→╔══════════════╗
+║ Public Key   ║ ║ Encrypted    ║ ║ Private Key  ║
+║ Shareable    ║ ║ Data         ║ ║ Secret       ║
+╚══════════════╝ ╚══════════════╝ ╚══════════════╝
+
+Advantages:
+
+✅ Secure Key Distribution
+
+Used In:
+
+✅ HTTPS
+✅ TLS
+✅ Digital Certificates
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 14 : HASHING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Hashing ≠ Encryption
+
+Purpose:
+
+✅ Integrity Verification
+
+Example:
+
+Password
+    │
+    ▼
+Hash Function
+    │
+    ▼
+Hash Value
+
+Properties:
+
+✅ One Way
+✅ Deterministic
+✅ Fast Verification
+
+Used For:
+
+✅ Password Storage
+✅ Integrity Checks
+
+Algorithms:
+
+✅ SHA-256
+✅ SHA-512
+✅ BCrypt
+✅ Argon2
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 15 : ENCRYPTION VS HASHING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+╔═══════════════════════╦══════════════════════╗
+║ ENCRYPTION            ║ HASHING              ║
+╠═══════════════════════╬══════════════════════╣
+║ Reversible            ║ One Way              ║
+║ Confidentiality       ║ Integrity            ║
+║ Has Key               ║ No Key               ║
+║ Decrypt Possible      ║ No Recovery          ║
+╚═══════════════════════╩══════════════════════╝
+
+Remember:
+
+Encryption Hides Data.
+
+Hashing Verifies Data.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 16 : DIGITAL SIGNATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose:
+
+✅ Integrity
+✅ Authenticity
+✅ Non-Repudiation
+
+Flow:
+
+Data
+ │
+ ▼
+Hash
+ │
+ ▼
+Sign With Private Key
+ │
+ ▼
+Signature
+
+Verification:
+
+Data
+ │
+ ▼
+Hash Computed
+ │
+ ▼
+Verify Using Public Key
+
+If Valid:
+
+✅ Data Untampered
+✅ Sender Verified
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 17 : WHY HTTPS EXISTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HTTP Problem:
+
+Browser ───────────── Server
+
+Data Visible.
+
+HTTPS Solution:
+
+Browser ─ TLS Tunnel ─ Server
+
+Data Protected.
+
+HTTPS Provides:
+
+✅ Confidentiality
+✅ Integrity
+✅ Authentication
+
+Without HTTPS:
+
+Passwords
+Cookies
+Tokens
+
+can be exposed.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 18 : SESSION SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Authenticated User
+       │
+       ▼
+Session Created
+       │
+       ▼
+Session Id Issued
+       │
+       ▼
+Future Requests Trusted
+
+If Session Stolen:
+
+Attacker Appears Logged In.
+
+Security Controls:
+
+✅ Secure Cookies
+✅ HttpOnly
+✅ SameSite
+✅ Session Timeout
+✅ MFA
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 19 : WHY MODERN SECURITY TECHNOLOGIES EXIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem                     Technology
+
+Identity Verification  →    Authentication
+
+Permission Control     →    Authorization
+
+Password Weakness      →    MFA
+
+Data Theft             →    Encryption
+
+Data Tampering         →    Hashing
+
+Proof Of Action        →    Digital Signatures
+
+Network Snooping       →    HTTPS/TLS
+
+Layer Protection       →    Defense In Depth
+
+Trust Validation       →    Trust Boundaries
+
+Everything exists to solve a specific security problem.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 FINAL SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Identification
+ ↓
+Who Are You Claiming To Be?
+
+Authentication
+ ↓
+Are You Really That Person?
+
+Authorization
+ ↓
+What Can You Do?
+
+Accountability
+ ↓
+Who Performed The Action?
+
+Non-Repudiation
+ ↓
+Can The User Deny The Action?
+
+Trust Boundary
+ ↓
+Location Where Trust Changes
+
+Defense In Depth
+ ↓
+Multiple Security Layers
+
+Encryption
+ ↓
+Confidentiality
+
+Hashing
+ ↓
+Integrity
+
+Digital Signatures
+ ↓
+Integrity + Authenticity + Non-Repudiation
+
+HTTPS/TLS
+ ↓
+Secure Communication
+
+Session Security
+ ↓
+Protect Authenticated Users
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🚀 PART 4 (NEXT TOPIC)
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🎬 CYBER SECURITY MASTER COURSE - PART 4 :
+ATTACK LIFECYCLE & HOW REAL BREACHES HAPPEN
+
+Topics:
+
+✅ Cyber Kill Chain
+✅ Reconnaissance
+✅ Enumeration
+✅ Initial Access
+✅ Privilege Escalation
+✅ Lateral Movement
+✅ Persistence
+✅ Data Exfiltration
+✅ Covering Tracks
+✅ MITRE ATT&CK Framework
+✅ Real Enterprise Breach Anatomy
+✅ How An Attacker Moves From Browser → API → Application → Database → Crown Jewels
+
+This is where you'll stop seeing attacks as isolated concepts and start understanding them as a complete end-to-end campaign.

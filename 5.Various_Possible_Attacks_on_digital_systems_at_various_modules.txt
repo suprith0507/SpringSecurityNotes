@@ -1,0 +1,619 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║      🎬 CYBER SECURITY MASTER COURSE - PART 5 : COMPLETE ATTACK LANDSCAPE 🎬                                   ║
+║        (ALL SECURITY DOMAINS • ALL ATTACK CATEGORIES • BIG PICTURE FIRST)                                      ║
+║                         FROM INTERNET TO DATABASE                                                               ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 THE MOST IMPORTANT REALIZATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Before OWASP...
+Before Spring Security...
+Before JWT...
+Before OAuth...
+
+You must understand:
+
+Cyber Security ≠ Application Security
+
+Application Security is only ONE slice of Cyber Security.
+
+Complete Landscape:
+
+╔══════════╦══════════╦══════════════╦══════════╦══════════╦══════════╦══════════╦══════════╗
+║Physical  ║ Network  ║Infrastructure║ Cloud    ║ Platform ║Application║  API    ║ Human    ║
+╚══════════╩══════════╩══════════════╩══════════╩══════════╩══════════╩══════════╩══════════╝
+
+Most Spring Developers Only Learn:
+
+Application + API
+
+While attackers can attack ALL 8 layers.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 1 : THE COMPLETE ENTERPRISE STACK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Think Of A Banking Application.
+
+Customer
+   │
+   ▼
+Internet
+   │
+   ▼
+DNS
+   │
+   ▼
+CDN
+   │
+   ▼
+DDoS Protection
+   │
+   ▼
+Firewall
+   │
+   ▼
+Load Balancer
+   │
+   ▼
+WAF
+   │
+   ▼
+API Gateway
+   │
+   ▼
+Spring Boot APIs
+   │
+   ▼
+Database
+   │
+   ▼
+Storage
+   │
+   ▼
+Cloud Infrastructure
+
+Every Layer Can Be Attacked.
+
+Every Layer Has Different Security Standards.
+
+Every Layer Has Different Attack Types.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 2 : PHYSICAL SECURITY ATTACKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Goal:
+
+Gain Physical Access To Assets.
+
+Protects:
+
+✅ Servers
+✅ Laptops
+✅ Datacenters
+✅ Hardware
+✅ Network Devices
+
+Attack Examples:
+
+╔═══════════════════════════════════════════════════╗
+║ Server Theft                                     ║
+║ Hard Drive Theft                                 ║
+║ USB Malware                                      ║
+║ Hardware Tampering                               ║
+║ Rogue Device Installation                        ║
+║ Datacenter Intrusion                             ║
+║ CCTV Blind Spots                                 ║
+║ Shoulder Surfing                                 ║
+╚═══════════════════════════════════════════════════╝
+
+Question:
+
+If attacker physically owns server,
+does software security still matter?
+
+Often No.
+
+Physical Security Is The First Security Layer.
+
+Defense:
+
+✅ Biometric Access
+✅ CCTV
+✅ Security Guards
+✅ Locked Server Rooms
+✅ Hardware Encryption
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 3 : NETWORK SECURITY ATTACKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Goal:
+
+Attack Network Communication.
+
+Protects:
+
+✅ Traffic
+✅ Network Routes
+✅ Packets
+✅ Communication Channels
+
+Attack Categories:
+
+╔════════════════════════════════════════════════════╗
+║ DDoS                                              ║
+║ DoS                                               ║
+║ Man In The Middle                                 ║
+║ DNS Poisoning                                     ║
+║ ARP Spoofing                                      ║
+║ Packet Sniffing                                   ║
+║ Port Scanning                                     ║
+║ Traffic Interception                              ║
+╚════════════════════════════════════════════════════╝
+
+Example:
+
+User
+ │
+ ▼
+Internet
+ │
+ ▼
+Application
+
+Attacker tries to interfere with traffic.
+
+Goal:
+
+✅ Read Traffic
+✅ Modify Traffic
+✅ Block Traffic
+
+Defense:
+
+✅ TLS
+✅ HTTPS
+✅ Firewalls
+✅ IDS
+✅ IPS
+✅ DDoS Protection
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 4 : INFRASTRUCTURE SECURITY ATTACKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Goal:
+
+Attack Operating Systems & Runtime Platforms.
+
+Protects:
+
+✅ Linux
+✅ Windows
+✅ Docker
+✅ Kubernetes
+✅ Virtual Machines
+
+Common Attacks:
+
+╔════════════════════════════════════════════════════╗
+║ SSH Abuse                                         ║
+║ Weak Passwords                                    ║
+║ Privilege Escalation                              ║
+║ Container Escape                                  ║
+║ Kubernetes Dashboard Exposure                     ║
+║ Host Misconfiguration                             ║
+║ Root Exploitation                                 ║
+╚════════════════════════════════════════════════════╝
+
+Example:
+
+Application Secure
+       │
+       ▼
+Linux Server Insecure
+       │
+       ▼
+System Compromised
+
+Lesson:
+
+Secure Application
+≠
+Secure Infrastructure
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 5 : CLOUD SECURITY ATTACKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Modern Applications Live Here.
+
+Protects:
+
+✅ AWS
+✅ Azure
+✅ GCP
+
+Common Attacks:
+
+╔════════════════════════════════════════════════════╗
+║ Public Storage Buckets                            ║
+║ IAM Misconfiguration                              ║
+║ Secret Leakage                                    ║
+║ Cloud Metadata Abuse                              ║
+║ Access Key Theft                                  ║
+║ Overprivileged Roles                              ║
+║ Public Databases                                  ║
+╚════════════════════════════════════════════════════╝
+
+Example:
+
+Database Secure
+      │
+      ▼
+Cloud Storage Public
+      │
+      ▼
+Data Leak
+
+Lesson:
+
+Cloud Security Is Mostly
+Configuration Security.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 6 : PLATFORM SECURITY ATTACKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Platform = Supporting Components
+
+Examples:
+
+✅ NGINX
+✅ Kafka
+✅ Redis
+✅ RabbitMQ
+✅ Elasticsearch
+✅ API Gateway
+✅ Load Balancers
+
+Attack Examples:
+
+╔════════════════════════════════════════════════════╗
+║ Redis Exposure                                    ║
+║ Elasticsearch Exposure                            ║
+║ Gateway Misconfigurations                         ║
+║ Reverse Proxy Issues                              ║
+║ Weak TLS Configurations                           ║
+║ Kafka Exposure                                    ║
+╚════════════════════════════════════════════════════╝
+
+Many Major Incidents Happen Here.
+
+Why?
+
+Application May Be Secure.
+
+Platform Is Not.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 7 : APPLICATION SECURITY ATTACKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 THIS IS OWASP'S WORLD
+
+Protects:
+
+✅ Business Logic
+✅ Source Code
+✅ Web Applications
+
+Attack Categories:
+
+╔════════════════════════════════════════════════════╗
+║ SQL Injection                                     ║
+║ NoSQL Injection                                   ║
+║ XSS                                                ║
+║ CSRF                                              ║
+║ SSRF                                              ║
+║ Broken Access Control                             ║
+║ Security Misconfiguration                         ║
+║ File Upload Vulnerabilities                       ║
+║ Deserialization Vulnerabilities                   ║
+║ Authentication Failures                           ║
+╚════════════════════════════════════════════════════╝
+
+Example:
+
+User
+ │
+ ▼
+Spring Boot Controller
+ │
+ ▼
+Service
+ │
+ ▼
+Database
+
+Attack targets:
+
+Code
+Design
+Configuration
+
+This Is Where OWASP Operates.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 8 : API SECURITY ATTACKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Modern Security's Fastest Growing Area.
+
+Protects:
+
+✅ REST APIs
+✅ GraphQL APIs
+✅ Microservices
+
+Common Attacks:
+
+╔════════════════════════════════════════════════════╗
+║ IDOR/BOLA                                         ║
+║ JWT Abuse                                         ║
+║ Broken Authentication                             ║
+║ API Enumeration                                   ║
+║ Rate Limit Bypass                                 ║
+║ Excessive Data Exposure                           ║
+║ Mass Assignment                                   ║
+║ Broken Object Property Authorization              ║
+╚════════════════════════════════════════════════════╝
+
+Example:
+
+User Can Access:
+
+/accounts/100
+
+changes URL to
+
+/accounts/101
+
+Application returns data.
+
+API Security Failure.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 9 : HUMAN SECURITY ATTACKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Dangerous Of All Layers.
+
+Protects:
+
+✅ Humans
+
+Attack Categories:
+
+╔════════════════════════════════════════════════════╗
+║ Phishing                                          ║
+║ Spear Phishing                                    ║
+║ Social Engineering                                ║
+║ Fake Support Calls                                ║
+║ Identity Theft                                    ║
+║ Credential Theft                                  ║
+║ Insider Threats                                   ║
+╚════════════════════════════════════════════════════╝
+
+Reality:
+
+Many organizations are breached through people,
+not through technology.
+
+Human Layer Is Usually The Weakest Layer.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 10 : AVAILABILITY ATTACKS (SPAN MULTIPLE LAYERS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Goal:
+
+Make Systems Unavailable.
+
+Examples:
+
+╔════════════════════════════════════════════════════╗
+║ DDoS                                               ║
+║ DoS                                                ║
+║ Thread Exhaustion                                  ║
+║ Database Pool Exhaustion                           ║
+║ Memory Exhaustion                                  ║
+║ Storage Exhaustion                                 ║
+╚════════════════════════════════════════════════════╝
+
+Targets:
+
+Network
+Infrastructure
+Platform
+Application
+
+CIA Impact:
+
+Availability
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 11 : DATA THEFT ATTACKS (SPAN MULTIPLE LAYERS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Goal:
+
+Steal Information.
+
+Examples:
+
+╔════════════════════════════════════════════════════╗
+║ Insider Theft                                     ║
+║ SQL Injection                                     ║
+║ Credential Theft                                  ║
+║ Cloud Misconfiguration                            ║
+║ Data Exfiltration                                 ║
+║ API Data Exposure                                 ║
+╚════════════════════════════════════════════════════╝
+
+CIA Impact:
+
+Confidentiality
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 12 : DATA TAMPERING ATTACKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Goal:
+
+Modify Data Illegally.
+
+Examples:
+
+╔════════════════════════════════════════════════════╗
+║ Account Manipulation                              ║
+║ Transaction Fraud                                 ║
+║ Database Updates                                  ║
+║ API Abuse                                         ║
+║ Session Tampering                                 ║
+╚════════════════════════════════════════════════════╝
+
+CIA Impact:
+
+Integrity
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 13 : SECURITY STANDARDS LANDSCAPE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Different Organizations Own Different Areas.
+
+╔══════════════════════╦══════════════════════════════════════╗
+║ ORGANIZATION         ║ DOMAIN                              ║
+╠══════════════════════╬══════════════════════════════════════╣
+║ OWASP                ║ Application Security                ║
+║ MITRE ATT&CK         ║ Attacker Behavior                   ║
+║ NIST                 ║ Enterprise Security Frameworks      ║
+║ CIS                  ║ Infrastructure Hardening            ║
+║ ISO 27001            ║ Security Governance                 ║
+║ CSA                  ║ Cloud Security                      ║
+║ PCI-DSS              ║ Payment Security                    ║
+╚══════════════════════╩══════════════════════════════════════╝
+
+No Single Framework Covers Everything.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 14 : WHERE OWASP FITS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The Universe:
+
+╔════════════╦════════════╦════════════╦════════════╦════════════╗
+║ Physical   ║ Network    ║ Infra      ║ Cloud      ║ Platform   ║
+╚════════════╩════════════╩════════════╩════════════╩════════════╝
+
+╔════════════╦════════════╦════════════╗
+║ Application║ API        ║ Human      ║
+╚════════════╩════════════╩════════════╝
+
+OWASP Focuses Mainly On:
+
+╔══════════════════════════════════════╗
+║ Application Security                ║
+║ API Security                         ║
+╚══════════════════════════════════════╝
+
+Not:
+
+❌ Physical Security
+❌ Network Security
+❌ Cloud Security
+❌ Infrastructure Security
+
+This Is Why OWASP Covers:
+
+✅ Injection
+✅ SSRF
+✅ Broken Access Control
+
+But Not Primarily:
+
+❌ DDoS
+❌ Router Attacks
+❌ Datacenter Intrusion
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 FINAL SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CYBER SECURITY UNIVERSE
+
+Physical Layer
+ ↓
+Steal Hardware
+
+Network Layer
+ ↓
+Interfere With Traffic
+
+Infrastructure Layer
+ ↓
+Attack OS/Containers
+
+Cloud Layer
+ ↓
+Attack Configuration
+
+Platform Layer
+ ↓
+Attack Supporting Services
+
+Application Layer
+ ↓
+Attack Source Code & Business Logic
+
+API Layer
+ ↓
+Attack Service Endpoints
+
+Human Layer
+ ↓
+Attack People
+
+Most Important Lesson:
+
+❝ OWASP Is Not Cyber Security.
+OWASP Is One Specialized Area Inside Cyber Security.
+
+To become a secure Spring Boot developer,
+first understand the entire battlefield.
+
+Then zoom into:
+Application Security → API Security → OWASP → Spring Security. ❞
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🚀 PART 6 (NEXT TOPIC)
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🎬 OWASP DEEP DIVE & APPLICATION SECURITY FUNDAMENTALS
+
+We'll answer:
+
+✅ Why OWASP was created?
+✅ Why application security became a separate field?
+✅ Why browsers, APIs and web applications are attacked differently?
+✅ What exactly is an application vulnerability?
+✅ OWASP Top 10 end-to-end
+✅ How OWASP maps to Spring Boot
+✅ Which OWASP risks appear most often in enterprise Java applications
+
+After PART 6, you'll finally have enough context to understand Spring Security the way an architect does rather than treating it as just a library.

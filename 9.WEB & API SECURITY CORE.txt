@@ -1,0 +1,724 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║         🎬 CYBER SECURITY MASTER COURSE - PART 9 : WEB & API SECURITY CORE 🎬                                  ║
+║      BROWSER SECURITY • ACCESS CONTROL • AUTHENTICATION • API SECURITY • JWT                                   ║
+║         (WHY MOST MODERN BREACHES HAPPEN EVEN WHEN LOGIN WORKS FINE)                                           ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 THE BIG REALIZATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Developers Think Security Means:
+
+✅ Login Screen
+✅ Password
+✅ JWT
+
+Done.
+
+Reality:
+
+Most Modern Breaches Happen AFTER Authentication.
+
+User Already Logged In
+         │
+         ▼
+Application Trusts Too Much
+         │
+         ▼
+Data Exposure
+
+Therefore:
+
+Modern Security Focus
+         │
+         ▼
+Authorization
+Access Control
+API Security
+Browser Security
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 1 : THE MODERN ATTACK SURFACE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Today:
+
+╔════════╗→╔════════╗→╔════════════╗→╔════════════╗→╔═══════════╗
+║ Browser║ ║ Internet║ ║ API Layer ║ ║Application ║ ║ Database  ║
+╚════════╝ ╚════════╝ ╚════════════╝ ╚════════════╝ ╚═══════════╝
+
+Attackers Target:
+
+╔══════════════╦══════════════╦══════════════╗
+║ Browser      ║ API          ║ App Logic    ║
+╚══════════════╩══════════════╩══════════════╝
+
+Not Just:
+
+❌ Database
+
+Because Browser + API
+Have Become Main Entry Points.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 2 : THE ACCESS CONTROL CRISIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OWASP #1 Risk:
+
+Broken Access Control
+
+Reason:
+
+Applications Verify Identity
+But Forget Permissions.
+
+Example:
+
+User A
+     │
+     ▼
+
+/profile/100
+
+Works
+
+Changes URL
+
+/profile/101
+
+Application Returns Data
+
+Problem:
+
+Identity Verified
+
+Authorization Missing
+
+Architecture:
+
+╔══════════╗→╔══════════════╗→╔══════════════╗
+║ Login OK ║ ║ Missing AuthZ║ ║ Data Leak    ║
+╚══════════╝ ╚══════════════╝ ╚══════════════╝
+
+Lesson:
+
+Authentication
+≠
+Authorization
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 3 : AUTHENTICATION FAILURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Question:
+
+Can Attacker Pretend To Be Somebody Else?
+
+Examples:
+
+✅ Weak Passwords
+✅ Password Reuse
+✅ Missing MFA
+✅ Session Problems
+✅ Token Theft
+
+Flow:
+
+Claim Identity
+       │
+       ▼
+Verify Identity
+       │
+       ▼
+Grant Access
+
+Failure Here
+
+      ▼
+
+Identity Cannot Be Trusted
+
+Authentication Answers:
+
+❓ Who Are You?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 4 : AUTHORIZATION FAILURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Question:
+
+What Are You Allowed To Do?
+
+Example:
+
+ADMIN
+
+✅ Create Users
+✅ Delete Users
+
+USER
+
+✅ View Own Data
+
+Bad Architecture:
+
+╔════════════╗→╔══════════════╗→╔════════════╗
+║ Authenticated║║ No Role Check║║ Access     ║
+╚════════════╝ ╚══════════════╝ ╚════════════╝
+
+Authorization Answers:
+
+❓ Can This User Perform This Action?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 5 : SESSION HIJACKING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Traditional Applications:
+
+Login
+   │
+   ▼
+Session Created
+   │
+   ▼
+Session Id Issued
+   │
+   ▼
+Future Requests Trusted
+
+Risk:
+
+If Session Identifier Is Stolen
+
+Attacker Appears Authenticated.
+
+Attack Target:
+
+Not Password
+
+But Session Identity.
+
+Defenses:
+
+✅ Secure Cookies
+✅ HttpOnly
+✅ SameSite
+✅ Session Expiration
+✅ MFA
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 6 : BROWSER SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Many Developers Ignore Browser Security.
+
+Huge Mistake.
+
+Browser Stores:
+
+✅ Sessions
+✅ Cookies
+✅ JWT Tokens
+✅ Local Storage
+✅ User Data
+
+Browser Security Attacks:
+
+╔════════════════════════════════════════╗
+║ XSS                                   ║
+║ CSRF                                  ║
+║ Clickjacking                          ║
+║ Cookie Theft                          ║
+║ Session Theft                         ║
+║ Browser Storage Abuse                 ║
+║ CORS Issues                           ║
+╚════════════════════════════════════════╝
+
+Browser Is A Security Boundary.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 7 : CROSS SITE SCRIPTING (XSS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Famous Browser Attack.
+
+Root Problem:
+
+Application Sends Dangerous Content.
+
+Browser Executes It.
+
+Flow:
+
+Input
+  │
+  ▼
+Database
+  │
+  ▼
+Application
+  │
+  ▼
+Browser
+  │
+  ▼
+Execution
+
+Result:
+
+❌ Session Theft
+❌ Data Theft
+❌ User Impersonation
+
+Mental Model:
+
+Browser Cannot Distinguish:
+
+Data
+vs
+Executable Content
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 8 : CROSS SITE REQUEST FORGERY (CSRF)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Question:
+
+Can Browser Be Tricked Into Sending Requests?
+
+Browser Trusts Existing Session.
+
+Risk:
+
+Request Appears Legitimate.
+
+Architecture:
+
+User Logged In
+       │
+       ▼
+Session Cookie Exists
+       │
+       ▼
+Browser Sends Request
+       │
+       ▼
+Application Trusts Request
+
+Problem:
+
+Request May Not Be Intentional.
+
+Spring Security Has CSRF Protection
+For This Reason.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 9 : CLICKJACKING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Idea:
+
+Trick User Interface.
+
+User Thinks:
+
+Clicking Button A
+
+Actually Clicks:
+
+Hidden Action B
+
+Flow:
+
+User
+ │
+ ▼
+Fake Interface
+ │
+ ▼
+Real Interface Hidden
+ │
+ ▼
+Action Executed
+
+Target:
+
+User Trust
+
+Not Server Logic.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 10 : CORS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Common Misunderstanding:
+
+CORS Is NOT Spring Security.
+
+CORS Is:
+
+✅ Browser Security Mechanism
+
+Browser Checks:
+
+Can Website A
+Talk To Website B?
+
+Architecture:
+
+Browser
+  │
+  ▼
+Origin Check
+  │
+  ▼
+Allow?
+  │
+  ▼
+Proceed / Block
+
+Wrong Configuration:
+
+Application Trusts Too Many Origins.
+
+Risk:
+
+Untrusted Sites Gain Access.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 11 : API SECURITY EMERGES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Old World:
+
+Browser
+  │
+  ▼
+Website
+
+Modern World:
+
+╔════════╗→╔═══════╗→╔══════════╗→╔══════════╗
+║ Mobile ║ ║ Browser║ ║ APIs     ║ ║ Services ║
+╚════════╝ ╚═══════╝ ╚══════════╝ ╚══════════╝
+
+Everything Talks Through APIs.
+
+APIs Become New Battlefield.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 12 : BOLA / IDOR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Dangerous API Risk.
+
+OWASP API Top 10 Leader.
+
+Example:
+
+User Accesses:
+
+/accounts/100
+
+Works.
+
+Changes:
+
+/accounts/101
+
+Application Returns Data.
+
+Problem:
+
+Object Ownership Never Verified.
+
+Architecture:
+
+Authenticated User
+        │
+        ▼
+Object Request
+        │
+        ▼
+Ownership Not Checked
+        │
+        ▼
+Unauthorized Data Exposure
+
+Identity Verified.
+
+Authorization Failed.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 13 : JWT SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Modern APIs Prefer JWT.
+
+Flow:
+
+Login
+  │
+  ▼
+JWT Created
+  │
+  ▼
+Client Stores JWT
+  │
+  ▼
+Future Requests Use JWT
+
+Questions:
+
+❓ Can Token Be Trusted?
+
+❓ Can Signature Be Verified?
+
+❓ Has Token Expired?
+
+JWT Provides:
+
+✅ Portable Identity
+
+JWT Does NOT Provide:
+
+❌ Automatic Security
+
+Security Comes From Verification.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 14 : API AUTHORIZATION PROBLEMS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Modern Breaches:
+
+NOT Authentication
+
+BUT Authorization
+
+Bad Example:
+
+JWT Valid
+      │
+      ▼
+Access Granted To Everything
+
+Problem:
+
+Identity Verified
+
+Permissions Ignored.
+
+Rule:
+
+Authentication
+      ↓
+First
+
+Authorization
+      ↓
+Every Request
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 15 : EXCESSIVE DATA EXPOSURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Application Returns:
+
+More Data Than Needed.
+
+Example:
+
+Need:
+
+name
+
+Returns:
+
+name
+email
+address
+internalData
+
+Problem:
+
+Unnecessary Information Exposure.
+
+Security Principle:
+
+Minimum Necessary Information.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 16 : RATE LIMITING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Without Limits:
+
+User
+ │
+ ▼
+Unlimited Requests
+
+Risk:
+
+❌ Resource Exhaustion
+❌ API Abuse
+❌ Service Degradation
+
+With Rate Limiting:
+
+Request Counter
+       │
+       ▼
+Threshold Check
+       │
+ ┌─────┴──────┐
+ ▼            ▼
+
+Allow       Reject
+
+Modern APIs Require:
+
+✅ Rate Limiting
+✅ Abuse Prevention
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 17 : WHY MODERN BREACHES HAPPEN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Historically:
+
+Injection Dominated.
+
+Today:
+
+Access Control Problems Dominate.
+
+Reason:
+
+Frameworks Improved.
+
+Applications Became More Complex.
+
+Most Common Root Causes:
+
+╔══════════════════════════════════════╗
+║ Missing Authorization               ║
+║ Weak Authentication                 ║
+║ Excessive Permissions               ║
+║ Data Exposure                       ║
+║ Misconfiguration                    ║
+║ Poor API Design                     ║
+╚══════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 CHAPTER 18 : THE SECURITY CHAIN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+User
+ │
+ ▼
+Browser
+ │
+ ▼
+Authentication
+ │
+ ▼
+Authorization
+ │
+ ▼
+Input Validation
+ │
+ ▼
+Business Logic
+ │
+ ▼
+Database
+ │
+ ▼
+Response
+ │
+ ▼
+Browser Rendering
+
+Security Must Exist
+At Every Step.
+
+One Broken Link
+Can Break Entire Chain.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 FINAL SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Browser Security Risks
+ ↓
+XSS
+CSRF
+CORS
+Clickjacking
+
+Authentication Risks
+ ↓
+Identity Problems
+
+Authorization Risks
+ ↓
+Permission Problems
+
+Session Risks
+ ↓
+Identity Theft Problems
+
+API Risks
+ ↓
+BOLA
+IDOR
+JWT Issues
+Excessive Data Exposure
+
+Most Modern Breaches
+ ↓
+Broken Authorization
+
+Most Important Lesson:
+
+"Login Success Does Not Mean Security Success.
+
+The hardest problem in modern systems
+is not proving WHO a user is.
+
+The hardest problem is ensuring
+the authenticated user can access
+ONLY what they are supposed to access."
+
+══════════════════════════════════════════════════════════════════════════════
+🚀 PART 10 (NEXT TOPIC)
+══════════════════════════════════════════════════════════════════════════════
+
+🎬 SPRING SECURITY ARCHITECTURE MASTERCLASS
+
+Topics:
+
+✅ Why Spring Security Exists
+✅ Security Filter Chain
+✅ DelegatingFilterProxy
+✅ FilterChainProxy
+✅ Security Filters
+✅ SecurityContext
+✅ Authentication
+✅ Authorization
+✅ Session Security
+✅ CSRF Protection
+✅ CORS Handling
+✅ Method Security
+✅ JWT Authentication Flow
+✅ OAuth2 Flow
+✅ Request Lifecycle Inside Spring Security
+
+This is where Cyber Security Concepts finally become
+real Spring Boot implementations.

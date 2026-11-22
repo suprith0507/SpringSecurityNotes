@@ -1,0 +1,824 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║        🎬 CYBER SECURITY MASTER NOTES : MAJOR ATTACKS EXPLAINED (ARCHITECT VIEW) 🎬                           ║
+║     XSS • CSRF • CORS • SSRF • SQLi • DoS • DDoS • IDOR • Sessions • JWT • More                               ║
+║                  (ROOT CAUSE • EXAMPLE • IMPACT • THINKING MODEL)                                               ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 MASTER RULE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Almost every security issue happens because application trusted something too early.
+
+❌ Trusted User Input
+❌ Trusted Browser
+❌ Trusted Identity
+❌ Trusted Permissions
+❌ Trusted Configuration
+❌ Trusted External Systems
+
+Security = Verify Before Trust
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 1. SQL INJECTION (SQLi)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Target:
+
+Database
+
+🎯 Core Problem:
+
+Application mixes:
+
+✅ Data
+
+with
+
+✅ Database Instructions
+
+Architecture:
+
+User Input
+     │
+     ▼
+Application
+     │
+     ▼
+SQL Query
+     │
+     ▼
+Database
+
+Example:
+
+Bank Application:
+
+Customer enters account number.
+
+Application should use:
+
+"Account Number = Data"
+
+But vulnerable design treats user input as part of query logic.
+
+Now database receives:
+
+Data + Instructions
+
+instead of
+
+Only Data.
+
+Business Example:
+
+User searches:
+
+Customer 100
+
+Application accidentally allows user input
+to influence database behavior.
+
+Potential Impact:
+
+✅ Customer Data Exposure
+✅ Data Manipulation
+✅ Data Deletion
+✅ Authentication Bypass
+
+CIA Impact:
+
+✅ Confidentiality
+✅ Integrity
+
+Mental Model:
+
+User Input Should Never Change Database Logic.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 2. CROSS SITE SCRIPTING (XSS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Target:
+
+Browser
+
+🎯 Core Problem:
+
+Browser cannot always distinguish:
+
+Data
+
+from
+
+Executable Content
+
+Architecture:
+
+User Input
+      │
+      ▼
+Stored By Application
+      │
+      ▼
+Displayed To Browser
+      │
+      ▼
+Browser Interprets Content
+      │
+      ▼
+Unexpected Execution
+
+Real Example:
+
+Social Media Application
+
+User Posts Comment:
+
+"Hello Everyone"
+
+Normal.
+
+Application stores and displays it.
+
+Suppose application displays content without proper protection.
+
+Now browser may interpret content
+as executable instead of ordinary text.
+
+Result:
+
+Browser executes unintended behavior.
+
+Who Is Actually Attacked?
+
+❌ Server
+
+Mostly No
+
+✅ Other Users' Browsers
+
+Yes
+
+Impact:
+
+✅ Account Takeover
+✅ Session Theft
+✅ User Impersonation
+✅ Browser Manipulation
+
+CIA Impact:
+
+✅ Confidentiality
+✅ Integrity
+
+Mental Model:
+
+Application Must Treat User Content As Data,
+Not Executable Content.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 3. CROSS SITE REQUEST FORGERY (CSRF)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Target:
+
+Browser Trust Model
+
+🎯 Core Problem:
+
+Browser automatically sends authentication cookies.
+
+Application sees:
+
+Valid Session
+
+Therefore trusts request.
+
+Architecture:
+
+User Logged In
+       │
+       ▼
+Valid Session Exists
+       │
+       ▼
+Browser Automatically Sends Cookie
+       │
+       ▼
+Application Trusts Request
+
+Bank Example:
+
+User logged into banking application.
+
+Application trusts:
+
+Session Cookie
+
+Question:
+
+Can browser send an authenticated request
+that the user never intentionally initiated?
+
+If application only trusts cookie:
+
+Potential CSRF Risk Exists.
+
+Impact:
+
+✅ Profile Changes
+✅ Password Changes
+✅ Settings Changes
+✅ Unauthorized Operations
+
+CIA Impact:
+
+✅ Integrity
+
+Mental Model:
+
+Authentication proves identity.
+
+CSRF proves user intention.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 4. CORS MISCONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠ Important:
+
+CORS Is NOT An Attack.
+
+CORS Is A Browser Defense Mechanism.
+
+🎯 Purpose:
+
+Control Which Websites May Access APIs.
+
+Architecture:
+
+Website A
+     │
+     ▼
+
+Browser Checks
+
+     │
+     ▼
+
+Can Website A
+Call Website B?
+
+Example:
+
+Frontend:
+
+app.company.com
+
+Backend:
+
+api.company.com
+
+Browser Asks:
+
+"Is This Allowed?"
+
+Application Answers Through CORS Headers.
+
+Problem:
+
+Application trusts too many origins.
+
+Example:
+
+"Every Website Is Allowed"
+
+Now Browser Security Becomes Weak.
+
+Impact:
+
+✅ Increased Data Exposure Risk
+✅ Trust Boundary Expansion
+
+CIA Impact:
+
+✅ Confidentiality
+
+Mental Model:
+
+CORS Decides Which Websites May Talk To Your APIs.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 5. SERVER SIDE REQUEST FORGERY (SSRF)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Target:
+
+Server Trust
+
+🎯 Core Problem:
+
+Application makes requests on behalf of users.
+
+Architecture:
+
+User
+ │
+ ▼
+Application
+ │
+ ▼
+External Resource
+
+Example:
+
+Website allows user to provide image URL.
+
+Application downloads image.
+
+Question:
+
+Can application trust destination blindly?
+
+If application blindly connects anywhere:
+
+Potential SSRF Risk.
+
+Application Becomes:
+
+Proxy
+
+instead of
+
+Validator.
+
+Impact:
+
+✅ Information Disclosure
+✅ Access To Internal Resources
+✅ Security Boundary Bypass
+
+CIA Impact:
+
+✅ Confidentiality
+
+Mental Model:
+
+Never Trust User-Supplied Destinations.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 6. DENIAL OF SERVICE (DoS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Target:
+
+Availability
+
+Objective:
+
+Legitimate Users Cannot Use Service.
+
+Architecture:
+
+Application
+     │
+     ▼
+CPU
+Threads
+Memory
+Connections
+
+All Are Limited.
+
+Example:
+
+Movie Ticket Website
+
+100 Seats Available.
+
+100 Genuine Users.
+
+Works Fine.
+
+Suddenly:
+
+Resources consumed much faster than expected.
+
+Result:
+
+Legitimate Users Experience Failure.
+
+Impact:
+
+✅ Service Downtime
+✅ Revenue Loss
+✅ User Frustration
+
+CIA Impact:
+
+✅ Availability
+
+Mental Model:
+
+Resources Are Finite.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 7. DISTRIBUTED DENIAL OF SERVICE (DDoS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Target:
+
+Availability
+
+Difference:
+
+DoS
+
+One Source
+
+DDoS
+
+Many Sources
+
+Architecture:
+
+╔══════╗ ╔══════╗ ╔══════╗ ╔══════╗
+║Node1 ║ ║Node2 ║ ║Node3 ║ ║Node4 ║
+╚══╤═══╝ ╚══╤═══╝ ╚══╤═══╝ ╚══╤═══╝
+   └────────┴────────┴────────┘
+                │
+                ▼
+          Target Service
+
+Example:
+
+E-Commerce Sale Day.
+
+Thousands of legitimate users + enormous artificial traffic.
+
+Target Struggles To Serve Customers.
+
+Impact:
+
+✅ Service Unavailability
+✅ Resource Exhaustion
+
+CIA Impact:
+
+✅ Availability
+
+Mental Model:
+
+Single Attacker Is Dangerous.
+
+Many Coordinated Sources Are Much Worse.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 8. RATE LIMITING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Not An Attack
+
+It Is A Defense.
+
+Purpose:
+
+Control Usage.
+
+Example:
+
+OTP API
+
+Without Limits:
+
+Unlimited Requests
+
+Potential Abuse.
+
+With Limits:
+
+100 Requests Allowed
+        │
+        ▼
+Further Requests Blocked
+
+Architecture:
+
+Request
+   │
+   ▼
+Counter
+   │
+ ┌─┴─┐
+ ▼   ▼
+
+Allow Reject
+
+Protects Against:
+
+✅ Resource Abuse
+✅ Automation Abuse
+✅ Availability Problems
+
+Mental Model:
+
+Every User Gets A Fair Share.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 9. BROKEN ACCESS CONTROL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 OWASP #1
+
+Most Important Modern Risk.
+
+Example:
+
+Bank Employee Portal
+
+ADMIN
+
+✅ View All Accounts
+
+CUSTOMER
+
+✅ View Own Account
+
+Question:
+
+Does Application Actually Enforce This?
+
+Flow:
+
+Authenticated User
+       │
+       ▼
+Resource Request
+       │
+       ▼
+Permission Check Missing
+       │
+       ▼
+Unauthorized Access
+
+Impact:
+
+✅ Sensitive Data Exposure
+✅ Unauthorized Modification
+
+CIA Impact:
+
+✅ Confidentiality
+✅ Integrity
+
+Mental Model:
+
+Login Is Not Enough.
+
+Permissions Matter.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 10. IDOR / BOLA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Most Common API Risk
+
+Full Name:
+
+Insecure Direct Object Reference
+
+Broken Object Level Authorization
+
+Example:
+
+Bank Customer
+
+Requests:
+
+Account 100
+
+Application returns account.
+
+Question:
+
+Can system verify ownership?
+
+If ownership checks are missing:
+
+Application may expose another customer's data.
+
+Impact:
+
+✅ Privacy Violations
+✅ Customer Data Exposure
+
+CIA Impact:
+
+✅ Confidentiality
+
+Mental Model:
+
+Identity Verified.
+
+Ownership Not Verified.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 11. SESSION HIJACKING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Target:
+
+Authenticated Session
+
+Architecture:
+
+Login
+ │
+ ▼
+Session Created
+ │
+ ▼
+Session Represents User
+
+Question:
+
+Who owns the session?
+
+Application assumes:
+
+Holder Of Session
+       │
+       ▼
+Authenticated User
+
+If session identity becomes exposed,
+risk increases significantly.
+
+Impact:
+
+✅ Account Takeover
+✅ User Impersonation
+
+Mental Model:
+
+Session = Temporary Identity Card
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 12. CLICKJACKING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 Target:
+
+User Interface
+
+Core Problem:
+
+User Sees One Thing
+
+Application Receives Another Action
+
+Example:
+
+User thinks:
+
+"Download Report"
+
+Actually:
+
+"Perform Different Sensitive Action"
+
+because interface presentation is deceptive.
+
+Impact:
+
+✅ User Manipulation
+✅ Unwanted Operations
+
+CIA Impact:
+
+✅ Integrity
+
+Mental Model:
+
+Attack Human Vision,
+Not Application Logic.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 13. AUTHENTICATION FAILURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Question:
+
+Can Identity Be Trusted?
+
+Examples:
+
+✅ Weak Password Policy
+✅ Password Reuse
+✅ Missing MFA
+✅ Poor Session Controls
+
+Architecture:
+
+Claim Identity
+      │
+      ▼
+Verify Identity
+      │
+      ▼
+Grant Access
+
+If Identity Verification Is Weak:
+
+Security Foundation Becomes Weak.
+
+CIA Impact:
+
+✅ Confidentiality
+✅ Integrity
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 14. SECURITY MISCONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Most Common Enterprise Problem.
+
+Example:
+
+Application Secure.
+
+Configuration Insecure.
+
+Examples:
+
+✅ Public Swagger
+✅ Public Actuator
+✅ Debug Enabled
+✅ Excessive Permissions
+
+Impact:
+
+Creates Opportunities For
+Other Attacks.
+
+Mental Model:
+
+Secure Code
++
+Bad Configuration
+=
+Insecure System
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 FINAL ATTACK MAP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BROWSER SECURITY
+╔══════════════════════════════════╗
+║ XSS                             ║
+║ CSRF                            ║
+║ CORS Issues                     ║
+║ Clickjacking                    ║
+║ Session Hijacking               ║
+╚══════════════════════════════════╝
+
+APPLICATION SECURITY
+╔══════════════════════════════════╗
+║ SQL Injection                   ║
+║ SSRF                            ║
+║ Broken Access Control           ║
+║ Authentication Failures         ║
+║ Security Misconfiguration       ║
+╚══════════════════════════════════╝
+
+API SECURITY
+╔══════════════════════════════════╗
+║ IDOR / BOLA                     ║
+║ Authorization Failures          ║
+║ Excessive Data Exposure         ║
+╚══════════════════════════════════╝
+
+AVAILABILITY SECURITY
+╔══════════════════════════════════╗
+║ DoS                             ║
+║ DDoS                            ║
+║ Resource Exhaustion             ║
+║ Abuse Without Rate Limiting     ║
+╚══════════════════════════════════╝
+
+💡 GOLDEN SECURITY RULE
+
+Every Major Breach Usually Starts Because:
+
+❌ Application Trusted Input Too Early
+❌ Application Trusted Identity Too Early
+❌ Application Trusted Permissions Too Early
+❌ Application Trusted Configuration Too Early
+
+Everything Spring Security Does Later
+(Authentication, Authorization, Session Management,
+CSRF Protection, Security Headers, JWT Validation,
+Method Security, CORS Handling)
+
+Exists To Establish Trust Safely.
