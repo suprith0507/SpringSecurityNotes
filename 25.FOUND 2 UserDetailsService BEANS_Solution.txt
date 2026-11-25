@@ -1,0 +1,527 @@
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║              FOUND 2 UserDetailsService BEANS - COMPLETE SPRING SECURITY ANALYSIS                  ║
+║                        Why Spring Stopped Auto Configuring DaoAuthenticationProvider               ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+LOG MESSAGE
+
+Found 2 UserDetailsService beans,
+with names
+
+[customerServiceImpl, getCustomInMemoryUserDetails]
+
+Global Authentication Manager will not use a UserDetailsService
+for username/password login.
+
+Consider publishing a single UserDetailsService bean.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 WHAT SPRING IS DOING DURING STARTUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Spring Container Starts
+        │
+        ▼
+Scans All Beans
+        │
+        ▼
+Looks For Authentication Components
+        │
+        ▼
+Looks For UserDetailsService Beans
+        │
+        ▼
+
+Found Bean #1
+
+@Service
+public class CustomerServiceImpl
+        implements UserDetailsService
+
+        │
+        ▼
+
+Bean Name
+
+customerServiceImpl
+
+───────────────────────────────────────────────────────────────────────────────
+
+Found Bean #2
+
+@Bean
+public UserDetailsService
+getCustomInMemoryUserDetails() {
+
+    return new InMemoryUserDetailsManager(...);
+}
+
+        │
+        ▼
+
+Bean Name
+
+getCustomInMemoryUserDetails
+
+───────────────────────────────────────────────────────────────────────────────
+
+Spring Now Sees
+
+┌───────────────────────────────────┐
+│ customerServiceImpl               │
+│ UserDetailsService                │
+└───────────────────────────────────┘
+
+                   +
+
+┌───────────────────────────────────┐
+│ getCustomInMemoryUserDetails      │
+│ UserDetailsService                │
+└───────────────────────────────────┘
+
+                   │
+                   ▼
+
+TOTAL UserDetailsService Beans = 2
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟨 WHY DOES SPRING HAVE A PROBLEM?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Normally Spring Security Auto Configuration Works Like This
+
+Found PasswordEncoder
+        │
+        ▼
+
+Found UserDetailsService
+        │
+        ▼
+
+Create DaoAuthenticationProvider
+        │
+        ▼
+
+provider.setUserDetailsService(
+        discoveredBean)
+
+        │
+        ▼
+
+Authentication Works
+
+───────────────────────────────────────────────────────────────────────────────
+
+But Now
+
+Found PasswordEncoder
+        │
+        ▼
+
+Found UserDetailsService #1
+(customerServiceImpl)
+
+        +
+        
+Found UserDetailsService #2
+(getCustomInMemoryUserDetails)
+
+        │
+        ▼
+
+Spring Asks:
+
+"Which UserDetailsService Should I Use?"
+
+        │
+        ▼
+
+customerServiceImpl ?
+
+OR
+
+getCustomInMemoryUserDetails ?
+
+        │
+        ▼
+
+❌ Ambiguous Decision
+
+        │
+        ▼
+
+Spring Refuses To Auto Configure
+
+DaoAuthenticationProvider
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟥 WHAT SPRING WOULD HAVE DONE IF ONLY ONE BEAN EXISTED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CustomerServiceImpl
+        │
+        ▼
+UserDetailsService
+        │
+        ▼
+
+PasswordEncoder Bean
+        │
+        ▼
+
+Spring Auto Creates
+
+DaoAuthenticationProvider provider =
+        new DaoAuthenticationProvider();
+
+provider.setUserDetailsService(
+        customerServiceImpl);
+
+provider.setPasswordEncoder(
+        passwordEncoder);
+
+        │
+        ▼
+
+AuthenticationManager
+
+        │
+        ▼
+
+Authentication Ready
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟩 VISUAL DIAGRAM OF THE PROBLEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                         Spring Security
+
+                                 │
+                                 ▼
+
+                  Searching For UserDetailsService
+
+                                 │
+                                 ▼
+
+         ┌─────────────────────────────────────────┐
+         │ customerServiceImpl                     │
+         │ implements UserDetailsService           │
+         └─────────────────────────────────────────┘
+
+                                 +
+
+         ┌─────────────────────────────────────────┐
+         │ getCustomInMemoryUserDetails            │
+         │ InMemoryUserDetailsManager              │
+         │ implements UserDetailsService           │
+         └─────────────────────────────────────────┘
+
+                                 │
+                                 ▼
+
+                       Which One Should I Use?
+
+                        ╱                    ╲
+
+                       ╱                      ╲
+
+      customerServiceImpl            getCustomInMemoryUserDetails
+
+                       ╲                      ╱
+
+                        ╲                    ╱
+
+                          ❌ Ambiguous Choice
+
+                                 │
+                                 ▼
+
+              Auto DaoAuthenticationProvider Not Created
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 SOLUTION 1 (RECOMMENDED)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If Your Real Authentication Source Is Database
+
+KEEP:
+
+@Service
+public class CustomerServiceImpl
+        implements UserDetailsService
+
+REMOVE:
+
+@Bean
+public UserDetailsService
+getCustomInMemoryUserDetails()
+
+Result
+
+Spring Finds
+
+┌─────────────────────────────┐
+│ customerServiceImpl         │
+└─────────────────────────────┘
+
+ONLY ONE USERDETAILSSERVICE
+
+        │
+        ▼
+
+Spring Creates
+
+DaoAuthenticationProvider
+
+Automatically
+
+Startup Log Changes To
+
+Global AuthenticationManager configured
+with UserDetailsService bean
+with name customerServiceImpl
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 SOLUTION 2 (KEEP BOTH BEANS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If You Intentionally Want Both
+
+✔ InMemoryUserDetailsManager
+
+AND
+
+✔ CustomerServiceImpl
+
+Then You Must Explicitly Tell Spring
+Which One To Use
+
+@Bean
+public AuthenticationProvider
+authenticationProvider(
+        CustomerServiceImpl customerService,
+        PasswordEncoder passwordEncoder) {
+
+    DaoAuthenticationProvider provider =
+            new DaoAuthenticationProvider();
+
+    provider.setUserDetailsService(
+            customerService);
+
+    provider.setPasswordEncoder(
+            passwordEncoder);
+
+    return provider;
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 WHAT HAPPENS AFTER EXPLICIT CONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SecurityFilterChain
+        │
+        ▼
+
+AuthenticationManager
+        │
+        ▼
+
+YOUR DaoAuthenticationProvider
+        │
+        ▼
+
+customerServiceImpl
+        │
+        ▼
+
+CustomerRepository
+        │
+        ▼
+
+MySQL
+
+Spring No Longer Needs To Guess
+
+Because You Explicitly Selected
+
+customerServiceImpl
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 SOLUTION 3 (@Primary)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@Primary
+@Service
+public class CustomerServiceImpl
+        implements UserDetailsService
+
+Meaning
+
+"If Multiple Beans Exist,
+Use This One By Default."
+
+Spring Chooses
+
+customerServiceImpl
+
+Instead Of
+
+getCustomInMemoryUserDetails
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟨 WHAT YOU SHOULD DO IN YOUR PROJECT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You Already Have
+
+CustomerEntity
+        │
+        ▼
+
+CustomerRepository
+        │
+        ▼
+
+CustomerServiceImpl
+        │
+        ▼
+
+MySQL Authentication
+
+Therefore
+
+❌ InMemoryUserDetailsManager Not Required
+
+Delete
+
+@Bean
+public UserDetailsService
+getCustomInMemoryUserDetails()
+
+Keep
+
+@Service
+public class CustomerServiceImpl
+implements UserDetailsService
+
+Then Spring Automatically Does
+
+CustomerServiceImpl
+        │
+        ▼
+
+DaoAuthenticationProvider
+        │
+        ▼
+
+AuthenticationManager
+        │
+        ▼
+
+BasicAuthenticationFilter
+        │
+        ▼
+
+Authentication Success
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 INTERVIEW ANSWER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Spring Security can automatically create a DaoAuthenticationProvider only when exactly one UserDetailsService bean is present. When multiple UserDetailsService implementations are found, Spring cannot determine which one should be used for username/password authentication and therefore disables the automatic DaoAuthenticationProvider configuration. To resolve this, either keep a single UserDetailsService bean, mark one bean as @Primary, or explicitly configure a DaoAuthenticationProvider and set the desired UserDetailsService manually.
+
+
+
+
+
+===============================================================================
+
+Explanation with code
+
+package com.example.SpringSecurity.configs;
+
+import com.example.SpringSecurity.services.CustomerServiceImpl;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsPasswordService;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain mySecurityFilterChain1(
+                HttpSecurity http,AuthenticationProvider authenticationProvider) throws Exception {
+
+        return http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth ->
+                        auth.anyRequest().
+                                authenticated()).authenticationProvider(authenticationProvider)
+                .httpBasic(Customizer.withDefaults())
+                .build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+
+   @Bean
+    @Primary
+    public UserDetailsService getCustomInMemoryUserDetails()
+    {
+        UserDetails User1 = User.builder().username("admin").password(passwordEncoder()
+                .encode("Welcome@123")).roles("ADMIN").build();
+        UserDetails User2 = User.builder().username("bankuser2").password(passwordEncoder()
+                .encode("Welcome@123")).roles("ADMIN").build();
+        return  new InMemoryUserDetailsManager(User1,User2);
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider(
+            CustomerServiceImpl customerService,
+            UserDetailsService getCustomInMemoryUserDetails,
+            PasswordEncoder passwordEncoder) {
+
+        DaoAuthenticationProvider provider =
+                new DaoAuthenticationProvider(customerService);
+
+        DaoAuthenticationProvider provider1 =
+                new DaoAuthenticationProvider(getCustomInMemoryUserDetails);
+
+        //OAuth2LoginAuthenticationProvider or any custom authentication provide also.
+
+        provider.setPasswordEncoder(
+                passwordEncoder);
+        provider1.setPasswordEncoder(
+                passwordEncoder);
+
+        return provider1;
+    }
+    //spring checks for securityfilterchainconfig. if found, it will use, otherwise it will use default inbuilt security filter chain .
+    //spring will use securityfilterchain only when we add the dependency in pom.xml
+    //creating a bean with custom filterchainconfig is optional. if not found, spring uses default security filer chain config.
+    //spring needs UserDetailsService and password encoder beans to decide which authenticaion method to pick.
+    //spring picks up DAOAuthenticationProvider if it finds UserDetailsService(inmemory or DAO implemented) and password encoder .
+
+    //Found 2 UserDetailsService beans, with names [customerServiceImpl, getCustomInMemoryUserDetails]. Global Authentication Manager will not use a UserDetailsService for username/password login. Consider publishing a single UserDetailsService bean.
+    //you can override the behaviour of choosing default as DAOAuthenticationProvider by implementing your own method to return ur own authenticaiton provider.
+    //you can also override inside this authenticaiotnprovider and say which userdetails service(inmemory/doa) to be used if we want to use DAOAuthenticationprovider.
+    //you need to register the authenticationprovider in the securityfilterchain if you are explicitly defining the authentication provider. else it wont get linked to the chain.
+}

@@ -1,0 +1,464 @@
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║         HOW SPRING CHOOSES DaoAuthenticationProvider AUTOMATICALLY                                 ║
+║         Case 1 : InMemoryUserDetailsManager                                                        ║
+║         Case 2 : Custom UserDetailsService + Database                                              ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+🟦 THE BIG QUESTION
+
+We never created:
+
+    DaoAuthenticationProvider
+
+So how did Spring Security start using it?
+
+Answer:
+
+Spring Security has a default authentication strategy.
+
+Whenever it finds:
+
+✅ UserDetailsService Bean
+✅ PasswordEncoder Bean
+
+it automatically creates:
+
+✅ DaoAuthenticationProvider
+
+behind the scenes.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟩 CASE 1 : InMemoryUserDetailsManager
+
+YOU WRITE:
+
+@Bean
+public UserDetailsService userDetailsService(
+        PasswordEncoder passwordEncoder) {
+
+    UserDetails admin =
+            User.builder()
+                    .username("admin")
+                    .password(
+                            passwordEncoder.encode(
+                                    "admin123"))
+                    .roles("ADMIN")
+                    .build();
+
+    return new InMemoryUserDetailsManager(
+            admin
+    );
+}
+
+────────────────────────────────────────────────────────────────────────────────
+
+SPRING STARTUP ANALYSIS
+
+Spring Container
+      │
+      ▼
+Scanning Beans
+      │
+      ▼
+Found Bean
+      │
+      ▼
+InMemoryUserDetailsManager
+      │
+      ▼
+InMemoryUserDetailsManager IS-A
+      │
+      ▼
+UserDetailsService
+      │
+      ▼
+Spring registers:
+
+UserDetailsService Bean Found
+
+────────────────────────────────────────────────────────────────────────────────
+
+Spring Container
+      │
+      ▼
+Scanning Beans
+      │
+      ▼
+Found Bean
+      │
+      ▼
+BCryptPasswordEncoder
+      │
+      ▼
+PasswordEncoder Bean Found
+
+────────────────────────────────────────────────────────────────────────────────
+
+Spring Security Internal Logic
+
+IF UserDetailsService EXISTS
+AND PasswordEncoder EXISTS
+
+THEN CREATE
+
+DaoAuthenticationProvider
+
+────────────────────────────────────────────────────────────────────────────────
+
+Internally Spring Creates
+
+DaoAuthenticationProvider provider =
+        new DaoAuthenticationProvider();
+
+provider.setUserDetailsService(
+        inMemoryUserDetailsManager);
+
+provider.setPasswordEncoder(
+        bcryptPasswordEncoder);
+
+────────────────────────────────────────────────────────────────────────────────
+
+FINAL OBJECT GRAPH
+
+┌───────────────────────────────┐
+│ AuthenticationManager         │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│ DaoAuthenticationProvider     │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│ InMemoryUserDetailsManager    │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│ UserDetails                   │
+└───────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟨 AUTHENTICATION FLOW FOR INMEMORY USER
+
+HTTP Request
+      │
+      ▼
+BasicAuthenticationFilter
+      │
+      ▼
+AuthenticationManager
+      │
+      ▼
+DaoAuthenticationProvider
+      │
+      ▼
+InMemoryUserDetailsManager
+      │
+      ▼
+loadUserByUsername()
+      │
+      ▼
+UserDetails
+      │
+      ▼
+PasswordEncoder.matches()
+      │
+      ▼
+SUCCESS
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟩 CASE 2 : DATABASE + UserDetailsService
+
+YOU WRITE:
+
+@Service
+public class CustomerServiceImpl
+        implements UserDetailsService {
+
+    @Override
+    public UserDetails loadUserByUsername(
+            String username) {
+
+        return customerRepository
+                .findByUsername(username)
+                .orElseThrow(...);
+    }
+}
+
+────────────────────────────────────────────────────────────────────────────────
+
+Spring Container
+      │
+      ▼
+Scanning Beans
+      │
+      ▼
+Found Bean
+      │
+      ▼
+CustomerServiceImpl
+      │
+      ▼
+Implements UserDetailsService
+      │
+      ▼
+Spring registers:
+
+UserDetailsService Bean Found
+
+────────────────────────────────────────────────────────────────────────────────
+
+Spring Container
+      │
+      ▼
+Found Bean
+      │
+      ▼
+BCryptPasswordEncoder
+      │
+      ▼
+PasswordEncoder Bean Found
+
+────────────────────────────────────────────────────────────────────────────────
+
+Spring Security Internal Logic
+
+IF UserDetailsService EXISTS
+AND PasswordEncoder EXISTS
+
+THEN CREATE
+
+DaoAuthenticationProvider
+
+────────────────────────────────────────────────────────────────────────────────
+
+Internally Spring Creates
+
+DaoAuthenticationProvider provider =
+        new DaoAuthenticationProvider();
+
+provider.setUserDetailsService(
+        customerServiceImpl);
+
+provider.setPasswordEncoder(
+        bcryptPasswordEncoder);
+
+────────────────────────────────────────────────────────────────────────────────
+
+FINAL OBJECT GRAPH
+
+┌───────────────────────────────┐
+│ AuthenticationManager         │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│ DaoAuthenticationProvider     │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│ CustomerServiceImpl           │
+│ UserDetailsService            │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│ CustomerRepository            │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│ MySQL                         │
+└───────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟦 HOW SPRING KNOWS TO USE DaoAuthenticationProvider
+
+There are many AuthenticationProviders:
+
+┌─────────────────────────────────────────────┐
+│ DaoAuthenticationProvider                   │
+├─────────────────────────────────────────────┤
+│ LdapAuthenticationProvider                  │
+├─────────────────────────────────────────────┤
+│ JwtAuthenticationProvider                   │
+├─────────────────────────────────────────────┤
+│ CasAuthenticationProvider                   │
+├─────────────────────────────────────────────┤
+│ AnonymousAuthenticationProvider             │
+└─────────────────────────────────────────────┘
+
+Spring sees:
+
+✔ Username Password Authentication
+
+AND
+
+✔ UserDetailsService
+
+This combination means:
+
+➡ "Use DaoAuthenticationProvider"
+
+because DaoAuthenticationProvider is specifically designed for:
+
+UserDetailsService
+        +
+PasswordEncoder
+
+authentication.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟥 WHAT CHANGED IN YOUR PROJECT
+
+EARLIER
+
+Spring Security Logs:
+
+Global AuthenticationManager configured
+with UserDetailsService bean
+with name customerServiceImpl
+
+This means Spring discovered:
+
+CustomerServiceImpl
+
+and internally created:
+
+DaoAuthenticationProvider
+
+────────────────────────────────────────────────────────────────────────────────
+
+LATER
+
+You added:
+
+@Bean
+public SecurityFilterChain
+mySecurityFilterChain(
+        HttpSecurity http)
+        throws Exception {
+
+    return http
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth ->
+                    auth.anyRequest()
+                            .authenticated())
+            .httpBasic(Customizer.withDefaults())
+            .build();
+}
+
+Now startup logs show:
+
+Will secure any request with filters:
+
+BasicAuthenticationFilter
+AuthorizationFilter
+AnonymousAuthenticationFilter
+...
+
+This tells us:
+
+Your SecurityFilterChain
+          │
+          ▼
+BasicAuthenticationFilter
+          │
+          ▼
+AuthenticationManager
+          │
+          ▼
+DaoAuthenticationProvider
+          │
+          ▼
+CustomerServiceImpl
+          │
+          ▼
+CustomerRepository
+          │
+          ▼
+MySQL
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟪 HOW IT CHANGES WHEN YOU PROVIDE YOUR OWN DaoAuthenticationProvider
+
+YOU WRITE
+
+@Bean
+public AuthenticationProvider
+authenticationProvider() {
+
+    DaoAuthenticationProvider provider =
+            new DaoAuthenticationProvider();
+
+    provider.setUserDetailsService(
+            customerService);
+
+    provider.setPasswordEncoder(
+            passwordEncoder);
+
+    return provider;
+}
+
+AND
+
+.authenticationProvider(
+        authenticationProvider())
+
+NOW SPRING DOES NOT CREATE ONE.
+
+Instead:
+
+AuthenticationManager
+        │
+        ▼
+YOUR DaoAuthenticationProvider
+        │
+        ▼
+CustomerServiceImpl
+        │
+        ▼
+MySQL
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟨 INTERVIEW ANSWER
+
+Q. How does Spring select DaoAuthenticationProvider automatically?
+
+Answer:
+
+Spring Security looks for a UserDetailsService bean and a PasswordEncoder bean.
+When both are available, Spring automatically creates a DaoAuthenticationProvider and registers it with the AuthenticationManager.
+The DaoAuthenticationProvider becomes responsible for loading the user through UserDetailsService and validating passwords through PasswordEncoder.
+
+UserDetailsService + PasswordEncoder
+                │
+                ▼
+Spring Auto Configuration
+                │
+                ▼
+DaoAuthenticationProvider
+                │
+                ▼
+AuthenticationManager
+                │
+                ▼
+SecurityFilterChain
+                │
+                ▼
+Authentication Success
+
+If you add both ways of UserDetailsService then it will show like this.
+
+
+Found 2 UserDetailsService beans, with names [customerServiceImpl, getCustomInMemoryUserDetails]. Global Authentication Manager will not use a UserDetailsService for username/password login. Consider publishing a single UserDetailsService bean.

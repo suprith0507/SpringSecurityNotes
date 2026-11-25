@@ -1,0 +1,850 @@
+╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                    🔐 SPRING SECURITY FILTER CHAIN - MASTER REFERENCE GUIDE 🔐                                     ║
+║            Complete Deep Dive into HttpSecurity, SecurityFilterChain & Request Processing                           ║
+╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain mySecurityFilterChain(
+            HttpSecurity http)
+            throws Exception {
+
+        return http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth ->
+                        auth.anyRequest()
+                                .authenticated())
+                .httpBasic(Customizer.withDefaults())
+                .build();
+    }
+}
+
+🟦 BIG PICTURE
+
+The entire purpose of this configuration is:
+
+Incoming HTTP Request
+         │
+         ▼
+SecurityFilterChain
+         │
+         ▼
+Authentication Filters
+         │
+         ▼
+Authentication Manager
+         │
+         ▼
+Authentication Provider
+         │
+         ▼
+Authorization Filters
+         │
+         ▼
+Controller
+         │
+         ▼
+Response
+
+Spring Security works as a chain of filters.
+
+Every request MUST pass through the Security Filter Chain before reaching the controller.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 STEP 1 : @Configuration
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@Configuration
+
+Meaning:
+
+"This class contains Spring Bean definitions."
+
+Spring Startup
+      │
+      ▼
+Scan Classes
+      │
+      ▼
+Found @Configuration
+      │
+      ▼
+Register Bean Definitions
+      │
+      ▼
+Create Objects In IOC Container
+
+Without @Configuration:
+
+❌ SecurityFilterChain bean not detected
+❌ Security not configured
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 STEP 2 : @EnableWebSecurity
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@EnableWebSecurity
+
+Purpose:
+
+Activates Spring Security Web Support.
+
+Internally imports:
+
+WebSecurityConfiguration
+SecurityFilterChain Configuration
+Authentication Configuration
+Authorization Configuration
+Exception Translation Configuration
+
+Without It (older versions):
+
+❌ Security not initialized
+
+Spring Boot today usually auto-configures security even without it, but
+keeping it is a good practice for learning purposes.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 STEP 3 : SecurityFilterChain Bean
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@Bean
+public SecurityFilterChain
+mySecurityFilterChain(HttpSecurity http)
+throws Exception
+
+Purpose:
+
+Creates the runtime security configuration.
+
+Think of:
+
+SecurityFilterChain =
+    "Compiled Security Rules"
+
+Before build()
+
+HttpSecurity Builder
+
+After build()
+
+SecurityFilterChain Object
+
+Diagram:
+
+HttpSecurity Builder
+        │
+        ▼
+Configure Rules
+        │
+        ▼
+build()
+        │
+        ▼
+SecurityFilterChain Bean
+        │
+        ▼
+Used For Every Request
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 STEP 4 : HttpSecurity
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Method Parameter:
+
+HttpSecurity http
+
+Purpose:
+
+Main Spring Security Builder.
+
+Very similar to:
+
+StringBuilder
+
+StringBuilder sb =
+        new StringBuilder();
+
+sb.append("A");
+sb.append("B");
+
+String result = sb.toString();
+
+Likewise:
+
+http
+ .csrf(...)
+ .authorizeHttpRequests(...)
+ .httpBasic(...)
+ .build();
+
+builds a SecurityFilterChain.
+
+HttpSecurity exposes almost every Spring Security feature.
+
+Major APIs:
+
+http.csrf(...)
+http.cors(...)
+http.sessionManagement(...)
+http.httpBasic(...)
+http.formLogin(...)
+http.oauth2Login(...)
+http.oauth2ResourceServer(...)
+http.rememberMe(...)
+http.headers(...)
+http.exceptionHandling(...)
+http.logout(...)
+http.authorizeHttpRequests(...)
+http.authenticationProvider(...)
+http.userDetailsService(...)
+http.addFilter(...)
+http.addFilterBefore(...)
+http.addFilterAfter(...)
+http.securityMatcher(...)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 STEP 5 : csrf()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current Configuration:
+
+.csrf(csrf -> csrf.disable())
+
+Full Signature:
+
+csrf(
+       Customizer<
+         CsrfConfigurer<HttpSecurity>
+       >
+)
+
+Lambda Parameter Type:
+
+CsrfConfigurer<HttpSecurity>
+
+Equivalent Code:
+
+.csrf(new Customizer<
+        CsrfConfigurer<HttpSecurity>>() {
+
+    @Override
+    public void customize(
+            CsrfConfigurer<HttpSecurity> csrf) {
+
+            csrf.disable();
+    }
+})
+
+Current Meaning:
+
+CSRF Protection OFF
+
+━━━━━━━━━━━━━━━━━━━━━━━
+What Is CSRF?
+━━━━━━━━━━━━━━━━━━━━━━━
+
+CSRF =
+Cross Site Request Forgery
+
+Example:
+
+User Logs Into Bank
+         │
+         ▼
+Session Cookie Generated
+         │
+         ▼
+User Opens Hacker Website
+         │
+         ▼
+Hacker Sends POST Request
+         │
+         ▼
+Browser Automatically Attaches Cookie
+         │
+         ▼
+Bank Thinks Request Is Valid
+
+Without CSRF:
+
+❌ Dangerous
+
+With CSRF Token:
+
+✅ Safe
+
+━━━━━━━━━━━━━━━━━━━━━━━
+Available Options
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Enable Default
+
+.csrf(Customizer.withDefaults())
+
+Disable
+
+.csrf(csrf ->
+        csrf.disable())
+
+Ignore Specific Endpoints
+
+.csrf(csrf ->
+        csrf.ignoringRequestMatchers(
+                "/api/**"))
+
+Custom Token Repository
+
+.csrf(csrf ->
+        csrf.csrfTokenRepository(
+                CookieCsrfTokenRepository
+                        .withHttpOnlyFalse()))
+
+Custom Request Handler
+
+.csrf(csrf ->
+        csrf.csrfTokenRequestHandler(
+                customHandler))
+
+━━━━━━━━━━━━━━━━━━━━━━━
+When To Disable?
+━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ REST APIs
+✅ JWT Authentication
+✅ Mobile Applications
+✅ Stateless APIs
+
+━━━━━━━━━━━━━━━━━━━━━━━
+When NOT To Disable?
+━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Banking Web Applications
+✅ Form Login Applications
+✅ Session Based Applications
+✅ Browser Rendered Web Sites
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 STEP 6 : authorizeHttpRequests()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current Configuration:
+
+.authorizeHttpRequests(auth ->
+        auth.anyRequest()
+                .authenticated())
+
+Purpose:
+
+Authorization Rules
+
+Question Answered:
+
+"What Can The Authenticated User Access?"
+
+Authentication:
+Who Are You?
+
+Authorization:
+What Can You Do?
+
+━━━━━━━━━━━━━━━━━━━━━━━
+Current Flow
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Request
+      │
+      ▼
+Authenticated?
+      │
+   YES
+      │
+      ▼
+Controller
+
+      OR
+
+      │
+      ▼
+NO
+      │
+      ▼
+401 Unauthorized
+
+━━━━━━━━━━━━━━━━━━━━━━━
+Request Matchers
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Permit Public URLs
+
+.authorizeHttpRequests(auth ->
+
+        auth.requestMatchers(
+                "/public/**")
+                .permitAll()
+
+        .anyRequest()
+                .authenticated()
+)
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Role Based
+
+.authorizeHttpRequests(auth ->
+
+        auth.requestMatchers(
+                "/admin/**")
+                .hasRole("ADMIN")
+
+        .anyRequest()
+                .authenticated()
+)
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Multiple Roles
+
+.authorizeHttpRequests(auth ->
+
+        auth.requestMatchers(
+                "/accounts/**")
+                .hasAnyRole(
+                        "ADMIN",
+                        "CUSTOMER")
+)
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Authority Based
+
+.authorizeHttpRequests(auth ->
+
+        auth.requestMatchers(
+                "/reports/**")
+                .hasAuthority(
+                        "READ_REPORT")
+)
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Multiple Authorities
+
+.authorizeHttpRequests(auth ->
+
+        auth.requestMatchers(
+                "/reports/**")
+                .hasAnyAuthority(
+                        "READ",
+                        "WRITE")
+)
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+HTTP Method Based
+
+.authorizeHttpRequests(auth ->
+
+        auth.requestMatchers(
+                HttpMethod.GET,
+                "/customers/**")
+                .permitAll()
+
+        .requestMatchers(
+                HttpMethod.POST,
+                "/customers/**")
+                .hasRole("ADMIN")
+)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 STEP 7 : anyRequest()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current Usage:
+
+.anyRequest()
+
+Meaning:
+
+Catch-All Rule
+
+Example:
+
+.authorizeHttpRequests(auth ->
+
+        auth.requestMatchers(
+                "/public/**")
+                .permitAll()
+
+        .requestMatchers(
+                "/admin/**")
+                .hasRole("ADMIN")
+
+        .anyRequest()
+                .authenticated()
+)
+
+Decision Tree
+
+/public/**
+      │
+      ▼
+Permit All
+
+/admin/**
+      │
+      ▼
+Admin Only
+
+Everything Else
+      │
+      ▼
+anyRequest()
+
+Think Of It As:
+
+default:
+    authenticated();
+
+inside a switch statement.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 STEP 8 : authenticated()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current Usage:
+
+.authenticated()
+
+Meaning:
+
+User Must Already Be Logged In
+
+Spring Checks:
+
+SecurityContext
+        │
+        ▼
+Authentication Object Exists?
+        │
+        ▼
+Authenticated = true ?
+        │
+        ▼
+ACCESS ALLOWED
+
+━━━━━━━━━━━━━━━━━━━━━━━
+Alternative Options
+━━━━━━━━━━━━━━━━━━━━━━━
+
+.permitAll()
+
+Everybody Allowed
+
+─────────────────────
+
+.denyAll()
+
+Nobody Allowed
+
+─────────────────────
+
+.anonymous()
+
+Only Anonymous Users
+
+─────────────────────
+
+.hasRole("ADMIN")
+
+Admin Only
+
+─────────────────────
+
+.hasAnyRole(
+        "ADMIN",
+        "CUSTOMER")
+
+Multiple Roles
+
+─────────────────────
+
+.hasAuthority("READ")
+
+Specific Authority
+
+─────────────────────
+
+.hasAnyAuthority(
+        "READ",
+        "WRITE")
+
+Multiple Authorities
+
+─────────────────────
+
+.fullyAuthenticated()
+
+Must Not Be Remember-Me Authenticated
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 STEP 9 : httpBasic()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current Usage:
+
+.httpBasic(
+        Customizer.withDefaults())
+
+Purpose:
+
+Enable Basic Authentication
+
+Browser Sends:
+
+Authorization:
+Basic base64(username:password)
+
+Example:
+
+username = admin
+
+password = admin123
+
+Will Become:
+
+Authorization:
+Basic YWRtaW46YWRtaW4xMjM=
+
+━━━━━━━━━━━━━━━━━━━━━━━
+Authentication Flow
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Request
+      │
+      ▼
+BasicAuthenticationFilter
+      │
+      ▼
+Decode Header
+      │
+      ▼
+AuthenticationManager
+      │
+      ▼
+DaoAuthenticationProvider
+      │
+      ▼
+UserDetailsService
+      │
+      ▼
+PasswordEncoder
+      │
+      ▼
+Success
+
+━━━━━━━━━━━━━━━━━━━━━━━
+Alternative Authentication
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Form Login
+
+.formLogin(
+        Customizer.withDefaults())
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+OAuth2 Login
+
+.oauth2Login(
+        Customizer.withDefaults())
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+JWT Resource Server
+
+.oauth2ResourceServer(
+        oauth ->
+                oauth.jwt())
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Disable Basic Auth
+
+.httpBasic(
+        basic ->
+                basic.disable())
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 STEP 10 : Customizer.withDefaults()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current Usage:
+
+Customizer.withDefaults()
+
+Meaning:
+
+Use Spring Defaults
+
+Equivalent To:
+
+configurer -> {}
+
+Empty Lambda
+
+Example:
+
+.httpBasic(
+        Customizer.withDefaults())
+
+is identical to:
+
+.httpBasic(
+        basic -> {})
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟦 STEP 11 : build()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current Usage:
+
+.build()
+
+Purpose:
+
+Create Final SecurityFilterChain
+
+Before:
+
+HttpSecurity Builder
+
+After:
+
+SecurityFilterChain
+
+Flow:
+
+HttpSecurity
+      │
+      ▼
+Configured Rules
+      │
+      ▼
+build()
+      │
+      ▼
+DefaultSecurityFilterChain
+      │
+      ▼
+IOC Container
+      │
+      ▼
+Request Processing
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟩 WHAT SPRING ACTUALLY BUILDS FOR YOUR PROJECT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Your Startup Logs:
+
+Global AuthenticationManager configured
+with UserDetailsService bean
+with name customerServiceImpl
+
+Meaning:
+
+Spring Found
+
+✅ CustomerServiceImpl
+
+implements
+
+✅ UserDetailsService
+
+and
+
+✅ BCryptPasswordEncoder
+
+Bean
+
+Therefore Spring Automatically Created:
+
+┌──────────────────────────────┐
+│ DaoAuthenticationProvider    │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│ CustomerServiceImpl          │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│ CustomerRepository           │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│ MySQL Database               │
+└──────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟥 FINAL END-TO-END EXECUTION FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GET /customers
+      │
+      ▼
+SecurityFilterChain
+      │
+      ▼
+BasicAuthenticationFilter
+      │
+      ▼
+Extract Username & Password
+      │
+      ▼
+AuthenticationManager
+      │
+      ▼
+DaoAuthenticationProvider
+      │
+      ▼
+CustomerServiceImpl
+(loadUserByUsername)
+      │
+      ▼
+CustomerRepository
+      │
+      ▼
+MySQL
+      │
+      ▼
+CustomerEntity
+implements UserDetails
+      │
+      ▼
+BCryptPasswordEncoder.matches()
+      │
+      ▼
+Authentication Success
+      │
+      ▼
+AuthorizationFilter
+      │
+      ▼
+anyRequest().authenticated()
+      │
+      ▼
+Controller Method
+      │
+      ▼
+Response Returned
+
+🎯 INTERVIEW ONE-LINER:
+
+"HttpSecurity is a builder used to construct a SecurityFilterChain. SecurityFilterChain contains authentication and authorization rules. In my configuration, CSRF is disabled, every request requires authentication, HTTP Basic authentication is enabled, and Spring automatically wires a DaoAuthenticationProvider because a UserDetailsService and PasswordEncoder bean are present in the application context."
