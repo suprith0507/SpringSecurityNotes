@@ -1,0 +1,674 @@
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                  🔐 SPRING SECURITY : SESSION + CSRF + XSS + FORM LOGIN + BASIC AUTH MASTER NOTES 🔐                           ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+🎯 BIG PICTURE
+
+Spring Security Authentication can happen in 2 major ways:
+
+1️⃣ STATEFUL AUTHENTICATION (Session Based)
+2️⃣ STATELESS AUTHENTICATION (Basic Auth / JWT)
+
+====================================================================================================
+🟦 PART 1 : PURE SESSION-BASED AUTHENTICATION
+====================================================================================================
+
+FLOW:
+
+┌───────────┐
+│ User Login│
+└─────┬─────┘
+      │ username + password
+      ▼
+┌──────────────────────────────┐
+│ UsernamePasswordAuthFilter   │
+└──────────────┬───────────────┘
+               ▼
+┌──────────────────────────────┐
+│ AuthenticationManager        │
+└──────────────┬───────────────┘
+               ▼
+┌──────────────────────────────┐
+│ AuthenticationProvider       │
+│ (DAO / LDAP / OAuth etc.)    │
+└──────────────┬───────────────┘
+               ▼
+┌──────────────────────────────┐
+│ UserDetailsService           │
+└──────────────┬───────────────┘
+               ▼
+┌──────────────────────────────┐
+│ PasswordEncoder             │
+└──────────────┬───────────────┘
+               ▼
+┌──────────────────────────────┐
+│ Authentication Success      │
+└──────────────┬───────────────┘
+               ▼
+┌──────────────────────────────┐
+│ SecurityContext             │
+│ User = bankuser2            │
+└──────────────┬───────────────┘
+               ▼
+┌──────────────────────────────┐
+│ HttpSession Created         │
+│ SessionId = ABC123          │
+└──────────────┬───────────────┘
+               ▼
+┌──────────────────────────────┐
+│ Browser stores JSESSIONID   │
+└──────────────────────────────┘
+
+AFTER LOGIN:
+
+HTTP REQUEST 1
+
+POST /login
+
+username=bankuser2
+password=Welcome@123
+
+HTTP RESPONSE
+
+Set-Cookie:
+JSESSIONID=ABC123
+
+----------------------------------------------------------------------------------------------------
+
+SUBSEQUENT REQUEST
+
+GET /customers
+
+Cookie:
+JSESSIONID=ABC123
+
+NO USERNAME
+NO PASSWORD
+
+Spring performs:
+
+JSESSIONID
+    ↓
+HttpSession
+    ↓
+SPRING_SECURITY_CONTEXT
+    ↓
+Authentication
+    ↓
+bankuser2
+
+✅ User authenticated
+
+KEY CONCEPT:
+
+Username and Password are used ONLY ONCE during login.
+After login, Spring relies entirely on JSESSIONID.
+
+====================================================================================================
+🟥 PROBLEMS WITH ONLY SESSION-BASED AUTHENTICATION
+====================================================================================================
+
+Imagine:
+
+bank.com
+
+Browser has:
+
+JSESSIONID=ABC123
+
+User visits:
+
+evil.com
+
+Attacker page:
+
+<form action="https://bank.com/transfer" method="POST">
+   <input name="amount" value="10000">
+</form>
+
+<script>
+ document.forms[0].submit();
+</script>
+
+Browser automatically sends:
+
+POST /transfer
+
+Cookie:
+JSESSIONID=ABC123
+
+Spring sees:
+
+✅ Valid Session
+✅ Valid User
+
+Potentially dangerous.
+
+This is called:
+
+🔥 CSRF = Cross Site Request Forgery
+
+====================================================================================================
+🟩 PART 2 : SESSION + CSRF PROTECTION
+====================================================================================================
+
+FLOW:
+
+┌───────────────────────────┐
+│ Login Successful          │
+└──────────────┬────────────┘
+               ▼
+┌───────────────────────────┐
+│ Session Created           │
+│ JSESSIONID = ABC123       │
+└──────────────┬────────────┘
+               ▼
+┌───────────────────────────┐
+│ CSRF Token Generated      │
+│ XSRF-TOKEN = XYZ789       │
+└──────────────┬────────────┘
+               ▼
+┌───────────────────────────┐
+│ Browser Stores Both       │
+└───────────────────────────┘
+
+Browser:
+
+JSESSIONID=ABC123
+XSRF-TOKEN=XYZ789
+
+----------------------------------------------------------------------------------------------------
+
+Legitimate Request:
+
+POST /customers
+
+Cookie:
+JSESSIONID=ABC123
+
+Cookie:
+XSRF-TOKEN=XYZ789
+
+Header:
+X-XSRF-TOKEN=XYZ789
+
+Spring Check:
+
+Cookie Token
+      ==
+Header Token
+
+Match ?
+
+✅ YES
+
+Request Allowed
+
+----------------------------------------------------------------------------------------------------
+
+Attacker Request:
+
+POST /customers
+
+Cookie:
+JSESSIONID=ABC123
+
+Header:
+(nothing)
+
+Spring Check:
+
+Cookie Token
+      ==
+Header Token
+
+Match ?
+
+❌ NO
+
+403 Forbidden
+
+====================================================================================================
+🟪 WHY SAME CSRF TOKEN ACROSS TABS IS SAFE
+====================================================================================================
+
+Tab 1:
+
+localhost:9090
+
+Tab 2:
+
+localhost:9090
+
+Both tabs belong to SAME origin.
+
+Hence:
+
+JSESSIONID = ABC123
+XSRF-TOKEN = XYZ789
+
+are shared.
+
+This is expected.
+
+IMPORTANT:
+
+CSRF token is NOT secure because it changes frequently.
+
+CSRF token is secure because:
+
+🔥 ATTACKER CANNOT READ IT
+
+Example:
+
+bank.com
+      |
+      |---- XSRF-TOKEN=XYZ789
+
+evil.com script CANNOT read:
+
+document.cookie of bank.com
+
+because of:
+
+✅ Same Origin Policy
+
+====================================================================================================
+🟨 WHAT IF ATTACKER RUNS CODE INSIDE BANK.COM ?
+====================================================================================================
+
+This is NOT CSRF.
+
+This is:
+
+🔥 XSS (Cross Site Scripting)
+
+Example:
+
+<script>
+ fetch('/transfer',{
+     method:'POST',
+     headers:{
+       'X-XSRF-TOKEN':'XYZ789'
+     }
+ });
+</script>
+
+running INSIDE bank.com
+
+Now attacker CAN read:
+
+document.cookie
+
+and therefore:
+
+✅ JSESSIONID
+✅ CSRF Token
+
+At this point:
+
+❌ CSRF Protection is bypassed
+
+VERY IMPORTANT INTERVIEW POINT:
+
+CSRF protects against Cross-Site attacks.
+XSS defeats Same-Origin trust.
+Therefore:
+
+🔥 XSS CAN BYPASS CSRF
+
+====================================================================================================
+🟧 HOW TO PREVENT XSS IN SPRING BOOT
+====================================================================================================
+
+1. INPUT VALIDATION
+
+@NotBlank
+@Pattern(
+ regexp="^[a-zA-Z ]+$"
+)
+
+Prevents:
+
+<script>alert(1)</script>
+
+----------------------------------------------------------------------------------------------------
+
+2. CONTENT SECURITY POLICY
+
+@Bean
+SecurityFilterChain securityFilterChain(HttpSecurity http)
+throws Exception {
+
+    return http
+        .headers(headers ->
+            headers.contentSecurityPolicy(csp ->
+                csp.policyDirectives(
+                  "default-src 'self'; script-src 'self'"
+                )
+            )
+        )
+        .build();
+}
+
+Response Header:
+
+Content-Security-Policy:
+default-src 'self';
+script-src 'self';
+
+----------------------------------------------------------------------------------------------------
+
+3. SANITIZE HTML
+
+OWASP HTML Sanitizer
+
+Input:
+
+<script>alert(1)</script>
+<b>Hello</b>
+
+Output:
+
+<b>Hello</b>
+
+----------------------------------------------------------------------------------------------------
+
+4. HttpOnly Cookies
+
+JSESSIONID
+
+HttpOnly=true
+
+Prevents:
+
+document.cookie
+
+reading session cookie.
+
+----------------------------------------------------------------------------------------------------
+
+5. Thymeleaf Escaping
+
+Good:
+
+th:text
+
+Bad:
+
+th:utext
+
+====================================================================================================
+🟫 SESSION + CSRF CONFIGURATION
+====================================================================================================
+
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http)
+throws Exception {
+
+    return http
+        .csrf(csrf -> csrf
+            .csrfTokenRepository(
+                CookieCsrfTokenRepository.withHttpOnlyFalse()
+            )
+        )
+        .authorizeHttpRequests(auth ->
+            auth.anyRequest().authenticated()
+        )
+        .formLogin(Customizer.withDefaults())
+        .sessionManagement(Customizer.withDefaults())
+        .build();
+}
+
+====================================================================================================
+⬜ WHY CSRF TOKEN WAS NOT VISIBLE INITIALLY
+====================================================================================================
+
+CookieCsrfTokenRepository uses:
+
+🔥 Lazy Token Generation
+
+Meaning:
+
+Enable CSRF
+≠
+Generate Token Immediately
+
+Spring generates token only when:
+
+CsrfToken is accessed.
+
+Example:
+
+@GetMapping("/csrf")
+public CsrfToken csrf(CsrfToken token){
+   return token;
+}
+
+OR
+
+Custom Filter:
+
+@Component
+public class CsrfCookieFilter extends OncePerRequestFilter {
+
+   @Override
+   protected void doFilterInternal(
+           HttpServletRequest request,
+           HttpServletResponse response,
+           FilterChain filterChain)
+           throws ServletException, IOException {
+
+       CsrfToken token =
+          (CsrfToken)request.getAttribute("_csrf");
+
+       if(token != null)
+           token.getToken();
+
+       filterChain.doFilter(request,response);
+   }
+}
+
+====================================================================================================
+🟦 BASIC AUTH VS FORM LOGIN
+====================================================================================================
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ FORM LOGIN                                                          │
+├──────────────────────────────────────────────────────────────────────┤
+│ Browser Oriented                                                    │
+│ Login Once                                                          │
+│ Session Created                                                     │
+│ JSESSIONID Used Afterwards                                          │
+│ Stateful                                                            │
+└──────────────────────────────────────────────────────────────────────┘
+
+FLOW:
+
+Username + Password
+          ↓
+Authentication
+          ↓
+JSESSIONID
+          ↓
+Future Requests
+
+----------------------------------------------------------------------------------------------------
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ BASIC AUTH                                                          │
+├──────────────────────────────────────────────────────────────────────┤
+│ API / Postman Oriented                                              │
+│ Username Password Every Request                                     │
+│ No Login Screen                                                     │
+│ Generally Stateless                                                 │
+└──────────────────────────────────────────────────────────────────────┘
+
+FLOW:
+
+Request 1
+Authorization: Basic xxx
+
+Request 2
+Authorization: Basic xxx
+
+Request 3
+Authorization: Basic xxx
+
+Authentication Happens Every Request
+
+====================================================================================================
+🟩 WHY SESSION AND CSRF APPEAR "USELESS" WITH BASIC AUTH
+====================================================================================================
+
+Request:
+
+GET /customers
+
+Authorization: Basic xxxx
+
+Spring executes:
+
+BasicAuthenticationFilter
+      ↓
+Authenticate User
+      ↓
+Success
+
+Spring never needs:
+
+JSESSIONID
+
+because it already knows user from:
+
+Authorization Header
+
+This is why Basic Auth often feels like:
+
+"Session not being used"
+
+In reality:
+
+Basic Auth keeps re-authenticating every request.
+
+====================================================================================================
+🟥 HOW TO FORCE TRUE SESSION VALIDATION IN POSTMAN
+====================================================================================================
+
+STEP 1
+
+Temporarily use:
+
+.formLogin(Customizer.withDefaults())
+
+Login through browser.
+
+Get:
+
+JSESSIONID=ABC123
+
+----------------------------------------------------------------------------------------------------
+
+STEP 2
+
+Postman
+
+Authorization:
+
+NONE
+
+Header:
+
+Cookie:
+JSESSIONID=ABC123
+
+Request:
+
+GET /customers
+
+Spring performs:
+
+HttpSession
+      ↓
+SPRING_SECURITY_CONTEXT
+      ↓
+User Retrieved
+
+✅ Session-Based Authentication
+
+----------------------------------------------------------------------------------------------------
+
+POST REQUEST WITH CSRF
+
+Cookie:
+JSESSIONID=ABC123
+
+Cookie:
+XSRF-TOKEN=XYZ789
+
+Header:
+X-XSRF-TOKEN: XYZ789
+
+Spring performs:
+
+Session Validation
+       +
+CSRF Validation
+
+✅ Success
+
+Without Token:
+
+❌ 403 Forbidden
+
+====================================================================================================
+🟪 LOGOUT FLOW
+====================================================================================================
+
+POST /logout
+      ↓
+CsrfFilter
+      ↓
+Validate CSRF
+      ↓
+LogoutFilter
+      ↓
+SecurityContextHolder.clearContext()
+      ↓
+Session.invalidate()
+      ↓
+Destroy JSESSIONID
+      ↓
+Redirect /login?logout
+
+Logs:
+
+Invalidated session 9F6947D65240ACB113B6A9B7AF86CC98
+
+Next Request:
+
+No HttpSession currently exists
+
+AnonymousAuthenticationToken
+
+Access Denied
+
+====================================================================================================
+🎯 FINAL INTERVIEW SUMMARY
+====================================================================================================
+
+✅ Username/Password → Used only to authenticate initially.
+✅ Session Authentication → Uses JSESSIONID afterwards.
+✅ CSRF Protection → Prevents malicious websites from abusing valid sessions.
+✅ CSRF works because attacker cannot READ the token, not because token changes frequently.
+✅ Same browser tabs share SessionId and CSRF token because they share cookie storage.
+✅ Different Browser Profiles / Incognito Windows → Different Session and CSRF tokens.
+✅ CSRF protects against evil.com attacking bank.com.
+✅ XSS executes inside bank.com and can bypass CSRF.
+✅ Protect XSS using CSP + Validation + Sanitization + HttpOnly cookies.
+✅ formLogin() → Browser + Session Authentication.
+✅ httpBasic() → Postman/API style, Username+Password on every request.
+✅ To test true session authentication in Postman, remove Basic Auth and manually send JSESSIONID.
+✅ To test CSRF in Postman, send BOTH XSRF-TOKEN cookie and X-XSRF-TOKEN header.
+✅ Logout destroys SecurityContext + Session + Authentication and forces re-login.
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════

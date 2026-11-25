@@ -1,0 +1,850 @@
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                  🔐 ACCESS TOKEN & REFRESH TOKEN - COMPLETE MASTER NOTES (ENTERPRISE JWT) 🔐                                    ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+🎯 THE BIG QUESTION
+
+If JWT is stateless and valid for only 15 minutes, how can a user stay logged in for days without repeatedly entering username/password?
+
+Solution:
+
+✅ Access Token
+✅ Refresh Token
+
+Modern security systems never rely on a single token.
+
+Examples:
+
+✅ Google
+✅ Microsoft
+✅ AWS
+✅ Banking Systems
+✅ Enterprise Applications
+
+All use:
+
+Access Token + Refresh Token Architecture
+
+====================================================================================================
+🟦 WHY ACCESS TOKEN ALONE IS NOT ENOUGH
+====================================================================================================
+
+Suppose:
+
+JWT Expiry
+
+30 Days
+
+----------------------------------------------------------------------------------------------------
+
+Problem
+
+Attacker Steals JWT
+
+      │
+      ▼
+
+Attacker Gets
+
+30 Days Access
+
+----------------------------------------------------------------------------------------------------
+
+Risk
+
+❌ Huge Security Issue
+❌ Long Attack Window
+❌ Hard to Revoke
+
+====================================================================================================
+🟩 WHY VERY SHORT JWT IS NOT ENOUGH
+====================================================================================================
+
+Suppose:
+
+JWT Expiry
+
+5 Minutes
+
+----------------------------------------------------------------------------------------------------
+
+User Login
+
+      │
+      ▼
+
+JWT Expires
+
+      │
+      ▼
+
+Force Login Again
+
+----------------------------------------------------------------------------------------------------
+
+User Gets Annoyed
+
+❌ Bad User Experience
+
+====================================================================================================
+🟨 ENTERPRISE SOLUTION
+====================================================================================================
+
+Use Two Tokens
+
+┌──────────────────────────┐
+│ Access Token             │
+│ Short Lived              │
+└─────────────┬────────────┘
+              │
+              ▼
+┌──────────────────────────┐
+│ Refresh Token            │
+│ Long Lived               │
+└──────────────────────────┘
+
+Access Token
+
+Purpose:
+Call APIs
+
+Lifetime:
+5 - 30 Minutes
+
+----------------------------------------------------------------------------------------------------
+
+Refresh Token
+
+Purpose:
+Generate New Access Token
+
+Lifetime:
+Days / Weeks
+
+====================================================================================================
+🟥 LOGIN FLOW
+====================================================================================================
+
+Username
+Password
+
+      │
+      ▼
+
+AuthenticationManager
+
+      │
+      ▼
+
+Authentication Success
+
+      │
+      ▼
+
+Generate Access Token
+
+      │
+      ▼
+
+Generate Refresh Token
+
+      │
+      ▼
+
+Send Both To Client
+
+----------------------------------------------------------------------------------------------------
+
+Response
+
+{
+   "accessToken":"eyJhbGc...",
+   "refreshToken":"eyJhbGc..."
+}
+
+====================================================================================================
+🟪 ACCESS TOKEN ARCHITECTURE
+====================================================================================================
+
+Access Token
+
+{
+   "sub":"suprith",
+   "role":"ADMIN",
+   "exp":"15 minutes"
+}
+
+----------------------------------------------------------------------------------------------------
+
+Purpose
+
+Authorize API Requests
+
+----------------------------------------------------------------------------------------------------
+
+Example
+
+Authorization:
+Bearer AccessToken
+
+GET /customers
+
+----------------------------------------------------------------------------------------------------
+
+Spring
+
+JWT Filter
+      ↓
+Validate Signature
+      ↓
+Validate Expiry
+      ↓
+SecurityContext
+      ↓
+Authenticated
+
+====================================================================================================
+🟫 REFRESH TOKEN ARCHITECTURE
+====================================================================================================
+
+Refresh Token
+
+{
+   "sub":"suprith",
+   "exp":"7 days"
+}
+
+----------------------------------------------------------------------------------------------------
+
+Purpose
+
+NOT CALL API
+
+----------------------------------------------------------------------------------------------------
+
+Purpose
+
+Generate
+New Access Token
+
+----------------------------------------------------------------------------------------------------
+
+Used Only For
+
+POST /refresh
+
+====================================================================================================
+⬜ COMPLETE TOKEN LIFECYCLE
+====================================================================================================
+
+USER LOGIN
+
+      │
+      ▼
+
+Access Token
+15 Minutes
+
+Refresh Token
+7 Days
+
+      │
+      ▼
+
+User Uses App
+
+      │
+      ▼
+
+Access Token Expires
+
+      │
+      ▼
+
+401 Unauthorized
+
+      │
+      ▼
+
+Frontend Calls
+
+POST /refresh
+
+Refresh Token Sent
+
+      │
+      ▼
+
+Server Validates Refresh Token
+
+      │
+      ▼
+
+Creates New Access Token
+
+      │
+      ▼
+
+Returns Access Token
+
+      │
+      ▼
+
+Continue Using App
+
+User Never Notices
+
+====================================================================================================
+🟦 SPRING BOOT LOGIN RESPONSE
+====================================================================================================
+
+@Data
+@AllArgsConstructor
+public class LoginResponse {
+
+    private String accessToken;
+
+    private String refreshToken;
+}
+
+----------------------------------------------------------------------------------------------------
+
+Response
+
+{
+   "accessToken":"eyJhbGc....",
+   "refreshToken":"eyJhbGc...."
+}
+
+====================================================================================================
+🟩 ACCESS TOKEN VS REFRESH TOKEN
+====================================================================================================
+
+ACCESS TOKEN
+
+Purpose:
+Access APIs
+
+Lifetime:
+Short
+
+Used Frequently:
+YES
+
+Contains Roles:
+YES
+
+Used In:
+Authorization Header
+
+----------------------------------------------------------------------------------------------------
+
+REFRESH TOKEN
+
+Purpose:
+Generate New Access Token
+
+Lifetime:
+Long
+
+Used Frequently:
+NO
+
+Contains Roles:
+Usually No
+
+Used In:
+Refresh Endpoint
+
+====================================================================================================
+🟨 SPRING SECURITY REQUEST FLOW
+====================================================================================================
+
+Request
+
+Authorization:
+Bearer AccessToken
+
+      │
+      ▼
+
+JwtAuthenticationFilter
+
+      │
+      ▼
+
+Verify Signature
+
+      │
+      ▼
+
+Check Expiration
+
+      │
+      ▼
+
+Load User
+
+      │
+      ▼
+
+Create Authentication
+
+      │
+      ▼
+
+SecurityContextHolder
+
+      │
+      ▼
+
+Controller
+
+====================================================================================================
+🟥 WHAT HAPPENS WHEN ACCESS TOKEN EXPIRES?
+====================================================================================================
+
+Request
+
+Authorization:
+Bearer AccessToken
+
+----------------------------------------------------------------------------------------------------
+
+Spring
+
+JWT Filter
+
+----------------------------------------------------------------------------------------------------
+
+Check Expiration
+
+Token Expired
+
+----------------------------------------------------------------------------------------------------
+
+Response
+
+401 Unauthorized
+
+----------------------------------------------------------------------------------------------------
+
+Frontend
+
+Calls
+
+POST /refresh
+
+====================================================================================================
+🟪 REFRESH ENDPOINT FLOW
+====================================================================================================
+
+POST /auth/refresh
+
+{
+   "refreshToken":"eyJhbGc..."
+}
+
+----------------------------------------------------------------------------------------------------
+
+Server
+
+Validate Refresh Token
+
+      │
+      ▼
+
+Expired ?
+
+      │
+      ▼
+
+NO
+
+      │
+      ▼
+
+Generate New Access Token
+
+      │
+      ▼
+
+Return
+
+{
+  "accessToken":"new-token"
+}
+
+====================================================================================================
+🟫 WHY REFRESH TOKEN EXISTS
+====================================================================================================
+
+Without Refresh Token
+
+Access Token Expired
+
+      │
+      ▼
+
+Login Again
+
+      │
+      ▼
+
+Bad UX
+
+----------------------------------------------------------------------------------------------------
+
+With Refresh Token
+
+Access Token Expired
+
+      │
+      ▼
+
+Refresh Token Used
+
+      │
+      ▼
+
+New Access Token
+
+      │
+      ▼
+
+Continue Working
+
+====================================================================================================
+⬜ WHERE SHOULD TOKENS BE STORED?
+====================================================================================================
+
+ACCESS TOKEN
+
+Best Practice
+
+✅ Memory
+✅ JavaScript Variable
+
+----------------------------------------------------------------------------------------------------
+
+REFRESH TOKEN
+
+Best Practice
+
+✅ HttpOnly Cookie
+✅ Secure Cookie
+✅ SameSite Cookie
+
+----------------------------------------------------------------------------------------------------
+
+Reason
+
+Refresh Token is most valuable.
+
+Protect it heavily.
+
+====================================================================================================
+🟦 TOKEN THEFT SCENARIO
+====================================================================================================
+
+Attacker Steals
+
+Access Token
+
+----------------------------------------------------------------------------------------------------
+
+Token Lifetime
+
+15 Minutes
+
+----------------------------------------------------------------------------------------------------
+
+Damage
+
+Limited
+
+----------------------------------------------------------------------------------------------------
+
+After Expiry
+
+Token Useless
+
+====================================================================================================
+🟩 WORST CASE SCENARIO
+====================================================================================================
+
+Attacker Steals
+
+Refresh Token
+
+----------------------------------------------------------------------------------------------------
+
+Attacker Can
+
+Generate New Access Tokens
+
+Again
+
+Again
+
+Again
+
+----------------------------------------------------------------------------------------------------
+
+Therefore
+
+Refresh Tokens must be protected more carefully than Access Tokens.
+
+====================================================================================================
+🟨 REFRESH TOKEN ROTATION
+====================================================================================================
+
+Modern Banking Architecture
+
+Refresh Token A
+
+      │
+      ▼
+
+Used Once
+
+      │
+      ▼
+
+Generate Refresh Token B
+
+      │
+      ▼
+
+Invalidate A
+
+----------------------------------------------------------------------------------------------------
+
+If Attacker Steals A
+
+Later
+
+      │
+      ▼
+
+Token Already Invalid
+
+----------------------------------------------------------------------------------------------------
+
+Attack Blocked
+
+====================================================================================================
+🟥 DATABASE STORAGE OF REFRESH TOKENS
+====================================================================================================
+
+Usually Stored
+
+Database
+
+Redis
+
+Cache
+
+----------------------------------------------------------------------------------------------------
+
+Example
+
+RefreshToken
+
+UserId
+
+Expiry
+
+DeviceId
+
+Status
+
+----------------------------------------------------------------------------------------------------
+
+Unlike Access Tokens
+
+Refresh Tokens are often tracked server-side.
+
+====================================================================================================
+🟪 SPRING BOOT TOKEN GENERATION
+====================================================================================================
+
+ACCESS TOKEN
+
+String accessToken =
+    Jwts.builder()
+
+        .subject(username)
+
+        .expiration(
+           new Date(
+             System.currentTimeMillis()
+             + 900000
+           )
+        )
+
+        .signWith(secretKey)
+
+        .compact();
+
+----------------------------------------------------------------------------------------------------
+
+REFRESH TOKEN
+
+String refreshToken =
+    Jwts.builder()
+
+        .subject(username)
+
+        .expiration(
+           new Date(
+             System.currentTimeMillis()
+             + 604800000
+           )
+        )
+
+        .signWith(secretKey)
+
+        .compact();
+
+====================================================================================================
+🟫 ENTERPRISE SECURITY MODEL
+====================================================================================================
+
+Login
+      ↓
+Issue Access Token
+      ↓
+Issue Refresh Token
+      ↓
+Access APIs
+      ↓
+Access Token Expires
+      ↓
+Refresh Token Used
+      ↓
+Generate New Access Token
+      ↓
+Continue Using App
+
+----------------------------------------------------------------------------------------------------
+
+Benefits
+
+✅ Stateless API Calls
+✅ Better User Experience
+✅ Improved Security
+✅ Short-Lived Access Tokens
+✅ Easy Horizontal Scaling
+
+====================================================================================================
+🟦 ACCESS TOKEN vs SESSION
+====================================================================================================
+
+SESSION
+
+Stored:
+Server
+
+JSESSIONID:
+Required
+
+Scalability:
+Harder
+
+CSRF:
+Needed
+
+----------------------------------------------------------------------------------------------------
+
+ACCESS TOKEN
+
+Stored:
+Client
+
+JSESSIONID:
+Not Needed
+
+Scalability:
+Easy
+
+CSRF:
+Usually Not Needed
+
+====================================================================================================
+🟩 ACCESS TOKEN vs REFRESH TOKEN vs SESSION
+====================================================================================================
+
+Session
+
+Purpose:
+Remember User
+
+Location:
+Server
+
+Lifetime:
+Server Controlled
+
+----------------------------------------------------------------------------------------------------
+
+Access Token
+
+Purpose:
+Call APIs
+
+Location:
+Client
+
+Lifetime:
+Minutes
+
+----------------------------------------------------------------------------------------------------
+
+Refresh Token
+
+Purpose:
+Get New Access Token
+
+Location:
+Client + Often Tracked Server Side
+
+Lifetime:
+Days/Weeks
+
+====================================================================================================
+🎯 INTERVIEW MASTER ANSWER
+====================================================================================================
+
+Access Tokens are short-lived JWTs used to authenticate and authorize API requests. They typically contain user identity and roles and are sent in the Authorization header. Because they have short expiration times, the impact of token theft is reduced.
+
+Refresh Tokens are long-lived credentials used only to obtain new Access Tokens after the Access Token expires. They are not used to access business APIs directly. Modern applications often store Refresh Tokens in HttpOnly Secure cookies and implement Refresh Token Rotation to prevent replay attacks.
+
+The most secure enterprise architecture is:
+
+Login
+   ↓
+Access Token (15 Minutes)
+   ↓
+Refresh Token (7 Days)
+   ↓
+Access Token Expires
+   ↓
+Refresh Token Generates New Access Token
+   ↓
+User Continues Without Re-Login
+
+MEMORY TRICK
+
+Access Token
+     ↓
+"Use API"
+
+Refresh Token
+     ↓
+"Get New Access Token"
+
+Session
+     ↓
+"Server Remembers Everything"
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝

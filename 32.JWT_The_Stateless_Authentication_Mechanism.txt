@@ -1,0 +1,914 @@
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                     🔐 JWT (JSON WEB TOKEN) COMPLETE MASTER NOTES - END TO END GUIDE 🔐                                         ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+🎯 WHAT IS JWT?
+
+JWT = JSON Web Token
+
+JWT is a compact, self-contained, digitally signed token used to represent authenticated user identity and authorization information in a stateless manner.
+
+JWT solves the biggest problem of Session Authentication:
+
+❌ Server Memory Storage
+❌ Session Replication
+❌ Redis Requirement
+❌ Sticky Sessions
+❌ Session Lookup
+
+JWT says:
+
+"Do not store user information on server. Put the information inside the token itself and digitally sign it."
+
+====================================================================================================
+🟦 WHY JWT WAS INVENTED
+====================================================================================================
+
+SESSION AUTHENTICATION
+
+Client
+   │
+   ▼
+JSESSIONID
+   │
+   ▼
+Server Session Lookup
+   │
+   ▼
+Authentication
+
+Server must remember user.
+
+----------------------------------------------------------------------------------------------------
+
+JWT AUTHENTICATION
+
+Client
+   │
+   ▼
+JWT Token
+   │
+   ▼
+Server Verifies Signature
+   │
+   ▼
+Authentication
+
+Server remembers NOTHING.
+
+====================================================================================================
+🟩 JWT OVERALL ARCHITECTURE
+====================================================================================================
+
+Login
+
+username
+password
+
+      │
+      ▼
+
+AuthenticationManager
+
+      │
+      ▼
+
+Authentication Success
+
+      │
+      ▼
+
+JWT Generated
+
+      │
+      ▼
+
+Client Stores JWT
+
+      │
+      ▼
+
+Future Requests
+
+Authorization:
+Bearer JWT
+
+      │
+      ▼
+
+JWT Validation
+
+      │
+      ▼
+
+Authenticated User
+
+NO SESSION
+
+NO JSESSIONID
+
+NO SERVER MEMORY
+
+====================================================================================================
+🟨 REAL JWT LOOKS LIKE THIS
+====================================================================================================
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+.
+eyJzdWIiOiJiYW5rdXNlcjIiLCJyb2xlIjoiQURNSU4iLCJleHAiOjE3OTU2NDYwMDB9
+.
+5aeha928hshahKJH892jdjshshs8273hhs
+
+----------------------------------------------------------------------------------------------------
+
+JWT ALWAYS HAS 3 PARTS
+
+HEADER
+.
+PAYLOAD
+.
+SIGNATURE
+
+Format:
+
+xxxxx.yyyyy.zzzzz
+
+====================================================================================================
+🟥 JWT STRUCTURE
+====================================================================================================
+
+HEADER
+.
+PAYLOAD
+.
+SIGNATURE
+
+Think:
+
+Identity Card
+      |
+      +--- Header
+      +--- User Details
+      +--- Security Seal
+
+====================================================================================================
+🟪 PART 1 : HEADER
+====================================================================================================
+
+Example
+
+{
+   "alg":"HS256",
+   "typ":"JWT"
+}
+
+Encoded:
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+
+----------------------------------------------------------------------------------------------------
+
+Meaning:
+
+alg = Algorithm
+
+HS256
+RS256
+ES256
+
+typ = Token Type
+
+JWT
+
+----------------------------------------------------------------------------------------------------
+
+Header answers:
+
+"How was this token signed?"
+
+====================================================================================================
+🟫 PART 2 : PAYLOAD
+====================================================================================================
+
+Payload contains:
+
+Claims
+
+Claims = User Information
+
+Example
+
+{
+   "sub":"bankuser2",
+   "role":"ADMIN",
+   "email":"bankuser2@gmail.com",
+   "iat":1795000000,
+   "exp":1796000000
+}
+
+----------------------------------------------------------------------------------------------------
+
+JWT CLAIM TYPES
+
+1. Registered Claims
+2. Public Claims
+3. Private Claims
+
+====================================================================================================
+⬜ REGISTERED CLAIMS
+====================================================================================================
+
+sub
+
+Subject
+
+{
+  "sub":"bankuser2"
+}
+
+----------------------------------------------------------------------------------------------------
+
+iss
+
+Issuer
+
+{
+  "iss":"BankingApp"
+}
+
+----------------------------------------------------------------------------------------------------
+
+aud
+
+Audience
+
+{
+  "aud":"MobileApp"
+}
+
+----------------------------------------------------------------------------------------------------
+
+iat
+
+Issued At
+
+{
+  "iat":1795000000
+}
+
+----------------------------------------------------------------------------------------------------
+
+exp
+
+Expiry Time
+
+{
+  "exp":1796000000
+}
+
+----------------------------------------------------------------------------------------------------
+
+nbf
+
+Not Before
+
+{
+  "nbf":1795000000
+}
+
+====================================================================================================
+🟦 PUBLIC CLAIMS
+====================================================================================================
+
+Custom Standard Data
+
+{
+   "role":"ADMIN"
+}
+
+{
+   "permissions":["READ","WRITE"]
+}
+
+====================================================================================================
+🟩 PRIVATE CLAIMS
+====================================================================================================
+
+Application Specific
+
+{
+   "branch":"London"
+}
+
+{
+   "employeeId":"12345"
+}
+
+{
+   "accountType":"Premium"
+}
+
+====================================================================================================
+🟨 IMPORTANT SECURITY RULE
+====================================================================================================
+
+JWT PAYLOAD IS NOT ENCRYPTED
+
+It is only:
+
+BASE64 ENCODED
+
+Anyone can decode it.
+
+----------------------------------------------------------------------------------------------------
+
+Never store:
+
+❌ Password
+❌ Credit Card
+❌ Secret Key
+❌ OTP
+
+inside JWT.
+
+----------------------------------------------------------------------------------------------------
+
+Safe Data:
+
+✅ Username
+✅ UserId
+✅ Role
+✅ Email
+✅ Authorities
+
+====================================================================================================
+🟥 PART 3 : SIGNATURE
+====================================================================================================
+
+This is the most important part.
+
+Header
+
++
+Payload
+
++
+Secret Key
+
+↓
+Hashing Algorithm
+
+↓
+
+Signature
+
+Example
+
+HMACSHA256(
+ Header
+ +
+ Payload
+ +
+ Secret
+)
+
+↓
+
+5aeha928hshahKJH892jdjshshs8273hhs
+
+====================================================================================================
+🟪 WHY SIGNATURE EXISTS
+====================================================================================================
+
+Without Signature
+
+Attacker changes:
+
+{
+   "role":"USER"
+}
+
+to
+
+{
+   "role":"ADMIN"
+}
+
+----------------------------------------------------------------------------------------------------
+
+With Signature
+
+Payload changed
+
+↓
+
+Signature mismatch
+
+↓
+
+Token Rejected
+
+====================================================================================================
+🟫 JWT TOKEN GENERATION FLOW
+====================================================================================================
+
+Login
+
+username=password
+
+         │
+         ▼
+
+AuthenticationManager
+
+         │
+         ▼
+
+Authentication Success
+
+         │
+         ▼
+
+Header Created
+
+{
+ "alg":"HS256"
+}
+
+         │
+         ▼
+
+Payload Created
+
+{
+ "sub":"bankuser2",
+ "role":"ADMIN"
+}
+
+         │
+         ▼
+
+Sign With Secret Key
+
+         │
+         ▼
+
+JWT Generated
+
+         │
+         ▼
+
+Return To Client
+
+====================================================================================================
+⬜ SPRING BOOT JWT TOKEN CREATION
+====================================================================================================
+
+String token =
+    Jwts.builder()
+
+        .subject(username)
+
+        .claim("role","ADMIN")
+
+        .issuedAt(new Date())
+
+        .expiration(
+            new Date(
+               System.currentTimeMillis()
+               + 86400000
+            )
+        )
+
+        .signWith(secretKey)
+
+        .compact();
+
+====================================================================================================
+🟦 CLIENT SIDE TOKEN STORAGE
+====================================================================================================
+
+Option 1
+
+Memory
+
+✅ Safer
+✅ Recommended
+
+----------------------------------------------------------------------------------------------------
+
+Option 2
+
+HttpOnly Cookie
+
+✅ Most Secure
+
+----------------------------------------------------------------------------------------------------
+
+Option 3
+
+LocalStorage
+
+⚠ XSS Risk
+
+----------------------------------------------------------------------------------------------------
+
+Option 4
+
+SessionStorage
+
+⚠ XSS Risk
+
+====================================================================================================
+🟩 FUTURE REQUEST FLOW
+====================================================================================================
+
+Authorization:
+
+Bearer eyJhbGciOiJIUzI1Ni...
+
+----------------------------------------------------------------------------------------------------
+
+Request
+
+GET /customers
+
+Authorization:
+Bearer JWT
+
+      │
+      ▼
+
+JwtAuthenticationFilter
+
+      │
+      ▼
+
+Extract Token
+
+      │
+      ▼
+
+Validate Signature
+
+      │
+      ▼
+
+Validate Expiry
+
+      │
+      ▼
+
+Read Claims
+
+      │
+      ▼
+
+Build Authentication
+
+      │
+      ▼
+
+Authenticated
+
+====================================================================================================
+🟨 JWT VALIDATION PROCESS
+====================================================================================================
+
+Spring validates:
+
+1. Format Valid?
+
+2. Signature Valid?
+
+3. Expired?
+
+4. Issuer Valid?
+
+5. Audience Valid?
+
+6. User Exists?
+
+----------------------------------------------------------------------------------------------------
+
+If any fail
+
+401 Unauthorized
+
+====================================================================================================
+🟥 HOW SPRING READS JWT
+====================================================================================================
+
+Claims claims =
+        Jwts.parser()
+
+            .verifyWith(secretKey)
+
+            .build()
+
+            .parseSignedClaims(jwt)
+
+            .getPayload();
+
+----------------------------------------------------------------------------------------------------
+
+Read Username
+
+String username =
+      claims.getSubject();
+
+----------------------------------------------------------------------------------------------------
+
+Read Role
+
+String role =
+      claims.get("role",
+                 String.class);
+
+====================================================================================================
+🟪 JWT FILTER IN SPRING SECURITY
+====================================================================================================
+
+Request
+
+Bearer Token
+
+      │
+      ▼
+
+JwtAuthenticationFilter
+
+      │
+      ▼
+
+Extract JWT
+
+      │
+      ▼
+
+Validate JWT
+
+      │
+      ▼
+
+Create Authentication
+
+      │
+      ▼
+
+SecurityContextHolder
+
+      │
+      ▼
+
+AuthorizationFilter
+
+      │
+      ▼
+
+Controller
+
+====================================================================================================
+🟫 SPRING SECURITY CONFIGURATION
+====================================================================================================
+
+@Bean
+public SecurityFilterChain security(
+        HttpSecurity http)
+        throws Exception {
+
+    return http
+
+            .csrf(csrf -> csrf.disable())
+
+            .sessionManagement(session ->
+                    session.sessionCreationPolicy(
+                            SessionCreationPolicy
+                                    .STATELESS
+                    )
+            )
+
+            .addFilterBefore(
+                    jwtFilter,
+                    UsernamePasswordAuthenticationFilter.class
+            )
+
+            .build();
+}
+
+====================================================================================================
+⬜ WHY CSRF IS USUALLY NOT NEEDED WITH JWT
+====================================================================================================
+
+Session Authentication
+
+Browser auto sends:
+
+JSESSIONID
+
+Therefore:
+
+CSRF Possible
+
+----------------------------------------------------------------------------------------------------
+
+JWT
+
+Authorization Header
+
+Bearer xxxxx
+
+Browser does NOT send automatically.
+
+Application sends explicitly.
+
+Therefore:
+
+CSRF protection usually unnecessary.
+
+====================================================================================================
+🟦 JWT REFRESH TOKEN CONCEPT
+====================================================================================================
+
+Access Token
+
+15 Minutes
+
+----------------------------------------------------------------------------------------------------
+
+Refresh Token
+
+7 Days
+
+----------------------------------------------------------------------------------------------------
+
+Flow
+
+Login
+   ↓
+Access Token
+Refresh Token
+
+Access Token Expired
+   ↓
+Send Refresh Token
+   ↓
+New Access Token
+
+User doesn't log in again.
+
+====================================================================================================
+🟩 ACCESS TOKEN vs REFRESH TOKEN
+====================================================================================================
+
+Access Token
+
+Purpose:
+API Calls
+
+Lifespan:
+Minutes
+
+Used Frequently:
+YES
+
+----------------------------------------------------------------------------------------------------
+
+Refresh Token
+
+Purpose:
+Get New Access Token
+
+Lifespan:
+Days/Months
+
+Used Frequently:
+NO
+
+====================================================================================================
+🟨 JWT ADVANTAGES
+====================================================================================================
+
+✅ Stateless
+✅ No Session Storage
+✅ Easy Horizontal Scaling
+✅ Works with Mobile Apps
+✅ Works with Angular/React
+✅ Perfect for Microservices
+✅ No Redis Needed
+✅ Cloud Native
+
+====================================================================================================
+🟥 JWT DISADVANTAGES
+====================================================================================================
+
+❌ Larger Request Size
+❌ Cannot Easily Revoke Token
+❌ Logout Not Immediate
+❌ Stolen JWT Works Until Expiry
+❌ Refresh Token Complexity
+❌ XSS Can Steal JWT if stored badly
+
+====================================================================================================
+🟪 SESSION vs JWT
+====================================================================================================
+
+SESSION
+
+Identity Stored:
+Server
+
+Memory Required:
+YES
+
+JSESSIONID:
+YES
+
+CSRF:
+YES
+
+Logout:
+Easy
+
+Scaling:
+Hard
+
+----------------------------------------------------------------------------------------------------
+
+JWT
+
+Identity Stored:
+Client Token
+
+Memory Required:
+NO
+
+JSESSIONID:
+NO
+
+CSRF:
+Usually No
+
+Logout:
+Harder
+
+Scaling:
+Easy
+
+====================================================================================================
+🟫 HOW JWT BECOMES AUTHENTICATION IN SPRING
+====================================================================================================
+
+Bearer Token
+      ↓
+JwtFilter
+      ↓
+Claims
+      ↓
+Username
+      ↓
+Authorities
+      ↓
+Authentication Object
+      ↓
+SecurityContextHolder
+      ↓
+AuthorizationFilter
+      ↓
+Controller
+
+Even though there is NO session,
+Spring still ultimately builds:
+
+Authentication
+
+inside
+
+SecurityContextHolder
+
+for the current request.
+
+====================================================================================================
+🎯 INTERVIEW MASTER SUMMARY
+====================================================================================================
+
+✅ JWT = JSON Web Token.
+✅ JWT is a Stateless Authentication mechanism.
+✅ JWT consists of Header.Payload.Signature.
+✅ Header describes algorithm and token type.
+✅ Payload contains Claims (user data).
+✅ Signature prevents tampering.
+✅ JWT is signed, NOT encrypted.
+✅ Never store passwords or secrets inside JWT.
+✅ Spring validates JWT by verifying signature and expiry.
+✅ JWT is commonly sent using:
+      Authorization: Bearer <token>
+✅ JWT eliminates server-side session storage.
+✅ JWT works well with Angular, React, Mobile Apps and Microservices.
+✅ Access Token authenticates requests.
+✅ Refresh Token obtains new Access Tokens.
+✅ Spring implements JWT using a custom JwtAuthenticationFilter or OAuth2 Resource Server support.
+✅ Session Authentication is Stateful.
+✅ JWT Authentication is Stateless.
+✅ Modern cloud-native applications generally prefer JWT because no session replication or server memory storage is required.
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝

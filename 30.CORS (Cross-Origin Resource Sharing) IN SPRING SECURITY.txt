@@ -1,0 +1,1125 @@
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                 🌍 CORS (Cross-Origin Resource Sharing) IN SPRING SECURITY - COMPLETE GUIDE 🌍                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+🎯 WHAT PROBLEM DOES CORS SOLVE?
+
+Many developers confuse:
+
+✅ CORS
+✅ CSRF
+
+They solve completely different problems.
+
+----------------------------------------------------------------------------------------------------
+
+CSRF PROTECTS
+
+evil.com
+      ↓
+tries to SEND request to bank.com
+
+Question:
+
+"Can this request be trusted?"
+
+----------------------------------------------------------------------------------------------------
+
+CORS PROTECTS
+
+angular-app.com
+       ↓
+tries to READ response from api.bank.com
+
+Question:
+
+"Should this origin be allowed to access my API?"
+
+====================================================================================================
+🟦 SAME ORIGIN POLICY (BROWSER SECURITY)
+====================================================================================================
+
+Browser considers origin as:
+
+Protocol + Host + Port
+
+Example:
+
+http://localhost:8080
+
+Origin:
+
+Protocol = http
+Host = localhost
+Port = 8080
+
+----------------------------------------------------------------------------------------------------
+
+Same Origin Examples
+
+http://localhost:8080
+http://localhost:8080
+
+✅ Same Origin
+
+----------------------------------------------------------------------------------------------------
+
+Different Origin Examples
+
+http://localhost:8080
+http://localhost:4200
+
+❌ Different Origin
+
+----------------------------------------------------------------------------------------------------
+
+http://localhost:8080
+https://localhost:8080
+
+❌ Different Origin
+
+----------------------------------------------------------------------------------------------------
+
+http://localhost:8080
+http://bank.com
+
+❌ Different Origin
+
+====================================================================================================
+🟩 WITHOUT CORS
+====================================================================================================
+
+Suppose:
+
+Spring Boot API
+
+http://localhost:9090
+
+Angular Application
+
+http://localhost:4200
+
+Angular sends:
+
+GET http://localhost:9090/customers
+
+Browser sees:
+
+4200 → 9090
+
+Cross Origin Request
+
+----------------------------------------------------------------------------------------------------
+
+Browser immediately blocks:
+
+Access to fetch at
+http://localhost:9090
+
+has been blocked by CORS policy
+
+----------------------------------------------------------------------------------------------------
+
+Important:
+
+Spring Boot returned response successfully.
+
+Browser blocked JavaScript from reading it.
+
+====================================================================================================
+🟨 WHY BROWSER CARES?
+====================================================================================================
+
+Suppose
+
+evil.com
+
+contains:
+
+<script>
+
+fetch(
+ "http://bank.com/customers"
+)
+
+</script>
+
+Without Same-Origin Policy:
+
+evil.com
+
+could read:
+
+Customers
+Accounts
+Balances
+
+Browser prevents this.
+
+====================================================================================================
+🟥 WHAT DOES CORS ACTUALLY DO?
+====================================================================================================
+
+API tells Browser:
+
+"I trust requests coming from these origins."
+
+Response Header:
+
+Access-Control-Allow-Origin
+
+Example:
+
+Access-Control-Allow-Origin:
+http://localhost:4200
+
+Browser:
+
+Origin Allowed?
+
+YES
+
+Allow JavaScript to read response.
+
+====================================================================================================
+🟪 SPRING SECURITY CORS CONFIGURATION
+====================================================================================================
+
+@Bean
+public CorsConfigurationSource corsConfigurationSource() {
+
+    CorsConfiguration config =
+            new CorsConfiguration();
+
+    config.setAllowedOrigins(
+            List.of(
+                    "http://localhost:4200"
+            ));
+
+    config.setAllowedMethods(
+            List.of(
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "DELETE"
+            ));
+
+    config.setAllowedHeaders(
+            List.of("*")
+    );
+
+    config.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source =
+            new UrlBasedCorsConfigurationSource();
+
+    source.registerCorsConfiguration(
+            "/**",
+            config
+    );
+
+    return source;
+}
+
+----------------------------------------------------------------------------------------------------
+
+Security Config
+
+@Bean
+public SecurityFilterChain securityFilterChain(
+        HttpSecurity http)
+        throws Exception {
+
+    return http
+
+            .cors(Customizer.withDefaults())
+
+            .csrf(csrf -> csrf
+                    .csrfTokenRepository(
+                            CookieCsrfTokenRepository
+                                    .withHttpOnlyFalse()))
+
+            .authorizeHttpRequests(auth ->
+                    auth.anyRequest()
+                            .authenticated())
+
+            .formLogin(
+                    Customizer.withDefaults())
+
+            .build();
+}
+
+====================================================================================================
+🟫 WHAT HAPPENS INTERNALLY?
+====================================================================================================
+
+Angular
+
+Origin:
+
+http://localhost:4200
+
+Request:
+
+GET http://localhost:9090/customers
+
+----------------------------------------------------------------------------------------------------
+
+Browser Adds
+
+Origin: http://localhost:4200
+
+Request sent to server.
+
+----------------------------------------------------------------------------------------------------
+
+Spring CORS Filter
+
+Receives:
+
+Origin: http://localhost:4200
+
+----------------------------------------------------------------------------------------------------
+
+Looks inside
+
+CorsConfiguration
+
+Allowed Origins:
+
+http://localhost:4200
+
+----------------------------------------------------------------------------------------------------
+
+Match Found
+
+Spring Adds:
+
+Access-Control-Allow-Origin:
+http://localhost:4200
+
+----------------------------------------------------------------------------------------------------
+
+Browser Receives Response
+
+Browser Checks:
+
+Requested Origin =
+http://localhost:4200
+
+Allowed Origin =
+http://localhost:4200
+
+✅ Match
+
+Allow JavaScript to read response.
+
+====================================================================================================
+🟧 PRE-FLIGHT REQUEST (OPTIONS)
+====================================================================================================
+
+For GET request
+
+Browser directly calls API.
+
+----------------------------------------------------------------------------------------------------
+
+For PUT/DELETE/Custom Headers
+
+Browser sends:
+
+OPTIONS request first
+
+Example:
+
+OPTIONS /customers
+
+Origin:
+http://localhost:4200
+
+Access-Control-Request-Method:
+PUT
+
+----------------------------------------------------------------------------------------------------
+
+Spring Replies
+
+Access-Control-Allow-Origin:
+http://localhost:4200
+
+Access-Control-Allow-Methods:
+PUT
+
+----------------------------------------------------------------------------------------------------
+
+Then Browser sends real:
+
+PUT /customers
+
+This is called:
+
+✅ Pre-Flight Request
+
+====================================================================================================
+⬜ CORS WITH SESSION AUTHENTICATION
+====================================================================================================
+
+Suppose:
+
+Angular
+
+http://localhost:4200
+
+Backend
+
+http://localhost:9090
+
+----------------------------------------------------------------------------------------------------
+
+Login
+
+POST /login
+
+Response:
+
+Set-Cookie:
+JSESSIONID=ABC123
+
+----------------------------------------------------------------------------------------------------
+
+IMPORTANT
+
+For browser to send session cookie:
+
+Angular must use:
+
+withCredentials=true
+
+Example:
+
+this.http.get(
+   url,
+   {
+     withCredentials:true
+   }
+);
+
+----------------------------------------------------------------------------------------------------
+
+Spring must allow credentials
+
+config.setAllowCredentials(true);
+
+----------------------------------------------------------------------------------------------------
+
+Flow
+
+Angular
+      ↓
+JSESSIONID Cookie
+      ↓
+Backend
+      ↓
+HttpSession Lookup
+      ↓
+SecurityContext
+      ↓
+bankuser2
+
+Authenticated
+
+====================================================================================================
+🟦 CORS + CSRF + SESSION TOGETHER
+====================================================================================================
+
+Angular
+(http://localhost:4200)
+
+        │
+        ▼
+
+GET /customers
+
+Origin:
+http://localhost:4200
+
+Cookie:
+JSESSIONID=ABC123
+
+Cookie:
+XSRF-TOKEN=XYZ789
+
+        │
+        ▼
+
+Spring CORS Filter
+
+        │
+Allowed Origin?
+        │
+        ▼
+
+YES
+
+        │
+        ▼
+
+Session Validation
+
+JSESSIONID
+      ↓
+HttpSession
+      ↓
+SecurityContext
+      ↓
+bankuser2
+
+        │
+        ▼
+
+POST /customers
+
+Cookie:
+XSRF-TOKEN=XYZ789
+
+Header:
+X-XSRF-TOKEN=XYZ789
+
+        │
+        ▼
+
+CsrfFilter
+
+        │
+Cookie Token ==
+Header Token ?
+
+        │
+        ▼
+
+YES
+
+        │
+        ▼
+
+Request Allowed
+
+====================================================================================================
+🟩 CORS DOES NOT PROTECT AGAINST
+====================================================================================================
+
+❌ SQL Injection
+
+❌ XSS
+
+❌ CSRF
+
+❌ Authentication Bypass
+
+❌ Session Hijacking
+
+----------------------------------------------------------------------------------------------------
+
+CORS ONLY ANSWERS:
+
+"Can this origin read my response?"
+
+====================================================================================================
+🟥 CORS VS CSRF VS XSS
+====================================================================================================
+
+CORS
+
+Purpose:
+
+Control who can READ API responses.
+
+Question:
+
+Can Angular read my API?
+
+----------------------------------------------------------------------------------------------------
+
+CSRF
+
+Purpose:
+
+Protect authenticated sessions.
+
+Question:
+
+Did this POST request originate from my app?
+
+----------------------------------------------------------------------------------------------------
+
+XSS
+
+Purpose:
+
+Prevent malicious script execution.
+
+Question:
+
+Can attacker execute JavaScript inside my site?
+
+----------------------------------------------------------------------------------------------------
+
+Example
+
+evil.com
+      ↓
+tries to read response
+      ↓
+CORS blocks
+
+----------------------------------------------------------------------------------------------------
+
+evil.com
+      ↓
+tries forged POST
+      ↓
+CSRF blocks
+
+----------------------------------------------------------------------------------------------------
+
+attacker script running INSIDE bank.com
+      ↓
+XSS succeeded
+      ↓
+can steal CSRF token
+      ↓
+can bypass CSRF
+
+====================================================================================================
+🟪 INTERVIEW GOLDEN ANSWER
+====================================================================================================
+
+✅ CORS is enforced primarily by the browser.
+✅ Spring Security's CORS configuration tells the browser which origins are trusted.
+✅ Browser sends Origin header.
+✅ Spring's CorsFilter validates the Origin header against CorsConfiguration.
+✅ If allowed, Spring returns Access-Control-Allow-Origin.
+✅ Browser then allows JavaScript to read the response.
+✅ CORS is unrelated to authentication.
+✅ CORS is unrelated to CSRF.
+✅ CORS should be enabled before authentication/authorization concerns.
+✅ Session-based applications usually require:
+      CORS
+      + Session (JSESSIONID)
+      + CSRF
+✅ Angular/React applications commonly use:
+      withCredentials=true
+      + setAllowCredentials(true)
+      + Specific Allowed Origins
+✅ Never use allowedOrigins("*") together with credentials in production.
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                           🌍 SPRING CORS CONFIGURATION - ALL 3 APPROACHES 🌍                                                     ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+🎯 SPRING PROVIDES 3 DIFFERENT WAYS TO CONFIGURE CORS
+
+1️⃣ @CrossOrigin Annotation                  → Controller/Method Level
+2️⃣ WebMvcConfigurer                         → Spring MVC Global Level
+3️⃣ SecurityFilterChain + CorsConfiguration  → Spring Security Level (Recommended)
+
+IMPORTANT:
+
+All three ultimately add CORS headers.
+
+Difference is:
+
+WHERE the configuration is applied and
+WHO processes the request first.
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟦 APPROACH 1 : @CrossOrigin (CONTROLLER LEVEL)
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+USE CASE
+
+Only a few controllers require CORS.
+
+----------------------------------------------------------------------------------------------------
+
+CONTROLLER LEVEL
+
+@RestController
+@RequestMapping("/customers")
+@CrossOrigin(
+        origins = "http://localhost:4200"
+)
+public class CustomerController {
+
+    @GetMapping
+    public List<Customer> getCustomers() {
+        return List.of();
+    }
+}
+
+----------------------------------------------------------------------------------------------------
+
+METHOD LEVEL
+
+@RestController
+@RequestMapping("/customers")
+public class CustomerController {
+
+    @GetMapping
+    @CrossOrigin(
+            origins = "http://localhost:4200"
+    )
+    public List<Customer> getCustomers() {
+        return List.of();
+    }
+}
+
+----------------------------------------------------------------------------------------------------
+
+FLOW
+
+Angular (4200)
+      ↓
+GET /customers
+      ↓
+CustomerController
+      ↓
+@CrossOrigin
+      ↓
+Spring Adds
+
+Access-Control-Allow-Origin:
+http://localhost:4200
+
+      ↓
+
+Response Allowed
+
+----------------------------------------------------------------------------------------------------
+
+PROS
+
+✅ Simple
+✅ Quick
+✅ Good for demos
+✅ Easy to understand
+
+----------------------------------------------------------------------------------------------------
+
+CONS
+
+❌ Repeated configuration
+❌ Difficult to manage
+❌ Hundreds of controllers become messy
+❌ Not preferred for enterprise projects
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟩 APPROACH 2 : WebMvcConfigurer (SPRING MVC LEVEL)
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+USE CASE
+
+Application-wide CORS configuration.
+
+----------------------------------------------------------------------------------------------------
+
+@Configuration
+public class CorsConfig
+        implements WebMvcConfigurer {
+
+    @Override
+    public void addCorsMappings(
+            CorsRegistry registry) {
+
+        registry.addMapping("/**")
+                .allowedOrigins(
+                        "http://localhost:4200"
+                )
+                .allowedMethods(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE"
+                )
+                .allowedHeaders("*")
+                .allowCredentials(true);
+    }
+}
+
+----------------------------------------------------------------------------------------------------
+
+FLOW
+
+Angular
+      ↓
+Request
+      ↓
+Spring MVC
+      ↓
+CorsRegistry
+      ↓
+Check Origin
+      ↓
+Add CORS Headers
+      ↓
+Response
+
+----------------------------------------------------------------------------------------------------
+
+PROS
+
+✅ Centralized
+✅ Reusable
+✅ No repetition
+✅ Cleaner than @CrossOrigin
+
+----------------------------------------------------------------------------------------------------
+
+CONS
+
+❌ CORS handled at MVC layer
+❌ May conflict with Spring Security
+❌ Security filters may block request before reaching MVC
+❌ Can cause unexpected 403 issues
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟨 APPROACH 3 : SecurityFilterChain + CorsConfigurationSource (RECOMMENDED)
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+USE CASE
+
+Real-world enterprise applications.
+
+Angular
+React
+Vue
+SPA Applications
+Session Authentication
+CSRF Protection
+
+----------------------------------------------------------------------------------------------------
+
+@Configuration
+public class CorsConfig {
+
+    @Bean
+    public CorsConfigurationSource
+    corsConfigurationSource() {
+
+        CorsConfiguration config =
+                new CorsConfiguration();
+
+        config.setAllowedOrigins(
+                List.of(
+                        "http://localhost:4200"
+                )
+        );
+
+        config.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "OPTIONS"
+                )
+        );
+
+        config.setAllowedHeaders(
+                List.of("*")
+        );
+
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(
+                "/**",
+                config
+        );
+
+        return source;
+    }
+}
+
+----------------------------------------------------------------------------------------------------
+
+SECURITY CONFIG
+
+@Bean
+public SecurityFilterChain securityFilterChain(
+        HttpSecurity http)
+        throws Exception {
+
+    return http
+
+            .cors(Customizer.withDefaults())
+
+            .csrf(csrf -> csrf
+                    .csrfTokenRepository(
+                            CookieCsrfTokenRepository
+                                    .withHttpOnlyFalse()
+                    )
+            )
+
+            .authorizeHttpRequests(auth ->
+                    auth.anyRequest()
+                            .authenticated())
+
+            .formLogin(
+                    Customizer.withDefaults())
+
+            .build();
+}
+
+----------------------------------------------------------------------------------------------------
+
+FLOW
+
+Angular
+      ↓
+Origin Header
+      ↓
+CorsFilter
+      ↓
+Spring Security
+      ↓
+Authentication
+      ↓
+Authorization
+      ↓
+Controller
+      ↓
+Response
+
+----------------------------------------------------------------------------------------------------
+
+WHY IS THIS BEST?
+
+Because CORS is checked BEFORE:
+
+✅ Authentication
+✅ Authorization
+✅ CSRF Validation
+
+----------------------------------------------------------------------------------------------------
+
+PROS
+
+✅ Enterprise Standard
+✅ Security Aware
+✅ Handles OPTIONS Preflight
+✅ Works with Sessions
+✅ Works with CSRF
+✅ Works with Cookies
+✅ Preferred for Angular/React
+
+----------------------------------------------------------------------------------------------------
+
+CONS
+
+❌ Slightly more configuration
+❌ Requires understanding Security Filter Chain
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟥 PRE-FLIGHT REQUEST (OPTIONS)
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Angular sends:
+
+PUT /customers
+
+Before actual request browser sends:
+
+OPTIONS /customers
+
+Headers:
+
+Origin:
+http://localhost:4200
+
+Access-Control-Request-Method:
+PUT
+
+----------------------------------------------------------------------------------------------------
+
+Spring Replies
+
+Access-Control-Allow-Origin:
+http://localhost:4200
+
+Access-Control-Allow-Methods:
+PUT
+
+----------------------------------------------------------------------------------------------------
+
+Browser:
+
+✅ Origin Allowed
+
+Then sends:
+
+PUT /customers
+
+Actual request executes.
+
+This process is called:
+
+🔥 PRE-FLIGHT REQUEST
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟪 CORS WITH SESSION AUTHENTICATION
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Frontend
+
+http://localhost:4200
+
+Backend
+
+http://localhost:9090
+
+----------------------------------------------------------------------------------------------------
+
+Backend Login
+
+POST /login
+
+Response
+
+Set-Cookie:
+
+JSESSIONID=ABC123
+
+----------------------------------------------------------------------------------------------------
+
+Frontend Must Use
+
+withCredentials:true
+
+Angular
+
+this.http.get(
+  url,
+  {
+      withCredentials:true
+  }
+);
+
+----------------------------------------------------------------------------------------------------
+
+Backend Must Allow Credentials
+
+config.setAllowCredentials(true);
+
+----------------------------------------------------------------------------------------------------
+
+Flow
+
+Angular
+      ↓
+JSESSIONID
+      ↓
+Backend
+      ↓
+HttpSession Lookup
+      ↓
+SecurityContext
+      ↓
+Authenticated User
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟫 COMPARISON
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+@CrossOrigin
+
+Scope:
+Controller/Method
+
+Best For:
+Small Demo Applications
+
+Pros:
+Simple
+
+Cons:
+Repetition
+
+----------------------------------------------------------------------------------------------------
+
+WebMvcConfigurer
+
+Scope:
+Entire MVC Layer
+
+Best For:
+Medium Applications
+
+Pros:
+Centralized
+
+Cons:
+May conflict with Security Layer
+
+----------------------------------------------------------------------------------------------------
+
+SecurityFilterChain + CorsConfigurationSource
+
+Scope:
+Security Layer
+
+Best For:
+Enterprise Applications
+
+Pros:
+Works with Authentication + CSRF + Sessions
+
+Cons:
+More Configuration
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🎯 INTERVIEW GOLDEN ANSWER
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+✅ Spring supports CORS using:
+      1. @CrossOrigin
+      2. WebMvcConfigurer
+      3. SecurityFilterChain + CorsConfigurationSource
+
+✅ @CrossOrigin applies at controller/method level.
+
+✅ WebMvcConfigurer applies globally at Spring MVC level.
+
+✅ SecurityFilterChain-based CORS applies at Spring Security level and is the recommended approach for applications using Spring Security.
+
+✅ CORS is enforced by browsers.
+
+✅ Browser sends Origin header.
+
+✅ Spring validates Origin against configured allowed origins.
+
+✅ If allowed, Spring adds:
+      Access-Control-Allow-Origin
+
+✅ Browser then allows JavaScript to read the response.
+
+✅ CORS protects API responses from being read by untrusted origins.
+
+✅ CORS is different from:
+      CSRF → protects authenticated sessions
+      XSS  → protects against script execution
+
+✅ Real-world Angular/React + Spring Security applications usually use:
+      SecurityFilterChain
+      + CorsConfigurationSource
+      + Session Authentication
+      + CSRF Protection
+      + allowCredentials(true)
+      + withCredentials(true)
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝

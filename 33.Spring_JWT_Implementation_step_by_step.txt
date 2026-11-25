@@ -1,0 +1,752 @@
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                 🔐 SPRING SECURITY JWT IMPLEMENTATION - COMPLETE STEP BY STEP GUIDE 🔐                                          ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+🎯 GOAL
+
+Implement a completely Stateless Authentication System using:
+
+✅ Spring Security
+✅ JWT Token
+✅ AuthenticationManager
+✅ UserDetailsService
+✅ JwtAuthenticationFilter
+✅ SecurityContextHolder
+✅ Authorization Header
+✅ No Session
+✅ No JSESSIONID
+✅ No CSRF
+
+END FLOW
+
+POST /login
+      ↓
+Username Password Validation
+      ↓
+JWT Generated
+      ↓
+Client Stores JWT
+      ↓
+Authorization: Bearer JWT
+      ↓
+JwtAuthenticationFilter
+      ↓
+Token Validation
+      ↓
+SecurityContextHolder
+      ↓
+Authorization
+      ↓
+Controller
+
+====================================================================================================
+🟦 STEP 1 : ADD DEPENDENCIES
+====================================================================================================
+
+pom.xml
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-api</artifactId>
+    <version>0.12.6</version>
+</dependency>
+
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-impl</artifactId>
+    <version>0.12.6</version>
+    <scope>runtime</scope>
+</dependency>
+
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-jackson</artifactId>
+    <version>0.12.6</version>
+    <scope>runtime</scope>
+</dependency>
+
+====================================================================================================
+🟩 STEP 2 : CREATE JWT SECRET KEY
+====================================================================================================
+
+application.properties
+
+jwt.secret.key=
+bW9zdFNlY3VyZVNwcmluZ0Jvb3RKd3RTZWNyZXRLZXlGb3JQcm9kdWN0aW9u
+
+jwt.expiration=86400000
+
+----------------------------------------------------------------------------------------------------
+
+SECRET KEY PURPOSE
+
+Used to:
+
+✅ Generate Signature
+✅ Validate Signature
+
+Without Secret Key
+
+Token cannot be trusted.
+
+====================================================================================================
+🟨 STEP 3 : CREATE JWT SERVICE
+====================================================================================================
+
+@Service
+public class JwtService {
+
+    @Value("${jwt.secret.key}")
+    private String secret;
+
+    public String generateToken(String username) {
+
+        return Jwts.builder()
+
+                .subject(username)
+
+                .issuedAt(
+                        new Date()
+                )
+
+                .expiration(
+                        new Date(
+                                System.currentTimeMillis()
+                                        + 86400000
+                        )
+                )
+
+                .signWith(
+                        getSigningKey()
+                )
+
+                .compact();
+    }
+
+    private SecretKey getSigningKey() {
+
+        byte[] keyBytes =
+                Decoders.BASE64.decode(secret);
+
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+}
+
+====================================================================================================
+🟧 INTERNAL TOKEN CREATION
+====================================================================================================
+
+Username
+
+bankuser2
+
+      ↓
+
+Header
+
+{
+ "alg":"HS256",
+ "typ":"JWT"
+}
+
+      ↓
+
+Payload
+
+{
+ "sub":"bankuser2",
+ "iat":123456,
+ "exp":999999
+}
+
+      ↓
+
+Secret Key
+
+      ↓
+
+Signature
+
+      ↓
+
+JWT
+
+Header.Payload.Signature
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟥 STEP 4 : CREATE METHOD TO EXTRACT USERNAME
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+public String extractUsername(
+        String token) {
+
+    return Jwts.parser()
+
+            .verifyWith(
+                    getSigningKey()
+            )
+
+            .build()
+
+            .parseSignedClaims(token)
+
+            .getPayload()
+
+            .getSubject();
+}
+
+----------------------------------------------------------------------------------------------------
+
+JWT
+
+Header.Payload.Signature
+
+      ↓
+
+Remove Signature
+
+      ↓
+
+Verify Signature
+
+      ↓
+
+Read Payload
+
+      ↓
+
+Extract "sub"
+
+      ↓
+
+bankuser2
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟪 STEP 5 : TOKEN VALIDATION METHOD
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+public boolean isTokenValid(
+        String token,
+        UserDetails userDetails) {
+
+    String username =
+            extractUsername(token);
+
+    return username.equals(
+            userDetails.getUsername()
+    )
+    &&
+    !isTokenExpired(token);
+}
+
+----------------------------------------------------------------------------------------------------
+
+Validation Checks
+
+✅ Signature Valid
+✅ Token Expired?
+✅ Username Match?
+
+If all pass
+
+JWT Accepted
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟫 STEP 6 : LOGIN REQUEST DTO
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+@Data
+public class LoginRequest {
+
+    private String username;
+
+    private String password;
+}
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+⬜ STEP 7 : LOGIN RESPONSE DTO
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+@Data
+@AllArgsConstructor
+public class JwtResponse {
+
+    private String token;
+}
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟦 STEP 8 : CREATE LOGIN CONTROLLER
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/auth")
+public class AuthenticationController {
+
+    private final AuthenticationManager
+            authenticationManager;
+
+    private final JwtService jwtService;
+
+    @PostMapping("/login")
+    public JwtResponse login(
+            @RequestBody LoginRequest request) {
+
+        authenticationManager.authenticate(
+
+                new UsernamePasswordAuthenticationToken(
+
+                        request.getUsername(),
+
+                        request.getPassword()
+                )
+        );
+
+        String token =
+                jwtService.generateToken(
+                        request.getUsername()
+                );
+
+        return new JwtResponse(token);
+    }
+}
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟩 LOGIN FLOW
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+POST /auth/login
+
+{
+   "username":"bankuser2",
+   "password":"Welcome@123"
+}
+
+      ↓
+
+AuthenticationManager
+
+      ↓
+
+DaoAuthenticationProvider
+
+      ↓
+
+UserDetailsService
+
+      ↓
+
+PasswordEncoder
+
+      ↓
+
+Success
+
+      ↓
+
+Generate JWT
+
+      ↓
+
+Response
+
+{
+   "token":"eyJhbGc..."
+}
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟨 STEP 9 : CREATE JWT FILTER
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+@Component
+@RequiredArgsConstructor
+public class JwtAuthenticationFilter
+        extends OncePerRequestFilter {
+
+    private final JwtService jwtService;
+
+    private final UserDetailsService
+            userDetailsService;
+
+    @Override
+    protected void doFilterInternal(
+
+            HttpServletRequest request,
+
+            HttpServletResponse response,
+
+            FilterChain filterChain)
+
+            throws ServletException,
+                   IOException {
+
+        String authHeader =
+                request.getHeader(
+                        "Authorization"
+                );
+
+        if(authHeader == null ||
+                !authHeader.startsWith(
+                        "Bearer ")) {
+
+            filterChain.doFilter(
+                    request,
+                    response);
+
+            return;
+        }
+
+        String jwt =
+                authHeader.substring(7);
+
+        String username =
+                jwtService.extractUsername(
+                        jwt
+                );
+
+        if(username != null &&
+           SecurityContextHolder.getContext()
+                                .getAuthentication()
+                   == null) {
+
+            UserDetails user =
+                    userDetailsService
+                            .loadUserByUsername(
+                                    username);
+
+            if(jwtService.isTokenValid(
+                    jwt,
+                    user
+            )) {
+
+                UsernamePasswordAuthenticationToken
+                        authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                user,
+                                null,
+                                user.getAuthorities());
+
+                SecurityContextHolder
+                        .getContext()
+                        .setAuthentication(
+                                authentication);
+            }
+        }
+
+        filterChain.doFilter(
+                request,
+                response);
+    }
+}
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟧 WHAT JWT FILTER ACTUALLY DOES
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Incoming Request
+
+Authorization:
+Bearer eyJhbGc...
+
+      ↓
+
+Extract Token
+
+      ↓
+
+Validate Signature
+
+      ↓
+
+Check Expiry
+
+      ↓
+
+Extract Username
+
+      ↓
+
+Load User
+
+      ↓
+
+Create Authentication
+
+      ↓
+
+SecurityContextHolder
+
+      ↓
+
+Authenticated User
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟥 STEP 10 : SECURITY CONFIGURATION
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+@Bean
+public SecurityFilterChain security(
+        HttpSecurity http)
+        throws Exception {
+
+    return http
+
+            .csrf(csrf ->
+                    csrf.disable())
+
+            .sessionManagement(
+                    session ->
+                    session.sessionCreationPolicy(
+                            SessionCreationPolicy
+                                    .STATELESS
+                    )
+            )
+
+            .authorizeHttpRequests(
+                    auth ->
+                            auth
+
+                    .requestMatchers(
+                            "/auth/login"
+                    )
+
+                    .permitAll()
+
+                    .anyRequest()
+
+                    .authenticated()
+            )
+
+            .addFilterBefore(
+
+                    jwtAuthenticationFilter,
+
+                    UsernamePasswordAuthenticationFilter.class
+            )
+
+            .build();
+}
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟪 IMPORTANT LINE
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+SessionCreationPolicy.STATELESS
+
+Means:
+
+❌ No HttpSession
+
+❌ No JSESSIONID
+
+❌ No Session Storage
+
+❌ No SecurityContext Persistence
+
+✅ Authenticate Every Request Using JWT
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟫 REQUEST FLOW AFTER LOGIN
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+CLIENT
+
+Authorization:
+Bearer eyJhbGc...
+
+      ↓
+
+Spring
+
+JwtAuthenticationFilter
+
+      ↓
+
+Verify Signature
+
+      ↓
+
+Verify Expiry
+
+      ↓
+
+Load User
+
+      ↓
+
+Create Authentication
+
+      ↓
+
+SecurityContextHolder
+
+      ↓
+
+AuthorizationFilter
+
+      ↓
+
+Controller
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+⬜ JWT FILTER CHAIN
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Request
+
+      ↓
+
+SecurityContextHolderFilter
+
+      ↓
+
+JwtAuthenticationFilter
+
+      ↓
+
+AuthorizationFilter
+
+      ↓
+
+Controller
+
+Notice:
+
+❌ Session Lookup
+
+❌ HttpSessionSecurityContextRepository
+
+❌ JSESSIONID
+
+do not participate.
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟦 HOW LOGOUT WORKS IN JWT
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Session Authentication
+
+logout
+      ↓
+invalidate session
+
+Immediate logout
+
+----------------------------------------------------------------------------------------------------
+
+JWT Authentication
+
+logout
+      ↓
+remove token from client
+
+Server remembers nothing.
+
+----------------------------------------------------------------------------------------------------
+
+Enterprise Solution
+
+Blacklist Token
+
+OR
+
+Short-lived Access Token
+
++
+Refresh Token
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟩 ACCESS TOKEN + REFRESH TOKEN FLOW
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Login
+      ↓
+Access Token (15 min)
+Refresh Token (7 days)
+
+      ↓
+
+Access Token Expired
+
+      ↓
+
+POST /refresh
+
+      ↓
+
+Refresh Token Valid
+
+      ↓
+
+Generate New Access Token
+
+      ↓
+
+Continue
+
+User Need Not Login Again
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🎯 SPRING SECURITY JWT IMPLEMENTATION CHECKLIST
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+✅ Add jjwt Dependencies
+✅ Create Secret Key
+✅ Create JwtService
+✅ Generate JWT
+✅ Extract Username
+✅ Validate JWT
+✅ Create Login API
+✅ Authenticate Through AuthenticationManager
+✅ Return JWT
+✅ Create JwtAuthenticationFilter
+✅ Read Authorization Header
+✅ Verify Signature
+✅ Verify Expiry
+✅ Load UserDetails
+✅ Create Authentication Object
+✅ Set SecurityContextHolder
+✅ Configure SessionCreationPolicy.STATELESS
+✅ Register JwtAuthenticationFilter Before UsernamePasswordAuthenticationFilter
+✅ Disable CSRF (Usually)
+✅ Secure Protected Endpoints
+
+FINAL FLOW
+
+POST /auth/login
+      ↓
+AuthenticationManager
+      ↓
+JWT Generated
+      ↓
+Client Stores JWT
+      ↓
+Authorization: Bearer JWT
+      ↓
+JwtAuthenticationFilter
+      ↓
+Validate JWT
+      ↓
+SecurityContextHolder
+      ↓
+Authenticated User
+      ↓
+Authorization
+      ↓
+Controller
+      ↓
+Response
+
+✅ Fully Stateless
+✅ No Sessions
+✅ No JSESSIONID
+✅ Cloud Native
+✅ Microservice Friendly
+✅ Angular / React Friendly
+✅ Spring Security Standard JWT Architecture
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝

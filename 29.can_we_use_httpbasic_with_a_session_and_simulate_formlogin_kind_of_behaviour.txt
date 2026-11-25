@@ -1,0 +1,772 @@
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║            🔐 SPRING SECURITY AUTHENTICATION MODES : formLogin vs httpBasic vs Custom Login API 🔐                             ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+🎯 BIG PICTURE
+
+Spring Security can authenticate users using multiple entry mechanisms:
+
+1️⃣ formLogin()            → Browser Login Page
+2️⃣ httpBasic()            → Authorization Header
+3️⃣ Custom Login API       → Your Own Controller
+
+IMPORTANT:
+
+These are AUTHENTICATION ENTRY MECHANISMS.
+
+Actual Session Authentication depends on:
+
+HttpSession
+        +
+SecurityContext
+        +
+JSESSIONID
+
+NOT on formLogin().
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟦 APPROACH 1 : formLogin()
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+CONFIGURATION
+
+.formLogin(Customizer.withDefaults())
+
+Spring Automatically Creates:
+
+GET  /login
+POST /login
+/logout
+
+You write:
+
+```java
+.formLogin(Customizer.withDefaults())
+```
+
+Spring creates everything else.
+
+----------------------------------------------------------------------------------------------------
+
+INTERNAL FLOW
+
+┌───────────────┐
+│ Browser Login │
+└───────┬───────┘
+        ▼
+┌────────────────────────────┐
+│ GET /login                 │
+│ Spring Login Page          │
+└──────────┬─────────────────┘
+           ▼
+┌────────────────────────────┐
+│ POST /login                │
+│ username + password        │
+└──────────┬─────────────────┘
+           ▼
+┌────────────────────────────┐
+│ UsernamePasswordAuthFilter │
+└──────────┬─────────────────┘
+           ▼
+┌────────────────────────────┐
+│ AuthenticationManager      │
+└──────────┬─────────────────┘
+           ▼
+┌────────────────────────────┐
+│ AuthenticationProvider     │
+└──────────┬─────────────────┘
+           ▼
+┌────────────────────────────┐
+│ UserDetailsService         │
+└──────────┬─────────────────┘
+           ▼
+┌────────────────────────────┐
+│ PasswordEncoder            │
+└──────────┬─────────────────┘
+           ▼
+┌────────────────────────────┐
+│ Authentication Success     │
+└──────────┬─────────────────┘
+           ▼
+┌────────────────────────────┐
+│ SecurityContext            │
+└──────────┬─────────────────┘
+           ▼
+┌────────────────────────────┐
+│ HttpSession                │
+│ SessionId = ABC123         │
+└──────────┬─────────────────┘
+           ▼
+┌────────────────────────────┐
+│ Set-Cookie:JSESSIONID      │
+└────────────────────────────┘
+
+----------------------------------------------------------------------------------------------------
+
+SUBSEQUENT REQUEST
+
+GET /customers
+
+Cookie:
+JSESSIONID=ABC123
+
+Spring:
+
+JSESSIONID
+      ↓
+HttpSession Lookup
+      ↓
+SPRING_SECURITY_CONTEXT
+      ↓
+Authentication
+      ↓
+bankuser2
+
+✅ User Authenticated
+
+----------------------------------------------------------------------------------------------------
+
+KEY CHARACTERISTICS
+
+✅ Browser Friendly
+✅ Login Only Once
+✅ Session Based
+✅ Uses JSESSIONID afterwards
+✅ Best for Banking / Enterprise Apps
+✅ Supports CSRF naturally
+
+----------------------------------------------------------------------------------------------------
+
+AUTHENTICATION FREQUENCY
+
+Login:
+username/password
+
+Future requests:
+JSESSIONID
+
+Username/password used ONLY ONCE.
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟩 APPROACH 2 : httpBasic()
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+CONFIGURATION
+
+.httpBasic(Customizer.withDefaults())
+
+----------------------------------------------------------------------------------------------------
+
+REQUEST
+
+GET /customers
+
+Authorization:
+Basic YWRtaW46V2VsY29tZUAxMjM=
+
+(Base64(admin:Welcome@123))
+
+----------------------------------------------------------------------------------------------------
+
+INTERNAL FLOW
+
+┌───────────────┐
+│ Request       │
+└───────┬───────┘
+        ▼
+┌─────────────────────────┐
+│ BasicAuthentication     │
+│ Filter                  │
+└──────────┬──────────────┘
+           ▼
+┌─────────────────────────┐
+│ Decode Authorization    │
+│ Header                  │
+└──────────┬──────────────┘
+           ▼
+┌─────────────────────────┐
+│ Username                │
+│ Password                │
+└──────────┬──────────────┘
+           ▼
+┌─────────────────────────┐
+│ AuthenticationManager   │
+└──────────┬──────────────┘
+           ▼
+┌─────────────────────────┐
+│ AuthenticationProvider  │
+└──────────┬──────────────┘
+           ▼
+┌─────────────────────────┐
+│ Authenticated User      │
+└─────────────────────────┘
+
+----------------------------------------------------------------------------------------------------
+
+NEXT REQUEST
+
+Authorization:
+Basic xxxxx
+
+again
+
+----------------------------------------------------------------------------------------------------
+
+NEXT REQUEST
+
+Authorization:
+Basic xxxxx
+
+again
+
+----------------------------------------------------------------------------------------------------
+
+NEXT REQUEST
+
+Authorization:
+Basic xxxxx
+
+again
+
+----------------------------------------------------------------------------------------------------
+
+KEY CHARACTERISTICS
+
+✅ Postman Friendly
+✅ API Friendly
+✅ Service-to-Service Communication
+✅ No Login Screen
+✅ Credentials Sent Every Request
+
+----------------------------------------------------------------------------------------------------
+
+IMPORTANT
+
+Many developers think:
+
+httpBasic()
+      ↓
+No Session Exists
+
+WRONG
+
+Session CAN still exist.
+
+However:
+
+Spring already has Username/Password on every request.
+
+Therefore:
+
+Session becomes
+
+⚠️ OPTIONAL
+⚠️ REDUNDANT
+
+but NOT useless.
+
+----------------------------------------------------------------------------------------------------
+
+AUTHENTICATION FREQUENCY
+
+Request 1
+→ Authenticate
+
+Request 2
+→ Authenticate Again
+
+Request 3
+→ Authenticate Again
+
+Request 4
+→ Authenticate Again
+
+Authentication happens EVERY REQUEST.
+
+
+
+											🟦 CASE 1 : BASIC AUTH ONLY
+
+											Request:
+
+											HTTP
+											GET /customers
+											 
+											Authorization: Basic xxx
+
+											Flow:
+
+											Plain Text
+											BasicAuthenticationFilter
+											↓
+											Authenticate User
+											↓
+											Authentication Object Created
+											↓
+											Controller Executes
+
+											No session lookup needed.
+
+											Plain Text
+											Session = OPTIONAL
+
+													🟩 CASE 2 : BASIC AUTH + SESSION EXISTS
+
+							Suppose browser has:
+
+							Plain Text
+							JSESSIONID=ABC123
+
+							and also sends:
+
+							HTTP
+							Authorization: Basic xxx
+
+							Now Spring has TWO ways to know who the user is:
+
+							Plain Text
+							Method 1:
+							JSESSIONID
+							↓
+							SecurityContext
+							 
+							Method 2:
+							Authorization Header
+							↓
+							BasicAuthenticationFilter
+
+							Basic Auth wins because it is present in every request.
+
+							Spring simply authenticates again.
+
+							So Session becomes:
+
+							Plain Text
+							Redundant
+
+							but not useless.
+
+							═══════════════════════════════════════════════════════════════
+
+							🟨 WHY YOU SAW THIS IN YOUR LOGS
+
+							You had:
+
+							Plain Text
+							JSESSIONID=401DB...
+
+							but no:
+
+							HTTP
+							Authorization: Basic ...
+
+							Log:
+
+							Plain Text
+							Did not process authentication request since failed
+							to find username and password in Basic Authorization header
+
+							Then Spring checked session:
+
+							Plain Text
+							Did not find SecurityContext in HttpSession
+
+							meaning:
+
+							Plain Text
+							Session Exists ✅
+							 
+							SecurityContext Missing ❌
+
+							Result:
+
+							Plain Text
+							anonymousUser
+
+							and access denied.
+
+							This proves Session Authentication is still active.
+
+							═══════════════════════════════════════════════════════════════
+
+							🟥 CAN SESSION AUTHENTICATION WORK WITH httpBasic() ?
+
+							YES.
+
+							Example:
+
+							Request 1
+
+							HTTP
+							Authorization: Basic xxx
+
+							Spring authenticates user.
+
+							Creates:
+
+							Plain Text
+							JSESSIONID=ABC123
+
+							Request 2
+
+							HTTP
+							Cookie: JSESSIONID=ABC123
+
+							No Authorization header.
+
+							Spring can still authenticate from session.
+
+							Flow:
+
+							Plain Text
+							Session
+							↓
+							SPRING_SECURITY_CONTEXT
+							↓
+							Authentication
+							↓
+							User
+
+							So Session still works.
+
+							═══════════════════════════════════════════════════════════════
+
+							🟪 WHY MOST PEOPLE SAY BASIC AUTH IS STATELESS
+
+							Because clients usually send:
+
+							HTTP
+							Authorization: Basic xxx
+
+							on EVERY request.
+
+							Example:
+
+							Plain Text
+							Request 1 → Basic Auth
+							Request 2 → Basic Auth
+							Request 3 → Basic Auth
+							Request 4 → Basic Auth
+
+							Spring keeps re-authenticating.
+
+							Therefore:
+
+							Plain Text
+							Session exists
+							but never really needed
+
+							which makes it behave almost stateless.
+
+							═══════════════════════════════════════════════════════════════
+
+							🟧 INTERVIEW ANSWER
+
+							Plain Text
+							httpBasic() does not invalidate or nullify sessions.
+							 
+							However, because Basic Authentication sends username and password
+							in every request through the Authorization header, Spring can
+							authenticate directly from the request without needing the
+							stored SecurityContext from HttpSession.
+							 
+							As a result, the session becomes optional and often redundant,
+							which is why HTTP Basic is commonly considered stateless in practice.
+							 
+							If the Authorization header is removed and a valid session exists,
+							Spring can still authenticate the user using JSESSIONID and the
+							stored SPRING_SECURITY_CONTEXT.
+
+							🎯 One-line takeaway:
+
+							Plain Text
+							formLogin() → Authenticate Once, Then Use Session
+							 
+							httpBasic() → Authenticate Every Request, Session Optional
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟨 APPROACH 3 : CUSTOM LOGIN API + SESSION
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+CONFIGURATION
+
+No formLogin()
+
+No httpBasic()
+
+----------------------------------------------------------------------------------------------------
+
+Security Config
+
+@Bean
+public SecurityFilterChain securityFilterChain(
+        HttpSecurity http)
+        throws Exception {
+
+    return http
+
+        .authorizeHttpRequests(auth ->
+             auth
+               .requestMatchers("/api/login")
+               .permitAll()
+               .anyRequest()
+               .authenticated())
+
+        .sessionManagement(
+             Customizer.withDefaults())
+
+        .build();
+}
+
+----------------------------------------------------------------------------------------------------
+
+LOGIN REQUEST
+
+POST /api/login
+
+{
+   "username":"bankuser2",
+   "password":"Welcome@123"
+}
+
+----------------------------------------------------------------------------------------------------
+
+LOGIN CONTROLLER
+
+Authentication authentication =
+     authenticationManager.authenticate(
+         new UsernamePasswordAuthenticationToken(
+                 username,
+                 password
+         )
+     );
+
+SecurityContext context =
+     SecurityContextHolder.createEmptyContext();
+
+context.setAuthentication(authentication);
+
+session.setAttribute(
+     SPRING_SECURITY_CONTEXT,
+     context
+);
+
+----------------------------------------------------------------------------------------------------
+
+INTERNAL FLOW
+
+┌──────────────────┐
+│ POST /api/login  │
+└────────┬─────────┘
+         ▼
+┌──────────────────┐
+│ Authentication   │
+│ Manager          │
+└────────┬─────────┘
+         ▼
+┌──────────────────┐
+│ Authentication   │
+│ Provider         │
+└────────┬─────────┘
+         ▼
+┌──────────────────┐
+│ UserDetails      │
+│ Service          │
+└────────┬─────────┘
+         ▼
+┌──────────────────┐
+│ SecurityContext  │
+└────────┬─────────┘
+         ▼
+┌──────────────────┐
+│ HttpSession      │
+└────────┬─────────┘
+         ▼
+┌──────────────────┐
+│ JSESSIONID       │
+└──────────────────┘
+
+----------------------------------------------------------------------------------------------------
+
+SUBSEQUENT REQUEST
+
+GET /customers
+
+Cookie:
+JSESSIONID=ABC123
+
+Spring:
+
+JSESSIONID
+      ↓
+Session
+      ↓
+SecurityContext
+      ↓
+Authentication
+      ↓
+bankuser2
+
+✅ Authenticated
+
+----------------------------------------------------------------------------------------------------
+
+KEY CHARACTERISTICS
+
+✅ Angular Friendly
+✅ React Friendly
+✅ Vue Friendly
+✅ SPA Friendly
+✅ Banking Applications
+✅ Full Control Over Login API
+✅ Still Uses Session Authentication
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟥 COMPARISON TABLE
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+formLogin()
+
+Username+Password
+        ↓
+Authenticate Once
+        ↓
+Session Created
+        ↓
+JSESSIONID
+        ↓
+Future Requests use Session
+
+----------------------------------------------------------------------------------------------------
+
+httpBasic()
+
+Authorization Header
+        ↓
+Authenticate Every Request
+        ↓
+Optional Session
+        ↓
+Often Acts Stateless
+
+----------------------------------------------------------------------------------------------------
+
+Custom Login API
+
+POST /api/login
+        ↓
+Authenticate Once
+        ↓
+Session Created
+        ↓
+JSESSIONID
+        ↓
+Future Requests use Session
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟪 SESSION USAGE IN ALL 3 APPROACHES
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+formLogin()
+
+Session Required?
+✅ YES
+
+Used Actively?
+✅ YES
+
+----------------------------------------------------------------------------------------------------
+
+httpBasic()
+
+Session Required?
+❌ NO
+
+Can Exist?
+✅ YES
+
+Used Actively?
+⚠️ Usually Not Needed
+
+----------------------------------------------------------------------------------------------------
+
+Custom Login API
+
+Session Required?
+✅ YES
+
+Used Actively?
+✅ YES
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🟫 WHY httpBasic MAKES SESSION LOOK USELESS
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Request
+
+Authorization:
+Basic xxxxx
+
+Spring already knows:
+
+Username
+Password
+
+for every request.
+
+Therefore:
+
+Instead of
+
+Session
+     ↓
+SecurityContext
+     ↓
+User
+
+Spring simply does:
+
+Authorization Header
+      ↓
+Authenticate Again
+      ↓
+User
+
+Result:
+
+Session becomes redundant.
+
+----------------------------------------------------------------------------------------------------
+
+INTERVIEW STATEMENT
+
+httpBasic() does not invalidate sessions.
+
+However, because every request contains credentials in the
+Authorization header, Spring can authenticate directly from the
+request without needing the SecurityContext stored inside HttpSession.
+
+Therefore the session becomes optional and often redundant,
+which makes HTTP Basic appear stateless in practice.
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+🎯 GOLDEN INTERVIEW SUMMARY
+══════════════════════════════════════════════════════════════════════════════════════════════════════
+
+✅ formLogin() = Spring-provided login page.
+✅ httpBasic() = Authorization header based authentication.
+✅ Custom Login API = Your own login endpoint.
+✅ Session Authentication is independent of formLogin().
+✅ True Session Authentication depends on:
+      HttpSession
+      + SecurityContext
+      + JSESSIONID
+✅ formLogin() authenticates once and uses session afterwards.
+✅ Custom Login API authenticates once and uses session afterwards.
+✅ httpBasic() re-authenticates every request.
+✅ httpBasic() does NOT remove sessions.
+✅ With httpBasic(), sessions become optional because credentials are always available.
+✅ Best for Browser Apps → formLogin() or Custom Login API.
+✅ Best for Postman/Internal APIs → httpBasic().
+✅ Best for Angular/React Enterprise Applications → Custom Login API + Session + CSRF.
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════╝
