@@ -1,0 +1,561 @@
+╔══════════════════════════════════════════════════════════════════════════════════════╗
+║            HANDLEREXCEPTIONRESOLVER vs AUTHENTICATIONENTRYPOINT                    ║
+║                    vs ACCESSDENIEDHANDLER                                          ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+
+                                    REQUEST
+                                       │
+                                       ▼
+                     ┌────────────────────────────────┐
+                     │      SECURITY FILTER CHAIN     │
+                     └────────────────────────────────┘
+                                       │
+                                       ▼
+                          JWTAuthenticationFilter
+                                       │
+                  ┌────────────────────┼────────────────────┐
+                  │                                         │
+                  ▼                                         ▼
+          Authentication Error                    Authorization Error
+        (Who are you?)                            (What can you access?)
+                  │                                         │
+                  ▼                                         ▼
+       AuthenticationException                  AccessDeniedException
+                  │                                         │
+                  ▼                                         ▼
+     AuthenticationEntryPoint                  AccessDeniedHandler
+                  │                                         │
+                  ▼                                         ▼
+              HTTP 401                                  HTTP 403
+
+
+
+═══════════════════════════════════════════════════════════════════════════════════════
+🟩 AUTHENTICATIONENTRYPOINT
+═══════════════════════════════════════════════════════════════════════════════════════
+
+PURPOSE
+--------
+Handles Authentication Failures.
+
+Meaning:
+
+"You are NOT authenticated."
+
+Typical HTTP Status:
+
+401 UNAUTHORIZED
+
+
+Common Exceptions
+-----------------
+
+AuthenticationException
+BadCredentialsException
+UsernameNotFoundException
+DisabledException
+LockedException
+CredentialsExpiredException
+AccountExpiredException
+InsufficientAuthenticationException
+
+
+FLOW
+----
+
+JWT Filter
+    │
+    ▼
+BadCredentialsException
+    │
+    ▼
+ExceptionTranslationFilter
+    │
+    ▼
+AuthenticationEntryPoint
+    │
+    ▼
+401 Unauthorized Response
+
+
+Implementation
+--------------
+
+@Component
+public class JWTAuthenticationEntryPoint
+        implements AuthenticationEntryPoint {
+
+    @Override
+    public void commence(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AuthenticationException ex)
+            throws IOException {
+
+        response.setStatus(401);
+
+        response.setContentType(
+                "application/json");
+
+        response.getWriter().write("""
+            {
+               "status":401,
+               "message":"Authentication Failed"
+            }
+            """);
+    }
+}
+
+
+SecurityConfig
+--------------
+
+.exceptionHandling(ex -> ex
+        .authenticationEntryPoint(
+                jwtAuthenticationEntryPoint))
+
+
+Important
+----------
+
+AuthenticationEntryPoint DOES NOT invoke:
+
+@RestControllerAdvice
+
+It directly writes HTTP response.
+
+Once response is written:
+
+Request ends.
+
+
+
+═══════════════════════════════════════════════════════════════════════════════════════
+🟥 ACCESSDENIEDHANDLER
+═══════════════════════════════════════════════════════════════════════════════════════
+
+PURPOSE
+--------
+Handles Authorization Failures.
+
+Meaning:
+
+"You are authenticated,
+but you do not have permission."
+
+Typical HTTP Status:
+
+403 FORBIDDEN
+
+
+Examples
+---------
+
+ROLE_USER trying to access
+
+/admin/customers
+
+/admin/delete
+
+/admin/update
+
+
+FLOW
+----
+
+Authenticated User
+        │
+        ▼
+
+ROLE_USER
+
+        │
+        ▼
+
+Trying To Access
+
+ROLE_ADMIN Endpoint
+
+        │
+        ▼
+
+AccessDeniedException
+
+        │
+        ▼
+
+AccessDeniedHandler
+
+        │
+        ▼
+
+403 Forbidden
+
+
+Implementation
+--------------
+
+@Component
+public class JWTAccessDeniedHandler
+        implements AccessDeniedHandler {
+
+    @Override
+    public void handle(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AccessDeniedException ex)
+            throws IOException {
+
+        response.setStatus(403);
+
+        response.setContentType(
+                "application/json");
+
+        response.getWriter().write("""
+            {
+              "status":403,
+              "message":"Access Denied"
+            }
+            """);
+    }
+}
+
+
+SecurityConfig
+--------------
+
+.exceptionHandling(ex -> ex
+      .accessDeniedHandler(
+              accessDeniedHandler))
+
+
+Important
+----------
+
+AccessDeniedHandler DOES NOT invoke:
+
+@RestControllerAdvice
+
+It directly writes HTTP response.
+
+
+
+═══════════════════════════════════════════════════════════════════════════════════════
+🟦 HANDLEREXCEPTIONRESOLVER
+═══════════════════════════════════════════════════════════════════════════════════════
+
+PURPOSE
+--------
+Bridge between Security Filters and
+@RestControllerAdvice.
+
+Allows Filter Exceptions to be handled by:
+
+@RestControllerAdvice
+
+
+FLOW
+----
+
+JWT Filter
+     │
+     ▼
+
+JwtException
+
+     │
+     ▼
+
+HandlerExceptionResolver
+
+     │
+     ▼
+
+@RestControllerAdvice
+
+     │
+     ▼
+
+ResponseEntity
+
+
+Implementation
+--------------
+
+@Component
+@RequiredArgsConstructor
+public class JWTAuthenticationFilter
+        extends OncePerRequestFilter {
+
+    private final HandlerExceptionResolver
+            handlerExceptionResolver;
+
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain)
+            throws ServletException, IOException {
+
+        try {
+
+            jwtService.validateToken(token);
+
+            filterChain.doFilter(
+                    request,
+                    response);
+
+        }
+
+        catch (Exception ex) {
+
+            handlerExceptionResolver
+                    .resolveException(
+                            request,
+                            response,
+                            null,
+                            ex
+                    );
+        }
+    }
+}
+
+
+Global Handler
+--------------
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(
+            JwtException.class)
+    public ResponseEntity<?> handleJwt(
+            JwtException ex) {
+
+        return ResponseEntity
+                .status(401)
+                .body("Invalid Token");
+    }
+}
+
+
+Important
+----------
+
+HandlerExceptionResolver
+CAN invoke
+
+@RestControllerAdvice
+
+because it forwards the exception
+to Spring MVC Exception Handling
+Infrastructure.
+
+
+
+═══════════════════════════════════════════════════════════════════════════════════════
+🔥 COMPARISON TABLE
+═══════════════════════════════════════════════════════════════════════════════════════
+
+AuthenticationEntryPoint
+------------------------
+Purpose:
+Authentication Failure
+
+Exception:
+AuthenticationException
+
+Status:
+401
+
+Calls RestControllerAdvice?
+❌ NO
+
+Writes Response Directly?
+✅ YES
+
+
+
+AccessDeniedHandler
+-------------------
+Purpose:
+Authorization Failure
+
+Exception:
+AccessDeniedException
+
+Status:
+403
+
+Calls RestControllerAdvice?
+❌ NO
+
+Writes Response Directly?
+✅ YES
+
+
+
+HandlerExceptionResolver
+------------------------
+Purpose:
+Delegate Exception Handling
+
+Exception:
+Any Exception
+
+Status:
+Depends on @ExceptionHandler
+
+Calls RestControllerAdvice?
+✅ YES
+
+Writes Response Directly?
+❌ Usually No
+
+
+
+═══════════════════════════════════════════════════════════════════════════════════════
+🟨 REAL WORLD ARCHITECTURE #1 (PURE SPRING SECURITY)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+JWT Filter
+      │
+      ▼
+
+AuthenticationException
+      │
+      ▼
+
+AuthenticationEntryPoint
+      │
+      ▼
+
+401 Response
+
+
+AccessDeniedException
+      │
+      ▼
+
+AccessDeniedHandler
+      │
+      ▼
+
+403 Response
+
+
+Controller/Service Exceptions
+      │
+      ▼
+
+@RestControllerAdvice
+
+
+
+═══════════════════════════════════════════════════════════════════════════════════════
+🟪 REAL WORLD ARCHITECTURE #2 (SINGLE GLOBAL ERROR FORMAT)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+JWT Filter
+      │
+      ▼
+
+JwtException
+
+      │
+      ▼
+
+HandlerExceptionResolver
+
+      │
+      ▼
+
+@RestControllerAdvice
+
+
+Controller Exceptions
+
+      │
+      ▼
+
+@RestControllerAdvice
+
+
+Result:
+-------
+All errors return exactly the same
+APIResponse<ErrorResponseDTO> structure.
+
+
+
+===========
+
+Can AuthenticationEntryPoint call RestControllerAdvice?
+
+Not automatically.
+
+But you can manually force it:
+
+Java
+@Component
+@RequiredArgsConstructor
+public class JWTAuthenticationEntryPoint
+implements AuthenticationEntryPoint {
+ 
+private final HandlerExceptionResolver
+handlerExceptionResolver;
+ 
+@Override
+public void commence(
+HttpServletRequest request,
+HttpServletResponse response,
+AuthenticationException ex) {
+ 
+handlerExceptionResolver
+.resolveException(
+request,
+response,
+null,
+ex);
+}
+}
+
+Flow:
+
+Plain Text
+AuthenticationException
+|
+V
+AuthenticationEntryPoint
+|
+V
+HandlerExceptionResolver
+|
+V
+@RestControllerAdvice
+
+This works, but at that point many developers ask:
+
+"Why use AuthenticationEntryPoint at all? Why not call HandlerExceptionResolver directly from the JWT Filter?"
+
+
+═══════════════════════════════════════════════════════════════════════════════════════
+🏆 INTERVIEW ANSWER
+═══════════════════════════════════════════════════════════════════════════════════════
+
+AuthenticationEntryPoint
+    → Handles Authentication Failures
+    → Returns 401
+    → Does NOT call RestControllerAdvice
+
+AccessDeniedHandler
+    → Handles Authorization Failures
+    → Returns 403
+    → Does NOT call RestControllerAdvice
+
+HandlerExceptionResolver
+    → Delegates Filter Exceptions to Spring MVC
+    → CAN call RestControllerAdvice
+    → Commonly used in JWT Filters when a common error response
+      structure is required across the application.
+═══════════════════════════════════════════════════════════════════════════════════════

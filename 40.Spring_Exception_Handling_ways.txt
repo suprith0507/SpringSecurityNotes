@@ -1,0 +1,669 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                 SPRING SECURITY EXCEPTION HANDLING MASTER GUIDE             ║
+║                  (JWT + FILTERS + CONTROLLERS + GLOBAL HANDLER)           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+🟩 LAYER 1 : REQUEST FLOW IN SPRING SECURITY
+
+Client Request
+      │
+      ▼
+┌─────────────────────┐
+│ Security FilterChain│
+└─────────────────────┘
+      │
+      ├── CORS Filter
+      │
+      ├── CSRF Filter
+      │
+      ├── JWT Filter
+      │
+      ├── UsernamePasswordAuthenticationFilter
+      │
+      ├── ExceptionTranslationFilter
+      │
+      ▼
+DispatcherServlet
+      │
+      ▼
+Controller
+      │
+      ▼
+Service
+      │
+      ▼
+Repository
+
+🔥 IMPORTANT INTERVIEW POINT
+
+Exceptions can occur in TWO COMPLETELY DIFFERENT PLACES:
+
+1. BEFORE Controller
+   (Filters / Spring Security)
+
+2. AFTER Controller
+   (Controller / Service / Repository)
+
+The handling mechanism is different for both.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🟥 CATEGORY 1 : EXCEPTIONS INSIDE SECURITY FILTERS
+═══════════════════════════════════════════════════════════════════════════════
+
+Examples:
+
+JWTAuthenticationFilter
+CustomSecurityFilter
+UsernamePasswordAuthenticationFilter
+
+Flow:
+
+Client
+  │
+  ▼
+JWT Filter
+  │
+  ├── ExpiredJwtException
+  ├── MalformedJwtException
+  ├── SignatureException
+  ├── JwtException
+  │
+  ✘ Controller never reached
+
+Therefore:
+
+❌ @RestControllerAdvice may not automatically catch these
+
+Why?
+
+Because request has not yet reached:
+
+DispatcherServlet
+     │
+     ▼
+Controller
+
+Hence Spring MVC exception handling is not active yet.
+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🟩 SOLUTION #1 : TRY-CATCH INSIDE FILTER
+═══════════════════════════════════════════════════════════════════════════════
+
+@Override
+protected void doFilterInternal(...) {
+
+    try {
+
+        jwtService.validateToken(token);
+
+        filterChain.doFilter(request,response);
+
+    }
+
+    catch (JwtException ex){
+
+        response.setStatus(401);
+
+        response.setContentType("application/json");
+
+        response.getWriter().write("""
+                {
+                   "error":"Invalid JWT"
+                }
+                """);
+    }
+}
+
+Advantages
+-----------
+✅ Simple
+
+✅ Easy for beginners
+
+✅ Direct response
+
+Disadvantages
+--------------
+❌ Duplicate code
+
+❌ Every filter writes response manually
+
+❌ Hard to maintain
+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🟦 SOLUTION #2 : HANDLEREXCEPTIONRESOLVER
+═══════════════════════════════════════════════════════════════════════════════
+
+Flow:
+
+JWT Filter
+     │
+     ├── JwtException
+     │
+     ▼
+HandlerExceptionResolver
+     │
+     ▼
+@RestControllerAdvice
+
+Code:
+
+@Component
+@RequiredArgsConstructor
+public class JWTAuthenticationFilter
+        extends OncePerRequestFilter {
+
+    private final HandlerExceptionResolver
+            handlerExceptionResolver;
+
+    @Override
+    protected void doFilterInternal(...) {
+
+        try {
+
+            jwtService.validateToken(token);
+
+            filterChain.doFilter(request,response);
+
+        }
+
+        catch (Exception ex){
+
+            handlerExceptionResolver
+                    .resolveException(
+                            request,
+                            response,
+                            null,
+                            ex);
+        }
+    }
+}
+
+Advantages
+-----------
+
+✅ Reuse GlobalExceptionHandler
+
+✅ Single error response structure
+
+✅ Very popular in JWT projects
+
+✅ Clean architecture
+
+
+Flow Diagram
+
+JwtException
+      │
+      ▼
+HandlerExceptionResolver
+      │
+      ▼
+@RestControllerAdvice
+      │
+      ▼
+JSON Response
+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🟨 SOLUTION #3 : AUTHENTICATIONENTRYPOINT
+═══════════════════════════════════════════════════════════════════════════════
+
+Spring Security's Official Way
+
+Flow:
+
+JWT Filter
+      │
+      ▼
+AuthenticationException
+      │
+      ▼
+ExceptionTranslationFilter
+      │
+      ▼
+AuthenticationEntryPoint
+      │
+      ▼
+401 Unauthorized
+
+Implementation:
+
+@Component
+public class JWTAuthenticationEntryPoint
+        implements AuthenticationEntryPoint {
+
+    @Override
+    public void commence(
+           HttpServletRequest request,
+           HttpServletResponse response,
+           AuthenticationException ex)
+           throws IOException {
+
+        response.setStatus(401);
+
+        response.getWriter()
+                .write("Unauthorized");
+    }
+}
+
+SecurityConfig:
+
+http.exceptionHandling(
+        ex -> ex.authenticationEntryPoint(
+                jwtAuthenticationEntryPoint));
+
+Advantages
+------------
+
+✅ Official Spring Security approach
+
+✅ Industry standard
+
+✅ Security layer handles security exceptions
+
+✅ Recommended for enterprise applications
+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🟪 CATEGORY 2 : LOGIN AUTHENTICATION EXCEPTIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+Controller
+
+@PostMapping("/login")
+public String login(...) {
+
+    authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                    username,
+                    password));
+
+    return token;
+}
+
+Flow:
+
+Controller
+     │
+     ▼
+AuthenticationManager
+     │
+     ▼
+ProviderManager
+     │
+     ▼
+DaoAuthenticationProvider
+     │
+     ▼
+UserDetailsService
+
+
+Possible Exceptions
+-------------------
+
+BadCredentialsException
+
+Wrong username/password
+
+
+UsernameNotFoundException
+
+User not found
+
+
+LockedException
+
+Account locked
+
+
+DisabledException
+
+Account disabled
+
+
+AccountExpiredException
+
+Account expired
+
+
+CredentialsExpiredException
+
+Password expired
+
+
+AuthenticationServiceException
+
+Authentication infrastructure failure
+
+
+InternalAuthenticationServiceException
+
+User loading failure
+
+
+Hierarchy:
+
+AuthenticationException
+       │
+       ├── BadCredentialsException
+       ├── UsernameNotFoundException
+       ├── LockedException
+       ├── DisabledException
+       ├── AccountExpiredException
+       ├── CredentialsExpiredException
+       └── AuthenticationServiceException
+
+
+Handle using:
+
+@ExceptionHandler(
+        AuthenticationException.class)
+
+OR
+
+@ExceptionHandler(
+        BadCredentialsException.class)
+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🟧 CATEGORY 3 : JWT EXCEPTIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+JWT Validation Phase
+
+jwtService.validateToken()
+
+Possible Exceptions
+--------------------
+
+ExpiredJwtException
+
+Token expired
+
+
+MalformedJwtException
+
+Invalid structure
+
+
+SignatureException
+
+Signature mismatch
+
+
+UnsupportedJwtException
+
+Unsupported JWT format
+
+
+IllegalArgumentException
+
+Null / blank token
+
+
+SecurityException
+
+Cryptographic verification failed
+
+
+Hierarchy
+
+JwtException
+      │
+      ├── ExpiredJwtException
+      ├── MalformedJwtException
+      ├── SignatureException
+      └── UnsupportedJwtException
+
+
+Global Handler
+
+@ExceptionHandler(JwtException.class)
+
+public ResponseEntity<?> handleJwt(
+        JwtException ex) {
+
+    return ResponseEntity
+            .status(401)
+            .body("Invalid Token");
+}
+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🟫 CATEGORY 4 : AUTHORIZATION EXCEPTIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+Authentication
+--------------
+WHO ARE YOU?
+
+Authorization
+--------------
+WHAT ARE YOU ALLOWED TO DO?
+
+
+Example
+
+User Role:
+
+ROLE_USER
+
+
+Trying To Access
+
+/admin
+
+
+Result:
+
+AccessDeniedException
+
+
+Flow
+
+User Authenticated
+       │
+       ▼
+Authorization Check
+       │
+       ▼
+AccessDeniedException
+       │
+       ▼
+AccessDeniedHandler
+
+
+Implementation
+
+@Component
+public class JWTAccessDeniedHandler
+        implements AccessDeniedHandler {
+
+    @Override
+    public void handle(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AccessDeniedException ex)
+            throws IOException {
+
+        response.setStatus(403);
+
+        response.getWriter()
+                .write("Access Denied");
+    }
+}
+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🟩 CATEGORY 5 : CONTROLLER VALIDATION EXCEPTIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+@PostMapping
+public void create(
+        @Valid @RequestBody CustomerDTO dto)
+
+Examples
+
+@NotBlank
+
+@NotNull
+
+@Email
+
+@Size
+
+Result
+
+MethodArgumentNotValidException
+
+
+Handled Using
+
+@RestControllerAdvice
+
+@ExceptionHandler(
+        MethodArgumentNotValidException.class)
+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🟦 CATEGORY 6 : BUSINESS EXCEPTIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+Examples
+
+CustomerNotFoundException
+
+CustomerAlreadyExistsException
+
+AccountNotFoundException
+
+TransactionNotFoundException
+
+InsufficientBalanceException
+
+
+Flow
+
+Controller
+     │
+Service
+     │
+throw CustomerNotFoundException
+     │
+@RestControllerAdvice
+     │
+404 Response
+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🟥 CATEGORY 7 : DATABASE EXCEPTIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+DataIntegrityViolationException
+
+Duplicate Entry
+
+Unique Constraint Violation
+
+Foreign Key Violation
+
+ConstraintViolationException
+
+SQLException
+
+JpaSystemException
+
+TransactionSystemException
+
+Handle:
+
+@ExceptionHandler(
+       DataIntegrityViolationException.class)
+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🏆 PRODUCTION READY EXCEPTION STRATEGY
+═══════════════════════════════════════════════════════════════════════════════
+
+FILTER LAYER
+------------
+JWT Exceptions
+      ↓
+HandlerExceptionResolver
+or
+AuthenticationEntryPoint
+
+SECURITY LAYER
+--------------
+AuthenticationException
+      ↓
+AuthenticationEntryPoint
+
+AccessDeniedException
+      ↓
+AccessDeniedHandler
+
+CONTROLLER LAYER
+----------------
+Validation Exceptions
+Business Exceptions
+Database Exceptions
+Runtime Exceptions
+      ↓
+@RestControllerAdvice
+
+
+
+FINAL ARCHITECTURE
+══════════════════
+
+Client
+  │
+  ▼
+Security Filters
+  │
+  ├── JwtException
+  │       │
+  │       ▼
+  │ AuthenticationEntryPoint
+  │
+  ├── AccessDeniedException
+  │       │
+  │       ▼
+  │ AccessDeniedHandler
+  │
+  ▼
+Controller
+  │
+  ├── Validation Exception
+  ├── Business Exception
+  ├── Database Exception
+  ├── Authentication Exception
+  │
+  ▼
+@RestControllerAdvice
+  │
+  ▼
+Standard APIResponse<ErrorResponseDTO>
+
+⭐⭐⭐ INTERVIEW ONE-LINER ⭐⭐⭐
+
+"Exceptions occurring before DispatcherServlet (Filters/Spring Security)
+should be handled using AuthenticationEntryPoint, AccessDeniedHandler, or
+HandlerExceptionResolver. Exceptions occurring after DispatcherServlet
+(Controllers, Services, Repositories) should be handled using
+@RestControllerAdvice and @ExceptionHandler."

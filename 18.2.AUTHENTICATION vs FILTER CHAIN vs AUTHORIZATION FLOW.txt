@@ -1,0 +1,711 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                   AUTHENTICATION vs FILTER CHAIN vs AUTHORIZATION FLOW                                  ║
+║                     (THE MOST CONFUSING SPRING SECURITY TOPIC)                                           ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+⭐⭐⭐ SHORT ANSWER FIRST ⭐⭐⭐
+
+AuthenticationManager is NOT called at the end.
+
+AuthenticationManager is called INSIDE the Authentication Filter
+(UsernamePasswordAuthenticationFilter or your JWT Filter).
+
+Authentication happens BEFORE Authorization.
+
+Authorization depends on the Authentication result.
+
+Flow:
+
+Request
+   │
+   ▼
+Authentication Filter
+   │
+   ▼
+AuthenticationManager
+   │
+   ▼
+SecurityContext Updated
+   │
+   ▼
+Remaining Filters
+   │
+   ▼
+AuthorizationFilter
+   │
+   ▼
+Controller
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟩 ACTUAL SPRING SECURITY FLOW
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Request
+
+   │
+   ▼
+
+DelegatingFilterProxy
+
+   │
+   ▼
+
+FilterChainProxy
+
+   │
+   ▼
+
+SecurityFilterChain
+
+   │
+   ▼
+
+Filter 1
+
+   │
+   ▼
+
+Filter 2
+
+   │
+   ▼
+
+Authentication Filter
+
+   │
+   ▼
+
+AuthenticationManager
+
+   │
+   ▼
+
+ProviderManager
+
+   │
+   ▼
+
+AuthenticationProvider
+
+   │
+   ▼
+
+UserDetailsService
+
+   │
+   ▼
+
+PasswordEncoder
+
+   │
+   ▼
+
+Authentication Success ?
+
+     ┌───────────────┐
+     │      NO       │
+     └───────┬───────┘
+             ▼
+
+AuthenticationException
+
+             ▼
+
+ExceptionTranslationFilter
+
+             ▼
+
+AuthenticationEntryPoint
+
+             ▼
+
+401 Response
+
+             ▼
+
+CHAIN STOPS HERE ❌
+
+
+     ┌───────────────┐
+     │     YES       │
+     └───────┬───────┘
+             ▼
+
+Authentication Object Created
+
+             ▼
+
+Stored in SecurityContextHolder
+
+             ▼
+
+Continue Remaining Filters
+
+             ▼
+
+AuthorizationFilter
+
+             ▼
+
+DispatcherServlet
+
+             ▼
+
+Controller
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟦 LOGIN REQUEST FLOW
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+POST /auth/login
+
+Request
+
+   │
+   ▼
+
+SecurityContextHolderFilter
+
+   │
+   ▼
+
+CSRF Filter
+
+   │
+   ▼
+
+UsernamePasswordAuthenticationFilter
+
+🔥 HERE AUTHENTICATION HAPPENS 🔥
+
+   │
+   ▼
+
+AuthenticationManager
+
+   │
+   ▼
+
+ProviderManager
+
+   │
+   ▼
+
+DaoAuthenticationProvider
+
+   │
+   ▼
+
+UserDetailsService
+
+   │
+   ▼
+
+loadUserByUsername()
+
+   │
+   ▼
+
+PasswordEncoder.matches()
+
+   │
+   ▼
+
+Credentials Correct ?
+
+   ┌──────────────┐
+   │ NO           │
+   └──────┬───────┘
+          ▼
+
+BadCredentialsException
+
+          ▼
+
+ExceptionTranslationFilter
+
+          ▼
+
+AuthenticationEntryPoint
+
+          ▼
+
+401
+
+          ▼
+
+STOP ❌
+
+
+   ┌──────────────┐
+   │ YES          │
+   └──────┬───────┘
+          ▼
+
+UsernamePasswordAuthenticationToken
+
+Authenticated=true
+
+          ▼
+
+SecurityContextHolder
+
+          ▼
+
+Continue Filters
+
+          ▼
+
+AuthorizationFilter
+
+          ▼
+
+Controller
+
+          ▼
+
+Generate JWT
+
+          ▼
+
+Response
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟨 JWT REQUEST FLOW
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+GET /customers
+
+Authorization:
+Bearer eyJhbGci...
+
+Request
+
+   │
+   ▼
+
+RateLimitFilter
+
+   │
+   ▼
+
+JWTAuthenticationFilter
+
+🔥 AUTHENTICATION HAPPENS HERE 🔥
+
+   │
+   ▼
+
+Extract Token
+
+   │
+   ▼
+
+Validate Signature
+
+   │
+   ▼
+
+Validate Expiry
+
+   │
+   ▼
+
+Load User
+
+   │
+   ▼
+
+Create Authentication Object
+
+   │
+   ▼
+
+SecurityContextHolder
+
+   │
+   ▼
+
+filterChain.doFilter()
+
+   │
+   ▼
+
+AuthorizationFilter
+
+🔥 AUTHORIZATION HAPPENS HERE 🔥
+
+   │
+   ▼
+
+Role Check
+
+   │
+   ▼
+
+Allowed ?
+
+      ┌─────────┐
+      │ NO      │
+      └────┬────┘
+           ▼
+
+AccessDeniedException
+
+           ▼
+
+AccessDeniedHandler
+
+           ▼
+
+403 Forbidden
+
+           ▼
+
+STOP ❌
+
+
+      ┌─────────┐
+      │ YES     │
+      └────┬────┘
+           ▼
+
+DispatcherServlet
+
+           ▼
+
+Controller
+
+           ▼
+
+Service
+
+           ▼
+
+Repository
+
+           ▼
+
+Response
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟥 WHY AUTHENTICATION MUST HAPPEN BEFORE AUTHORIZATION?
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Suppose:
+
+/admin/customers
+
+requires:
+
+ROLE_ADMIN
+
+How can Spring check role?
+
+It first needs:
+
+WHO ARE YOU?
+
+Authentication
+
+then
+
+WHAT ARE YOUR ROLES?
+
+Authorization
+
+
+Therefore:
+
+Authentication
+      │
+      ▼
+SecurityContextHolder
+      │
+      ▼
+Authorization
+
+ALWAYS
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟪 WHAT IS STORED IN SECURITY CONTEXT?
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+After successful authentication:
+
+Authentication auth =
+new UsernamePasswordAuthenticationToken(
+        user,
+        null,
+        authorities);
+
+auth.setAuthenticated(true);
+
+
+SecurityContextHolder
+        .getContext()
+        .setAuthentication(auth);
+
+
+Now SecurityContext contains:
+
+┌───────────────────────────────┐
+│ Authentication                │
+├───────────────────────────────┤
+│ Principal  = john.doe         │
+│ Roles      = ROLE_ADMIN       │
+│ Auth=true                     │
+└───────────────────────────────┘
+
+
+Later:
+
+AuthorizationFilter
+
+reads the same object.
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟧 ROLE OF ExceptionTranslationFilter
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Many people think this performs authentication.
+
+❌ Wrong
+
+It performs exception translation.
+
+Example:
+
+JWT Filter
+
+     │
+     ▼
+
+throws BadCredentialsException
+
+     │
+     ▼
+
+ExceptionTranslationFilter
+
+     │
+     ▼
+
+AuthenticationEntryPoint
+
+     │
+     ▼
+
+401
+
+
+Example:
+
+AuthorizationFilter
+
+     │
+     ▼
+
+throws AccessDeniedException
+
+     │
+     ▼
+
+ExceptionTranslationFilter
+
+     │
+     ▼
+
+AccessDeniedHandler
+
+     │
+     ▼
+
+403
+
+
+ExceptionTranslationFilter acts like:
+
+TRY-CATCH for Security Filters.
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟩 COMPLETE SUCCESSFUL JWT REQUEST
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Request
+
+ │
+ ▼
+
+DelegatingFilterProxy
+
+ │
+ ▼
+
+FilterChainProxy
+
+ │
+ ▼
+
+RateLimitFilter
+
+ │
+ ▼
+
+BruteForceFilter
+
+ │
+ ▼
+
+JWTAuthenticationFilter
+
+ │
+ ▼
+
+AuthenticationManager (optional if JWT filter uses one)
+
+ │
+ ▼
+
+Authentication Object
+
+ │
+ ▼
+
+SecurityContextHolder
+
+ │
+ ▼
+
+SessionManagementFilter
+
+ │
+ ▼
+
+ExceptionTranslationFilter
+
+ │
+ ▼
+
+AuthorizationFilter
+
+ │
+ ▼
+
+DispatcherServlet
+
+ │
+ ▼
+
+Controller
+
+ │
+ ▼
+
+Service
+
+ │
+ ▼
+
+Repository
+
+ │
+ ▼
+
+Response
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟥 COMPLETE FAILED JWT REQUEST
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Request
+
+ │
+ ▼
+
+JWTAuthenticationFilter
+
+ │
+ ▼
+
+ExpiredJwtException
+
+ │
+ ▼
+
+BadCredentialsException
+
+ │
+ ▼
+
+ExceptionTranslationFilter
+
+ │
+ ▼
+
+AuthenticationEntryPoint
+
+ │
+ ▼
+
+401
+
+ │
+ ▼
+
+STOP
+
+Controller Never Executes ❌
+
+Authorization Never Executes ❌
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🏆 INTERVIEW ANSWER
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+AuthenticationManager does NOT execute after all filters.
+
+AuthenticationManager is invoked by an Authentication Filter
+(UsernamePasswordAuthenticationFilter, JWT Filter, OAuth2 Filter, etc.)
+during filter-chain execution.
+
+If authentication succeeds, an Authentication object is stored in
+SecurityContextHolder and the remaining filters continue executing.
+
+Later, AuthorizationFilter reads the Authentication object from
+SecurityContextHolder and decides whether the user is allowed to
+access the requested resource.
+
+Therefore the sequence is:
+
+Request
+→ Security Filters
+→ Authentication Filter
+→ AuthenticationManager
+→ AuthenticationProvider
+→ UserDetailsService
+→ SecurityContextHolder Population
+→ Remaining Filters
+→ AuthorizationFilter
+→ DispatcherServlet
+→ Controller
+→ Service
+→ Repository
+→ Response

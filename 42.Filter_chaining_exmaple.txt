@@ -1,0 +1,576 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                    REAL WORLD FILTER CHAINING WITH JWT + RATE LIMIT + BRUTE FORCE                ║
+║                             (WHY EACH FILTER IS PLACED THERE ?)                                  ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+██████████████████████████████████████████████████████████████████████████████████████████████████
+🟩 TARGET FILTER CHAIN
+██████████████████████████████████████████████████████████████████████████████████████████████████
+
+Incoming Request
+      │
+      ▼
+┌──────────────┐
+│ CORS Filter  │
+└──────┬───────┘
+       ▼
+┌────────────────────┐
+│ RateLimit Filter   │
+└─────────┬──────────┘
+          ▼
+┌────────────────────┐
+│ BruteForce Filter  │
+└─────────┬──────────┘
+          ▼
+┌────────────────────┐
+│ CSRF Filter        │
+└─────────┬──────────┘
+          ▼
+┌────────────────────┐
+│ JWT Filter         │
+└─────────┬──────────┘
+          ▼
+┌──────────────────────────────────┐
+│ UsernamePasswordAuthentication   │
+│ Filter                           │
+└─────────┬────────────────────────┘
+          ▼
+┌────────────────────┐
+│ AuthorizationFilter│
+└─────────┬──────────┘
+          ▼
+DispatcherServlet
+          │
+          ▼
+Controller
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════
+🟦 SECURITY CONFIGURATION
+════════════════════════════════════════════════════════════════════════════════════════════════════
+
+@Bean
+public SecurityFilterChain securityFilterChain(
+        HttpSecurity http)
+        throws Exception {
+
+    return http
+
+        .csrf(Customizer.withDefaults())
+
+        .cors(Customizer.withDefaults())
+
+        /*
+        RateLimit First
+        */
+        .addFilterBefore(
+                rateLimitFilter,
+                UsernamePasswordAuthenticationFilter.class)
+
+        /*
+        Brute Force After RateLimit
+        */
+        .addFilterBefore(
+                bruteForceFilter,
+                UsernamePasswordAuthenticationFilter.class)
+
+        /*
+        JWT Before UsernamePasswordAuthenticationFilter
+        */
+        .addFilterBefore(
+                jwtAuthenticationFilter,
+                UsernamePasswordAuthenticationFilter.class)
+
+        .authorizeHttpRequests(auth ->
+                auth.anyRequest()
+                        .authenticated())
+
+        .build();
+}
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════
+🟨 WHY CORS FILTER COMES FIRST?
+════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Browser
+   │
+   ▼
+
+OPTIONS Request
+
+Origin Header
+
+Access-Control-Request-Method
+
+Before doing any authentication,
+browser must know:
+
+Can I call this server?
+
+Therefore:
+
+CORS
+   │
+   ▼
+Authentication
+   │
+   ▼
+Authorization
+
+If JWT Filter runs first:
+
+JWT Missing
+     │
+     ▼
+401
+
+Browser never reaches API.
+
+Therefore CORS must execute very early.
+
+
+Flow
+
+OPTIONS
+   │
+   ▼
+CORS Filter
+   │
+   ▼
+Allowed ?
+   │
+   ▼
+Continue
+
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════
+🟥 WHY RATELIMIT FILTER IS PLACED BEFORE JWT?
+════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Rate limiting is extremely cheap.
+
+JWT validation is expensive.
+
+JWT validation requires:
+
+Token parsing
+
+Signature verification
+
+Claims extraction
+
+Cryptographic verification
+
+
+Suppose
+
+10000 requests/sec
+
+from attacker.
+
+If JWT runs first:
+
+10000 JWT validations/sec
+
+CPU Waste.
+
+
+Better:
+
+Request
+  │
+  ▼
+RateLimitFilter
+
+Too many requests?
+
+ ┌──────────┐
+ │ YES      │
+ └────┬─────┘
+      ▼
+
+429 Too Many Requests
+
+NO JWT Parsing Needed.
+
+
+Flow
+
+Request
+   │
+   ▼
+RateLimitFilter
+   │
+   ▼
+Allowed ?
+   │
+   ▼
+JWT Filter
+
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════
+🟪 WHY BRUTE FORCE FILTER BEFORE JWT?
+════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Purpose:
+
+Protect Login Endpoint
+
+Examples
+
+/auth/login
+
+/login
+
+/oauth/token
+
+
+Check:
+
+IP
+
+Username
+
+Failed Attempts
+
+
+Before authentication happens we want:
+
+Blocked Username?
+Blocked IP?
+
+If Yes
+
+Stop request immediately.
+
+Diagram
+
+Request
+
+   │
+   ▼
+
+BruteForceFilter
+
+   │
+   ▼
+
+Blocked ?
+
+ ┌─────────┐
+ │ YES     │
+ └────┬────┘
+      ▼
+
+423 Locked
+
+or
+
+429 Too Many Requests
+
+
+No need to execute:
+
+JWT
+
+AuthenticationManager
+
+UserDetailsService
+
+Database
+
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════
+🟩 WHY CSRF FILTER BEFORE AUTHENTICATION?
+════════════════════════════════════════════════════════════════════════════════════════════════════
+
+STATEFUL APPLICATIONS
+
+(Session + Cookies)
+
+Request
+   │
+   ▼
+CSRF Filter
+   │
+   ▼
+Valid CSRF Token?
+   │
+   ▼
+Authentication
+
+
+Why?
+
+Even authenticated users can be victims of CSRF attack.
+
+CSRF protection must happen before business logic.
+
+For JWT Stateless APIs
+
+Usually:
+
+http.csrf(csrf -> csrf.disable());
+
+Then CSRF filter is removed.
+
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════
+🟧 WHY JWT FILTER BEFORE UsernamePasswordAuthenticationFilter?
+════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MOST IMPORTANT INTERVIEW QUESTION
+
+Request:
+
+GET /customers
+
+Authorization:
+Bearer eyJhbGciOi...
+
+Current User Already Logged In
+
+Token already present.
+
+We don't want:
+
+UsernamePasswordAuthenticationFilter
+
+to start login process.
+
+We want:
+
+JWT Filter
+      │
+      ▼
+Read Token
+      │
+      ▼
+Validate Token
+      │
+      ▼
+Create Authentication
+      │
+      ▼
+Store in SecurityContext
+      │
+      ▼
+Continue
+
+
+By the time request reaches:
+
+UsernamePasswordAuthenticationFilter
+
+user is already authenticated.
+
+
+Diagram
+
+Request
+
+   │
+   ▼
+
+JWT Filter
+
+   │
+   ▼
+
+Authentication Created
+
+SecurityContext Updated
+
+   │
+   ▼
+
+UsernamePasswordAuthenticationFilter
+
+   │
+   ▼
+
+Sees User Already Authenticated
+
+   │
+   ▼
+
+Skips Login Logic
+
+   │
+   ▼
+
+Authorization Filter
+
+
+If JWT Filter is after UsernamePasswordAuthenticationFilter:
+
+
+Request
+   │
+   ▼
+
+UsernamePasswordAuthenticationFilter
+
+   │
+   ▼
+
+No Authentication Found
+
+   │
+   ▼
+
+May trigger login/authentication flow
+
+Wrong order.
+
+
+Therefore:
+
+✅ JWT Filter must be BEFORE UsernamePasswordAuthenticationFilter
+
+
+Standard code:
+
+.addFilterBefore(
+        jwtAuthenticationFilter,
+        UsernamePasswordAuthenticationFilter.class)
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════
+🟦 WHAT HAPPENS INSIDE JWT FILTER?
+════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Authorization Header
+
+      │
+      ▼
+
+Bearer xxxxx
+
+      │
+      ▼
+
+Extract Token
+
+      │
+      ▼
+
+Validate Signature
+
+      │
+      ▼
+
+Check Expiration
+
+      │
+      ▼
+
+Load UserDetails
+
+      │
+      ▼
+
+Create Authentication
+
+      │
+      ▼
+
+SecurityContextHolder
+      .getContext()
+      .setAuthentication(authentication)
+
+      │
+      ▼
+
+Continue Chain
+
+
+Now AuthorizationFilter can use:
+
+SecurityContextHolder
+
+to check roles.
+
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════
+🟨 COMPLETE ENTERPRISE FILTER CHAIN
+════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Request
+   │
+   ▼
+
+CorsFilter
+   │
+   ▼
+
+RateLimitFilter
+   │
+   ▼
+
+BruteForceProtectionFilter
+   │
+   ▼
+
+CsrfFilter
+   │
+   ▼
+
+JWTAuthenticationFilter
+   │
+   ▼
+
+UsernamePasswordAuthenticationFilter
+   │
+   ▼
+
+AnonymousAuthenticationFilter
+   │
+   ▼
+
+SessionManagementFilter
+   │
+   ▼
+
+ExceptionTranslationFilter
+   │
+   ▼
+
+AuthorizationFilter
+   │
+   ▼
+
+DispatcherServlet
+   │
+   ▼
+
+Controller
+   │
+   ▼
+
+Service
+   │
+   ▼
+
+Repository
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════
+🏆 INTERVIEW ANSWER
+════════════════════════════════════════════════════════════════════════════════════════════════════
+
+RateLimitFilter is placed before JWT because rejecting excessive traffic is cheaper than JWT validation.
+
+BruteForceFilter is placed before authentication because blocked users/IPs should be stopped before database lookups.
+
+JWTAuthenticationFilter is placed before UsernamePasswordAuthenticationFilter because JWT requests already contain authentication information. The JWT filter validates the token and populates SecurityContextHolder before Spring Security's authentication filters execute.
+
+AuthorizationFilter always comes after authentication because Spring cannot decide what resources a user can access until it knows who the user is.
+
+Authentication → SecurityContextHolder Population → Authorization is the core order followed by Spring Security.

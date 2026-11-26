@@ -1,0 +1,482 @@
+/*
+===============================================================================
+AUTHENTICATIONENTRYPOINT + ACCESSDENIEDHANDLER + SECURITYFILTERCHAIN
+===============================================================================
+
+WHEN IS AuthenticationEntryPoint CALLED?
+------------------------------------------
+
+Case 1:
+No JWT Token
+
+Case 2:
+Invalid JWT
+
+Case 3:
+Expired JWT
+
+Case 4:
+Malformed JWT
+
+Case 5:
+SecurityContext has no authenticated user
+
+Result:
+401 Unauthorized
+
+
+WHEN IS AccessDeniedHandler CALLED?
+------------------------------------
+
+User authenticated successfully.
+
+BUT
+
+User does not have required role/authority.
+
+Example:
+
+ROLE_USER trying to access /admin
+
+Result:
+403 Forbidden
+
+
+===============================================================================
+REQUEST FLOW
+===============================================================================
+
+                            REQUEST
+                               |
+                               V
+
+                    ┌──────────────────────┐
+                    │ SecurityFilterChain  │
+                    └──────────────────────┘
+                               |
+                               V
+
+                    ┌──────────────────────┐
+                    │ JWTAuthentication    │
+                    │ Filter               │
+                    └──────────────────────┘
+                               |
+                 ┌─────────────┴─────────────┐
+                 │                           │
+                 ▼                           ▼
+
+          JWT VALID                    JWT INVALID
+                 │                           │
+                 ▼                           ▼
+
+SecurityContext Updated      AuthenticationException
+                 │                           │
+                 ▼                           ▼
+
+        Continue Chain         ExceptionTranslationFilter
+                                            │
+                                            ▼
+
+                               AuthenticationEntryPoint
+                                            │
+                                            ▼
+
+                                   401 Response
+
+
+
+===============================================================================
+ROLE AUTHORIZATION FLOW
+===============================================================================
+
+User Logged In
+      |
+      ▼
+
+ROLE_USER
+
+      |
+      ▼
+
+Access /admin
+
+      |
+      ▼
+
+AccessDeniedException
+
+      |
+      ▼
+
+AccessDeniedHandler
+
+      |
+      ▼
+
+403 Forbidden
+
+
+===============================================================================
+AUTHENTICATION ENTRY POINT
+===============================================================================
+*/
+
+@Component
+public class JWTAuthenticationEntryPoint
+        implements AuthenticationEntryPoint {
+
+    @Override
+    public void commence(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AuthenticationException ex)
+            throws IOException {
+
+        response.setStatus(
+                HttpServletResponse.SC_UNAUTHORIZED);
+
+        response.setContentType(
+                MediaType.APPLICATION_JSON_VALUE);
+
+        response.getWriter().write("""
+                {
+                    "status":401,
+                    "error":"Unauthorized",
+                    "message":"Authentication Failed",
+                    "path":"%s"
+                }
+                """.formatted(
+                        request.getRequestURI()
+                ));
+    }
+}
+
+/*
+===============================================================================
+ACCESS DENIED HANDLER
+===============================================================================
+*/
+
+@Component
+public class JWTAccessDeniedHandler
+        implements AccessDeniedHandler {
+
+    @Override
+    public void handle(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AccessDeniedException ex)
+            throws IOException {
+
+        response.setStatus(
+                HttpServletResponse.SC_FORBIDDEN);
+
+        response.setContentType(
+                MediaType.APPLICATION_JSON_VALUE);
+
+        response.getWriter().write("""
+                {
+                    "status":403,
+                    "error":"Forbidden",
+                    "message":"You don't have permission to access this resource",
+                    "path":"%s"
+                }
+                """.formatted(
+                        request.getRequestURI()
+                ));
+    }
+}
+
+
+/*
+===============================================================================
+JWT FILTER
+===============================================================================
+*/
+
+@Component
+@RequiredArgsConstructor
+public class JWTAuthenticationFilter
+        extends OncePerRequestFilter {
+
+    private final JWTService jwtService;
+
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain)
+            throws ServletException, IOException {
+
+        String header =
+                request.getHeader("Authorization");
+
+        try {
+
+            if (header != null
+                    && header.startsWith("Bearer ")) {
+
+                String token =
+                        header.substring(7);
+
+                jwtService.validateToken(token);
+
+                // Create Authentication object
+                // Set SecurityContext here
+            }
+
+            filterChain.doFilter(
+                    request,
+                    response
+            );
+
+        }
+        catch (ExpiredJwtException ex) {
+
+            throw new BadCredentialsException(
+                    "JWT Token Expired",
+                    ex
+            );
+        }
+        catch (JwtException ex) {
+
+            throw new BadCredentialsException(
+                    "Invalid JWT Token",
+                    ex
+            );
+        }
+    }
+}
+
+
+/*
+===============================================================================
+SECURITY CONFIGURATION
+===============================================================================
+*/
+
+@Configuration
+@EnableWebSecurity
+@RequiredArgsConstructor
+public class SecurityConfig {
+
+    private final JWTAuthenticationFilter
+            jwtAuthenticationFilter;
+
+    private final AuthenticationProvider
+            authenticationProvider;
+
+    private final JWTAuthenticationEntryPoint
+            authenticationEntryPoint;
+
+    private final JWTAccessDeniedHandler
+            accessDeniedHandler;
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http)
+            throws Exception {
+
+        return http
+
+                .csrf(csrf -> csrf.disable())
+
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS))
+
+                .authenticationProvider(
+                        authenticationProvider)
+
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class)
+
+                .authorizeHttpRequests(auth -> auth
+
+                        .requestMatchers(
+                                "/auth/login")
+                        .permitAll()
+
+                        .requestMatchers(
+                                "/admin/**")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(
+                                "/user/**")
+                        .hasAnyRole(
+                                "USER",
+                                "ADMIN")
+
+                        .anyRequest()
+                        .authenticated())
+
+                .exceptionHandling(exception ->
+
+                        exception
+
+                                /*
+                                 AuthenticationException
+                                 -> AuthenticationEntryPoint
+                                 -> 401
+                                */
+                                .authenticationEntryPoint(
+                                        authenticationEntryPoint)
+
+                                /*
+                                 AccessDeniedException
+                                 -> AccessDeniedHandler
+                                 -> 403
+                                 */
+                                .accessDeniedHandler(
+                                        accessDeniedHandler)
+                )
+
+                .build();
+    }
+}
+
+
+/*
+===============================================================================
+WHO HANDLES WHAT?
+===============================================================================
+
+AuthenticationException
+------------------------
+
+BadCredentialsException
+
+UsernameNotFoundException
+
+DisabledException
+
+LockedException
+
+CredentialsExpiredException
+
+AccountExpiredException
+
+InsufficientAuthenticationException
+
+                |
+                V
+
+AuthenticationEntryPoint
+
+                |
+                V
+
+401 Unauthorized
+
+
+
+
+AccessDeniedException
+---------------------
+
+Authenticated User
+
+BUT
+
+Missing Required Role
+
+Example:
+
+ROLE_USER
+trying to call
+/admin/customers
+
+                |
+                V
+
+AccessDeniedHandler
+
+                |
+                V
+
+403 Forbidden
+
+
+
+
+JwtException
+------------
+
+ExpiredJwtException
+
+MalformedJwtException
+
+SignatureException
+
+UnsupportedJwtException
+
+                |
+                V
+
+JWT Filter
+
+                |
+                V
+
+Convert to
+
+BadCredentialsException
+
+                |
+                V
+
+AuthenticationEntryPoint
+
+                |
+                V
+
+401 Unauthorized
+
+
+
+
+Controller Exceptions
+----------------------
+
+MethodArgumentNotValidException
+
+CustomerNotFoundException
+
+CustomerAlreadyExistsException
+
+DataIntegrityViolationException
+
+IllegalArgumentException
+
+                |
+                V
+
+@RestControllerAdvice
+
+                |
+                V
+
+400 / 404 / 409 / 500
+
+
+
+===============================================================================
+PRODUCTION BEST PRACTICE
+===============================================================================
+
+JWT Filter
+   -> Validate token
+
+AuthenticationEntryPoint
+   -> Handle all AuthenticationException (401)
+
+AccessDeniedHandler
+   -> Handle all Authorization failures (403)
+
+@RestControllerAdvice
+   -> Handle Controller/Service/DB exceptions
+
+This is the cleanest and most commonly used architecture in enterprise
+Spring Security JWT applications.
+===============================================================================	

@@ -1,0 +1,798 @@
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                        SPRING SECURITY COMPLETE REQUEST FLOW MASTER DIAGRAM                              ║
+║                     (DelegatingFilterProxy → Security → Controller)                                      ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+████████████████████████████████████████████████████████████████████████████████████████████████████████████
+🟩 STEP 1 : WHAT HAPPENS WHEN REQUEST HITS SPRING BOOT?
+████████████████████████████████████████████████████████████████████████████████████████████████████████████
+
+Browser/Postman
+       │
+       ▼
+Tomcat
+       │
+       ▼
+Servlet Filter Chain (Container Level)
+       │
+       ▼
+DelegatingFilterProxy
+       │
+       ▼
+springSecurityFilterChain Bean
+       │
+       ▼
+FilterChainProxy
+       │
+       ▼
+SecurityFilterChain
+       │
+       ▼
+DispatcherServlet
+       │
+       ▼
+Controller
+       │
+       ▼
+Service
+       │
+       ▼
+Repository
+       │
+       ▼
+Database
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟦 WHAT IS DelegatingFilterProxy?
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Tomcat knows only Servlet Filters.
+
+Tomcat DOES NOT KNOW:
+
+SecurityFilterChain
+AuthenticationManager
+AuthenticationProvider
+UserDetailsService
+
+Therefore Spring creates:
+
+DelegatingFilterProxy
+
+Tomcat
+  │
+  ▼
+DelegatingFilterProxy
+  │
+  ▼
+looks for bean
+
+"springSecurityFilterChain"
+
+inside Spring Container.
+
+It acts as a bridge.
+
+Diagram
+
+Tomcat
+   │
+   ▼
+DelegatingFilterProxy
+   │
+   ▼
+springSecurityFilterChain Bean
+   │
+   ▼
+FilterChainProxy
+
+
+Interview:
+
+DelegatingFilterProxy is a standard Servlet Filter which delegates
+actual processing to a Spring-managed bean called springSecurityFilterChain.
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟨 WHAT IS springSecurityFilterChain?
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+springSecurityFilterChain is actually:
+
+FilterChainProxy
+
+Diagram
+
+springSecurityFilterChain
+           │
+           ▼
+     FilterChainProxy
+
+FilterChainProxy manages:
+
+SecurityFilterChain #1
+SecurityFilterChain #2
+SecurityFilterChain #3
+
+etc.
+
+
+Example
+
+/api/**
+      │
+      ▼
+SecurityFilterChain #1
+
+/admin/**
+      │
+      ▼
+SecurityFilterChain #2
+
+/** 
+      │
+      ▼
+SecurityFilterChain #3
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟥 WHAT IS SecurityFilterChain?
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+SecurityFilterChain is nothing but:
+
+Ordered List Of Filters
+
+Example
+
+SecurityFilterChain
+
+ ┌───────────────┐
+ │ CORS Filter   │
+ └──────┬────────┘
+        ▼
+ ┌───────────────┐
+ │ CSRF Filter   │
+ └──────┬────────┘
+        ▼
+ ┌───────────────┐
+ │ JWT Filter    │
+ └──────┬────────┘
+        ▼
+ ┌───────────────┐
+ │ Auth Filter   │
+ └──────┬────────┘
+        ▼
+ ┌───────────────┐
+ │ Authorization │
+ └──────┬────────┘
+        ▼
+ Controller
+
+
+Each filter executes one after another.
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟪 WHAT HAPPENS IF I JUST ADD SPRING SECURITY DEPENDENCY?
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+pom.xml
+
+spring-boot-starter-security
+
+ONLY
+
+NO SecurityConfig
+
+
+Spring creates
+
+Default SecurityFilterChain
+
+Default Username/Password Login
+
+Default Login Page
+
+Default Logout
+
+Generated Password
+
+Every Request Authenticated
+
+Diagram
+
+Request
+   │
+   ▼
+
+DefaultSecurityFilterChain
+
+   │
+   ├── CSRF
+   ├── Headers
+   ├── Login Page
+   ├── Logout
+   ├── Anonymous User
+   ├── Session Management
+   ├── Exception Translation
+   └── Authorization
+
+   ▼
+
+403 / Login Page
+
+
+Console
+
+Using generated security password:
+
+xxxxxxxxxx
+
+
+All endpoints become secure automatically.
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟧 WHAT HAPPENS IF I CREATE MY OWN SecurityFilterChain?
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+@Bean
+SecurityFilterChain securityFilterChain(
+        HttpSecurity http)
+{
+}
+
+Then
+
+Spring Security
+
+❌ DOES NOT USE DEFAULT CHAIN
+
+✅ USES YOUR CHAIN
+
+Diagram
+
+Your Bean Found?
+
+YES
+ │
+ ▼
+Use Your Chain
+
+NO
+ │
+ ▼
+Use Default Chain
+
+
+Important Interview Point
+
+Defining a SecurityFilterChain bean completely replaces
+Spring Boot's default SecurityFilterChain.
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟩 WHAT FILTERS ARE ADDED AUTOMATICALLY?
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Depending on configuration.
+
+Not all filters are added always.
+
+Common Filters
+
+ChannelProcessingFilter
+
+WebAsyncManagerIntegrationFilter
+
+SecurityContextHolderFilter
+
+HeaderWriterFilter
+
+CorsFilter
+
+CsrfFilter
+
+LogoutFilter
+
+UsernamePasswordAuthenticationFilter
+
+DefaultLoginPageGeneratingFilter
+
+DefaultLogoutPageGeneratingFilter
+
+RequestCacheAwareFilter
+
+SecurityContextHolderAwareRequestFilter
+
+AnonymousAuthenticationFilter
+
+SessionManagementFilter
+
+ExceptionTranslationFilter
+
+AuthorizationFilter
+
+
+Most common runtime chain:
+
+SecurityContextHolderFilter
+          │
+HeaderWriterFilter
+          │
+CsrfFilter
+          │
+LogoutFilter
+          │
+UsernamePasswordAuthenticationFilter
+          │
+RequestCacheAwareFilter
+          │
+SecurityContextHolderAwareRequestFilter
+          │
+AnonymousAuthenticationFilter
+          │
+SessionManagementFilter
+          │
+ExceptionTranslationFilter
+          │
+AuthorizationFilter
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟦 WHERE DOES AUTHENTICATION HAPPEN?
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+UsernamePasswordAuthenticationFilter
+
+or
+
+Your JWT Filter
+
+
+Example Login
+
+POST /login
+
+      │
+      ▼
+UsernamePasswordAuthenticationFilter
+
+      │
+      ▼
+AuthenticationManager
+
+      │
+      ▼
+ProviderManager
+
+      │
+      ▼
+AuthenticationProvider
+
+      │
+      ▼
+UserDetailsService
+
+      │
+      ▼
+PasswordEncoder
+
+      │
+      ▼
+
+Authentication Success
+
+      │
+      ▼
+
+Authentication Object Created
+
+      │
+      ▼
+
+SecurityContextHolder
+
+
+SecurityContext now contains:
+
+Authenticated User
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟨 WHERE DOES AUTHORIZATION HAPPEN?
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+AuthorizationFilter
+
+checks:
+
+Authenticated?
+
+Role Present?
+
+Authority Present?
+
+
+Example
+
+ROLE_USER
+
+trying
+
+/admin
+
+      │
+      ▼
+
+AuthorizationFilter
+
+      │
+      ▼
+
+AccessDeniedException
+
+      │
+      ▼
+
+AccessDeniedHandler
+
+      │
+      ▼
+
+403 Forbidden
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟥 WHAT IS SecurityContext?
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+After Authentication
+
+Spring stores:
+
+Authentication Object
+
+inside
+
+SecurityContextHolder
+
+
+SecurityContextHolder
+          │
+          ▼
+SecurityContext
+          │
+          ▼
+Authentication
+          │
+          ▼
+Principal(User)
+Authorities
+Credentials
+
+
+Anywhere
+
+Authentication authentication =
+SecurityContextHolder
+        .getContext()
+        .getAuthentication();
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟪 HOW DOES FILTER CHAINING WORK?
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Filter A
+    │
+    ▼
+filterChain.doFilter()
+    │
+    ▼
+Filter B
+    │
+    ▼
+filterChain.doFilter()
+    │
+    ▼
+Filter C
+    │
+    ▼
+filterChain.doFilter()
+    │
+    ▼
+Controller
+
+
+If a filter DOES NOT call:
+
+filterChain.doFilter()
+
+chain stops immediately.
+
+Example
+
+JWT Token Invalid
+
+JWT Filter
+    │
+    ▼
+Send 401
+
+NO doFilter()
+
+Controller Never Executes
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟩 ADDING CUSTOM FILTERS
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+JWT Filter
+
+RateLimit Filter
+
+BruteForce Filter
+
+Audit Filter
+
+Logging Filter
+
+MFA Filter
+
+etc.
+
+
+Example Chain
+
+Request
+  │
+  ▼
+
+RateLimitFilter
+
+  │
+  ▼
+
+BruteForceProtectionFilter
+
+  │
+  ▼
+
+JWTAuthenticationFilter
+
+  │
+  ▼
+
+UsernamePasswordAuthenticationFilter
+
+  │
+  ▼
+
+AuthorizationFilter
+
+  │
+  ▼
+
+Controller
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🟦 HOW TO REGISTER CUSTOM FILTERS?
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+BEFORE
+
+.addFilterBefore(
+        jwtFilter,
+        UsernamePasswordAuthenticationFilter.class)
+
+AFTER
+
+.addFilterAfter(
+        myFilter,
+        UsernamePasswordAuthenticationFilter.class)
+
+AT SAME POSITION
+
+.addFilterAt(
+        myFilter,
+        UsernamePasswordAuthenticationFilter.class)
+
+
+Example
+
+http
+
+.addFilterBefore(
+       rateLimitFilter,
+       UsernamePasswordAuthenticationFilter.class)
+
+.addFilterBefore(
+       bruteForceFilter,
+       UsernamePasswordAuthenticationFilter.class)
+
+.addFilterBefore(
+       jwtFilter,
+       UsernamePasswordAuthenticationFilter.class);
+
+
+Execution Order
+
+RateLimitFilter
+       │
+       ▼
+BruteForceFilter
+       │
+       ▼
+JWTFilter
+       │
+       ▼
+UsernamePasswordAuthenticationFilter
+
+
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🏆 COMPLETE END TO END JWT REQUEST FLOW
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Client Request
+
+     │
+     ▼
+
+Tomcat
+
+     │
+     ▼
+
+DelegatingFilterProxy
+
+     │
+     ▼
+
+FilterChainProxy
+(springSecurityFilterChain)
+
+     │
+     ▼
+
+SecurityFilterChain
+
+     │
+     ▼
+
+RateLimitFilter
+
+     │
+     ▼
+
+BruteForceFilter
+
+     │
+     ▼
+
+JWTAuthenticationFilter
+
+     │
+     ▼
+
+JWT Valid ?
+
+ ┌───────────────┐
+ │ NO            │
+ └──────┬────────┘
+        ▼
+
+AuthenticationException
+
+        ▼
+
+AuthenticationEntryPoint
+
+        ▼
+
+401
+
+
+YES
+
+ │
+ ▼
+
+Create Authentication Object
+
+ │
+ ▼
+
+SecurityContextHolder
+
+ │
+ ▼
+
+AuthorizationFilter
+
+ │
+ ▼
+
+Role Check
+
+ │
+ ▼
+
+Has Access ?
+
+ ┌─────────────┐
+ │ NO          │
+ └─────┬───────┘
+       ▼
+
+AccessDeniedException
+
+       ▼
+
+AccessDeniedHandler
+
+       ▼
+
+403
+
+
+YES
+
+ │
+ ▼
+
+DispatcherServlet
+
+ │
+ ▼
+
+Controller
+
+ │
+ ▼
+
+Service
+
+ │
+ ▼
+
+Repository
+
+ │
+ ▼
+
+Database
+
+ │
+ ▼
+
+Response
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+INTERVIEW ONE-LINER
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Tomcat → DelegatingFilterProxy → springSecurityFilterChain(FilterChainProxy) →
+SecurityFilterChain(ordered filters) → Authentication →
+SecurityContextHolder Population → Authorization →
+DispatcherServlet → Controller → Service → Repository → Database → Response
+
+Authentication answers "WHO ARE YOU?"
+Authorization answers "WHAT ARE YOU ALLOWED TO DO?"
+SecurityContextHolder stores the authenticated user for the current request.
