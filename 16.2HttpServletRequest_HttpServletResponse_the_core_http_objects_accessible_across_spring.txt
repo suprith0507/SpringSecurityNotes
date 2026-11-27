@@ -1,0 +1,595 @@
+╔════════════════════════════════════════════════════════════════════════════════════╗
+║                    HttpServletRequest & HttpServletResponse                      ║
+║                          COMPLETE SPRING MVC FLOW                                ║
+╚════════════════════════════════════════════════════════════════════════════════════╝
+
+🟦 WHAT ARE THEY?
+
+HttpServletRequest
+------------------
+Represents the incoming HTTP Request.
+
+Contains:
+✅ URL
+✅ HTTP Method (GET/POST/PUT/DELETE)
+✅ Headers
+✅ Query Parameters
+✅ Request Body
+✅ Cookies
+✅ Session Information
+✅ Client Information
+
+Example:
+
+POST /customers
+Authorization: Bearer xyz
+Cookie: JSESSIONID=ABC123
+X-CSRF-TOKEN=token123
+
+{
+   "name":"John"
+}
+
+All of the above becomes:
+
+HttpServletRequest request
+
+
+HttpServletResponse
+-------------------
+Represents the outgoing HTTP Response.
+
+Contains:
+✅ Status Code
+✅ Response Headers
+✅ Response Body
+✅ Cookies
+
+Example:
+
+HTTP/1.1 200 OK
+
+{
+   "message":"Customer Created"
+}
+
+All of the above is stored inside:
+
+HttpServletResponse response
+
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 WHO CREATES THEM?
+
+Neither Spring MVC nor Spring Security creates them.
+
+They are created by the Servlet Container:
+
+✅ Tomcat
+✅ Jetty
+✅ Undertow
+
+Flow:
+
+Browser
+   |
+   v
+Tomcat
+   |
+   +--> Create HttpServletRequest
+   |
+   +--> Create HttpServletResponse
+   |
+   v
+Spring Application
+
+Diagram:
+
+┌──────────┐
+│ Browser  │
+└────┬─────┘
+     |
+     v
+┌──────────┐
+│ Tomcat   │
+└────┬─────┘
+     |
+     +--> HttpServletRequest
+     |
+     +--> HttpServletResponse
+     |
+     v
+Spring Security
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 COMPLETE REQUEST FLOW
+
+┌──────────┐
+│ Browser  │
+└────┬─────┘
+     |
+     v
+┌──────────┐
+│ Tomcat   │
+└────┬─────┘
+     |
+     v
+┌───────────────────────────────┐
+│ Security Filter Chain         │
+└────┬──────────────────────────┘
+     |
+     v
+┌───────────────────────────────┐
+│ DispatcherServlet             │
+└────┬──────────────────────────┘
+     |
+     v
+┌───────────────────────────────┐
+│ Controller                    │
+└────┬──────────────────────────┘
+     |
+     v
+┌───────────────────────────────┐
+│ Service                       │
+└────┬──────────────────────────┘
+     |
+     v
+┌───────────────────────────────┐
+│ Repository                    │
+└────┬──────────────────────────┘
+     |
+     v
+┌───────────────────────────────┐
+│ Database                      │
+└───────────────────────────────┘
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 WHAT HAPPENS IN SPRING SECURITY FILTERS?
+
+Every filter receives THE SAME request and response objects.
+
+Example:
+
+public void doFilterInternal(
+       HttpServletRequest request,
+       HttpServletResponse response,
+       FilterChain chain)
+
+Flow:
+
+Tomcat
+  |
+  v
+CorsFilter
+  |
+  v
+CsrfFilter
+  |
+  v
+JwtFilter
+  |
+  v
+AuthorizationFilter
+  |
+  v
+DispatcherServlet
+
+Same request object moves through all filters.
+
+Same response object moves through all filters.
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 WHY DOES SPRING SECURITY NEED HTTPSERVLETREQUEST?
+
+Because all security data lives inside the request.
+
+1. JWT Authentication
+
+request.getHeader("Authorization")
+
+Reads:
+
+Authorization: Bearer eyJhbGci...
+
+─────────────────────────────────
+
+2. Session Authentication
+
+request.getSession(false)
+
+Reads:
+
+Cookie: JSESSIONID=ABC123
+
+─────────────────────────────────
+
+3. CSRF Validation
+
+request.getHeader("X-CSRF-TOKEN")
+
+or
+
+request.getParameter("_csrf")
+
+─────────────────────────────────
+
+4. URL-Based Authorization
+
+request.getRequestURI()
+
+Returns:
+
+/admin/users
+
+Spring checks:
+
+requestMatchers("/admin/**")
+.hasRole("ADMIN")
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 WHY DOES SPRING SECURITY NEED HTTPSERVLETRESPONSE?
+
+To immediately send a response back.
+
+Example:
+
+Invalid JWT
+
+response.setStatus(401);
+
+Result:
+
+HTTP/1.1 401 Unauthorized
+
+─────────────────────────────────
+
+Missing Role
+
+response.setStatus(403);
+
+Result:
+
+HTTP/1.1 403 Forbidden
+
+─────────────────────────────────
+
+CSRF Failure
+
+response.setStatus(403);
+
+Result:
+
+HTTP/1.1 403 Forbidden
+
+Controller never executes.
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 WHAT DOES chain.doFilter() DO?
+
+Most important line in every filter.
+
+chain.doFilter(request,response);
+
+Meaning:
+
+"I have completed my work.
+Pass the SAME request and response
+to the next filter."
+
+Diagram:
+
+JwtFilter
+    |
+chain.doFilter()
+    |
+    v
+CsrfFilter
+    |
+chain.doFilter()
+    |
+    v
+AuthorizationFilter
+    |
+chain.doFilter()
+    |
+    v
+DispatcherServlet
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 WHAT IF chain.doFilter() IS NOT CALLED?
+
+Example:
+
+protected void doFilterInternal(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      FilterChain chain) {
+
+      System.out.println("Filter");
+
+      // chain.doFilter NOT CALLED
+}
+
+Result:
+
+Browser
+   |
+   v
+JwtFilter
+   |
+ STOP
+
+DispatcherServlet never executes.
+
+Controller never executes.
+
+Request dies there.
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 WHAT HAPPENS AFTER THE LAST FILTER?
+
+After all filters pass:
+
+Security Filter Chain
+         |
+         v
+DispatcherServlet
+
+Spring passes:
+
+HttpServletRequest
+HttpServletResponse
+
+to DispatcherServlet.
+
+Same objects created by Tomcat.
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 CONTROLLER EXECUTION
+
+Example:
+
+@GetMapping("/customers")
+public Customer getCustomer() {
+     return customer;
+}
+
+Controller returns:
+
+Customer Object
+
+NOT JSON
+
+NOT HTTP RESPONSE
+
+Just a plain Java object.
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 THEN WHO CONVERTS MY JAVA OBJECT TO JSON?
+
+Answer:
+
+DispatcherServlet
+      |
+      v
+HandlerAdapter
+      |
+      v
+HttpMessageConverter
+      |
+      v
+Jackson ObjectMapper
+      |
+      v
+JSON
+
+Sequence:
+
+Customer Object
+      |
+      v
+ObjectMapper
+      |
+      v
+JSON String
+      |
+      v
+HttpServletResponse
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 WHO HANDLES ResponseEntity?
+
+Example:
+
+return ResponseEntity.ok(customer);
+
+Spring receives:
+
+ResponseEntity<Customer>
+
+Internally:
+
+Status = 200
+Body = Customer
+
+Spring extracts both.
+
+The controller itself never writes into HttpServletResponse.
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 WHAT IS HttpMessageConverter?
+
+Responsible for converting Java objects into HTTP responses.
+
+Examples:
+
+Java Object
+     |
+     v
+JSON
+
+Java Object
+     |
+     v
+XML
+
+Java Object
+     |
+     v
+Text
+
+Most common converter:
+
+MappingJackson2HttpMessageConverter
+
+Uses:
+
+Jackson ObjectMapper
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 INTERNAL CONVERSION
+
+Suppose controller returns:
+
+return ResponseEntity.ok(customer);
+
+Internally Spring does something similar to:
+
+String json =
+      objectMapper.writeValueAsString(customer);
+
+response.setStatus(200);
+
+response.setContentType("application/json");
+
+response.getWriter().write(json);
+
+YOU NEVER WRITE THIS CODE.
+
+Spring MVC writes it for you.
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 COMPLETE RESPONSE FLOW
+
+Controller
+     |
+     v
+ResponseEntity<Customer>
+     |
+     v
+DispatcherServlet
+     |
+     v
+HandlerAdapter
+     |
+     v
+HttpMessageConverter
+     |
+     v
+ObjectMapper
+     |
+     v
+JSON
+     |
+     v
+HttpServletResponse
+     |
+     v
+Tomcat
+     |
+     v
+Browser
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 EXCEPTION FLOW
+
+Controller
+    |
+    +--> throw UserNotFoundException
+    |
+    v
+@RestControllerAdvice
+    |
+    v
+ResponseEntity<ErrorResponse>
+    |
+    v
+DispatcherServlet
+    |
+    v
+HttpMessageConverter
+    |
+    v
+HttpServletResponse
+    |
+    v
+Browser
+
+Even exception responses are eventually written into HttpServletResponse.
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 SECURITY FAILURE FLOW
+
+Request
+   |
+   v
+JwtFilter
+   |
+   +--> Invalid JWT
+   |
+   v
+AuthenticationEntryPoint
+   |
+   v
+response.setStatus(401)
+   |
+   v
+Browser
+
+DispatcherServlet NOT reached
+Controller NOT reached
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 CSRF FAILURE FLOW
+
+Request
+   |
+   v
+CsrfFilter
+   |
+   +--> Invalid CSRF Token
+   |
+   v
+AccessDeniedHandler
+   |
+   v
+response.setStatus(403)
+   |
+   v
+Browser
+
+DispatcherServlet NOT reached
+Controller NOT reached
+
+══════════════════════════════════════════════════════════════════════════════════════
+
+🟦 FINAL INTERVIEW ANSWER
+
+HttpServletRequest and HttpServletResponse are created by the Servlet Container (Tomcat) for every incoming HTTP request. The same request and response objects travel through the entire Spring Security filter chain, DispatcherServlet, controllers, services, and back to the client. Spring Security uses HttpServletRequest to read authentication information such as JWT tokens, session IDs, CSRF tokens, headers, URLs, and cookies. It uses HttpServletResponse to immediately return responses such as 401 Unauthorized and 403 Forbidden. Controllers generally return Java objects or ResponseEntity objects rather than writing directly into HttpServletResponse. DispatcherServlet delegates to HandlerAdapters and HttpMessageConverters (typically MappingJackson2HttpMessageConverter), which use Jackson's ObjectMapper to serialize Java objects into JSON and write that JSON into the existing HttpServletResponse created by Tomcat. Finally, Tomcat sends the completed HTTP response back to the browser.

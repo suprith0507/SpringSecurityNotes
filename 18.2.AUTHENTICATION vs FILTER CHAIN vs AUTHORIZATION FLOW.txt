@@ -676,6 +676,129 @@ Authorization Never Executes ❌
 
 
 
+════════════════════════════════════════════════════════════════════════════════════════════════════
+🟧 WHY JWT FILTER BEFORE UsernamePasswordAuthenticationFilter?
+════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MOST IMPORTANT INTERVIEW QUESTION
+
+Request:
+
+GET /customers
+
+Authorization:
+Bearer eyJhbGciOi...
+
+Current User Already Logged In
+
+Token already present.
+
+We don't want:
+
+UsernamePasswordAuthenticationFilter
+
+to start login process.
+
+We want:
+
+JWT Filter
+      │
+      ▼
+Read Token
+      │
+      ▼
+Validate Token
+      │
+      ▼
+Create Authentication
+      │
+      ▼
+Store in SecurityContext
+      │
+      ▼
+Continue
+
+
+By the time request reaches:
+
+UsernamePasswordAuthenticationFilter
+
+user is already authenticated.
+
+
+Diagram
+
+Request
+
+   │
+   ▼
+
+JWT Filter
+
+   │
+   ▼
+
+Authentication Created
+
+SecurityContext Updated
+
+   │
+   ▼
+
+UsernamePasswordAuthenticationFilter
+
+   │
+   ▼
+
+Sees User Already Authenticated
+
+   │
+   ▼
+
+Skips Login Logic
+
+   │
+   ▼
+
+Authorization Filter
+
+
+If JWT Filter is after UsernamePasswordAuthenticationFilter:
+
+
+Request
+   │
+   ▼
+
+UsernamePasswordAuthenticationFilter
+
+   │
+   ▼
+
+No Authentication Found
+
+   │
+   ▼
+
+May trigger login/authentication flow
+
+Wrong order.
+
+
+Therefore:
+
+✅ JWT Filter must be BEFORE UsernamePasswordAuthenticationFilter
+
+
+Standard code:
+
+.addFilterBefore(
+        jwtAuthenticationFilter,
+        UsernamePasswordAuthenticationFilter.class)
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════
+
 ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 🏆 INTERVIEW ANSWER
 ══════════════════════════════════════════════════════════════════════════════════════════════════════════════

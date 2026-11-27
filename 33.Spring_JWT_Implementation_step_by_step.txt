@@ -297,7 +297,31 @@ public class AuthenticationController {
     public JwtResponse login(
             @RequestBody LoginRequest request) {
 
-        authenticationManager.authenticate(
+         authenticationManager.authenticate(  
+        // this work will be done usually by UsernamePasswordAuthenticationFilter. this filter calls authenticate method of
+		authencationmanager which will internally call userdetailsservice and passwordencoder to match password and 
+		return an authentcated UsernamePasswordAuthenticationToken. this contains authenticated=true.
+		spring then internally stores this UsernamePasswordAuthenticationToken in applicationsecuritycontext holder.
+		
+		
+		
+		we are skipping this method from the security chain and directly allowing till here to write our custom logic to authenticate and pass the tokens
+		if we allow this method to pass via custom UsernamePasswordAuthenticationFilter chain then it will just validate and not return any jwt token
+		
+		we put the username password filter after jwtfilter in the filterchain later so that every request(except this) 
+		will go through our custom jwt filter to verify for authenticity.
+		
+		UsernamePasswordAuthenticationFilter will be nullified because we will authenticate and store the token in security context from our JWT filter itself. the work needs to done by UsernamePasswordAuthenticationFilter is 
+		done by JWT filter in its own way.
+		
+		
+		we are doing authentication of username password here and storing the token in securitycontext in filter.
+		storing is required during filter journey to bypass the UsernamePasswordAuthenticationFilter
+		storing is not requied in this method as this is directly allowed bypassing filters.
+	
+	
+        authenticationManager.authenticate(     
+		
 
                 new UsernamePasswordAuthenticationToken(
 
@@ -423,13 +447,18 @@ public class JwtAuthenticationFilter
                     jwt,
                     user
             )) {
+			
+			
+			     //since the jwt token authentication is succesful we dont want to do any username password authentication
+				 but we will store the token in the security context so that the next UsernamePasswordAuthenticationFilter
+				 will not have any authentication work to do. it will become silent and nullified.
 
                 UsernamePasswordAuthenticationToken
                         authentication =
                         new UsernamePasswordAuthenticationToken(
                                 user,
                                 null,
-                                user.getAuthorities());
+                                user.getAuthorities());    
 
                 SecurityContextHolder
                         .getContext()

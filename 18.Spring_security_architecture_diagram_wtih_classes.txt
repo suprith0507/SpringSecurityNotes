@@ -44,7 +44,119 @@ AuthorizationManager
     ▼
 Controller
 
+
+
+TO BE MORE PRECISE:
+
 Every class below participates in this pipeline.
+
+Browser Request
+      |
+      v
+Tomcat
+      |
+Creates:
+- HttpServletRequest
+- HttpServletResponse
+      |
+
+      |
+      v
+DelegatingFilterProxy
+      |
+      v
+FilterChainProxy (Spring Security)
+      |
+      v
+Security Filters
+(JWT Filter, CsrfFilter, UsernamePasswordAuthenticationFilter,AuthorisationFilter,customfilter etc.)
+      |
+      v
+DispatcherServlet
+      |
+      v
+HandlerMapping
+      |
+      v
+Controller
+      |
+      v
+Service
+      |
+      v
+Repository
+      |
+      v
+Database
+	  |
+      v
+	  Repository
+	  |
+      v
+	  Service
+	   |
+       v
+	   Controller
+	   |
+       v
+return ResponseEntity<ApiResponse>
+
+      |
+      v
+RequestMappingHandlerAdapter
+      |
+      v
+HttpMessageConverter
+      |
+      v
+Jackson ObjectMapper
+      |
+      v
+	  JSON
+
+      |
+      v
+HttpServletResponse
+      |
+      v
+Tomcat
+      |
+      v
+Browser
+
+=====================
+
+									Request
+							  |
+							  +--> CorsFilter
+							  |
+							  +--> CsrfFilter
+							  |
+							  +--> LogoutFilter
+							  |
+							  +--> JwtFilter (custom)
+							  |
+							  +--> UsernamePasswordAuthenticationFilter
+							  |
+							  +--> AnonymousAuthenticationFilter
+							  |
+							  +--> ExceptionTranslationFilter
+							  |
+							  +--> AuthorizationFilter
+							  |
+							  v
+							DispatcherServlet
+							  |
+							  +--> HandlerMapping
+							  |
+							  +--> Controller
+							  |
+							  +--> Service
+							  |
+							  +--> Repository
+							  |
+							  v
+							Response
 
 ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
@@ -79,7 +191,7 @@ HTTP Request
       │
       ▼
 ┌────────────────────────────┐
-│ Tomcat Servlet Container   │
+│ Tomcat Servlet Container   │contains httpservletrequest and httpservletresponse injected across spring
 └────────────────────────────┘
 
 ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════

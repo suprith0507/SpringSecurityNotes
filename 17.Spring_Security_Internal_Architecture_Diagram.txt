@@ -74,22 +74,22 @@ HTTP Request
       │
       ▼
 ┌────────────────────┐ ➜ ┌──────────────────┐ ➜ ┌──────────────────┐ ➜ ┌──────────────────┐
-│DelegatingFilterProxy│   │ FilterChainProxy │   │SecurityFilterChain│   │ Authentication   │
-└────────────────────┘   └──────────────────┘   └──────────────────┘   └──────────────────┘
+│DelegatingFilterProxy│   │ FilterChainProxy │   │SecurityFilterChain│   │ Authentication (part of filter chain.not after  │
+└────────────────────┘   └──────────────────┘   └──────────────────┘     └──────────────────┘
                                                                                    │
                                                                                    ▼
-┌──────────────────┐ ➜ ┌──────────────────┐ ➜ ┌─────────────────────┐
-│ SecurityContext  │   │ Authorization    │   │ Controller          │
-└──────────────────┘   └──────────────────┘   └─────────────────────┘
+┌──────────────────┐ ➜ ┌──────────────────┐ ➜                      ┌─────────────────────┐
+│ SecurityContext  │   │ Authorization (part of filter chain)   │    │ Controller          │
+└──────────────────┘   └──────────────────┘                         └─────────────────────┘
 
 🔥 THESE ARE THE CORE BUILDING BLOCKS OF SPRING SECURITY
 
 1. DelegatingFilterProxy
 2. FilterChainProxy
 3. SecurityFilterChain
-4. Authentication Subsystem
-5. SecurityContext
-6. Authorization Subsystem
+4. Authentication Subsystem( it is part of filter chain and not seperate. usernamepasswordauthenticationfilter does it
+5. SecurityContext(created after authentication filter)
+6. Authorization Subsystem( it is part of filter chain and not after filter chain. authorization filter does it)
 
 Everything else belongs to one of these modules.
 
@@ -213,7 +213,7 @@ Request
    │
    ▼
 ┌──────────────────────┐
-│  FilterChainProxy    │
+│  FilterChainProxy    │--->holds a list of spring security filters. each springsecurity filter contains list of filters.
 └──────────────────────┘
              │
              ▼
@@ -252,11 +252,11 @@ SecurityFilterChain
 
 Internally:
 
-┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ SecurityFilterChain                                                                                          │
-├──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬─────────────────┤
-│CSRF Filter   │Login Filter  │Logout Filter │JWT Filter    │Session Filter│Header Filter │Authorization   │
-└──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴─────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────--─┐
+│ SecurityFilterChain                                                                                          	 │
+├──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬─────────────────-----┤
+│CSRF Filter   │Login Filter  │Logout Filter │JWT Filter    │Session Filter│Header Filter │Authorization  filter │
+└──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴──────────────┴─────────────────-----┘
 
 Think:
 
@@ -268,7 +268,7 @@ This is the REAL HEART of Spring Security.
 
 ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-🔥 LEVEL 8 : AUTHENTICATION SUBSYSTEM (WHO ARE YOU?)
+🔥 LEVEL 8 : AUTHENTICATION SUBSYSTEM (WHO ARE YOU?) Part of spring security filter ( usernamepasswordauthenticationfilter)
 
 Suppose User Logs In:
 
@@ -288,9 +288,9 @@ Authentication Flow:
                 │
                 ▼
 ┌─────────────────────────────┐
-│AuthenticationProvider       │
-└─────────────────────────────┘
-                │
+│AuthenticationProvider       │---> list of authentication providers are present. default DaoAuthenticationProvider is 
+└─────────────────────────────┘     choosen if we implement userdetailservice(using DAO or inmemory)we can override and
+                │                   choose our own authentication provider and our own authenticationmanager.
                 ▼
 ┌─────────────────────────────┐
 │UserDetailsService           │
@@ -479,8 +479,8 @@ Logged-In User
 Visual Flow:
 
 ┌──────────────────────┐ ➜ ┌────────────────────┐ ➜ ┌──────────────────┐
-│SecurityContextHolder │   │SecurityContext     │   │Authentication    │
-└──────────────────────┘   └────────────────────┘   └──────────────────┘
+│SecurityContextHolder │   │SecurityContext     │    │Authentication    │
+└──────────────────────┘   └────────────────────┘    └──────────────────┘
 
 Think:
 
@@ -492,7 +492,7 @@ SecurityContextHolder.getContext().getAuthentication()
 
 ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-🔥 LEVEL 14 : AUTHORIZATION SUBSYSTEM (WHAT CAN YOU ACCESS?)
+🔥 LEVEL 14 : AUTHORIZATION SUBSYSTEM (WHAT CAN YOU ACCESS?)( part of Authorisation filter)
 
 Authentication Answered:
 
@@ -573,7 +573,7 @@ DelegatingFilterProxy
 FilterChainProxy
       │
       ▼
-SecurityFilterChain
+SecurityFilterChain(list of filters added based on the choosen configs in securityfilterchain.Authentication filter is 	part of it by default )
       │
       ▼
 Authentication Filter

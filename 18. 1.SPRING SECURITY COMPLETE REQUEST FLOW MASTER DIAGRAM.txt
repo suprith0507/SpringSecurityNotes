@@ -302,7 +302,7 @@ CsrfFilter
 
 LogoutFilter
 
-UsernamePasswordAuthenticationFilter
+UsernamePasswordAuthenticationFilter(MOST IMPORTANT AMONG THE CHAIN)
 
 DefaultLoginPageGeneratingFilter
 
@@ -316,9 +316,9 @@ AnonymousAuthenticationFilter
 
 SessionManagementFilter
 
-ExceptionTranslationFilter
+ExceptionTranslationFilter(MOST IMPORTANT AMONG THE CHAIN)
 
-AuthorizationFilter
+AuthorizationFilter(MOST IMPORTANT AMONG THE CHAIN)
 
 
 Most common runtime chain:
@@ -331,7 +331,7 @@ CsrfFilter
           │
 LogoutFilter
           │
-UsernamePasswordAuthenticationFilter
+UsernamePasswordAuthenticationFilter=========================>AuthenticationManager-->providerManager-->AuthenticationProvider-->UserDetailsService-->UserDetails-->AuthenticatedObject-->SecurityContext-->stored-->then_to next filter
           │
 RequestCacheAwareFilter
           │

@@ -48,7 +48,7 @@ Cyber Security is:
 Simple Definition:
 
 ┌───────────────────────────────────────────────────────────┐
-│ Cyber Security = Security For Digital Assets             │
+│ Cyber Security = Security For Digital Assets              │
 └───────────────────────────────────────────────────────────┘
 
 Examples:

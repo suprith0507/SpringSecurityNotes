@@ -1,0 +1,77 @@
+401 Unauthorized
+----------------
+Meaning:
+"I don't know who you are."
+
+Triggered when:
+- No authentication credentials are provided.
+- Invalid username/password.
+- Invalid JWT token.
+- Expired JWT token.
+
+Examples:
+GET /customers
+
+Authorization header missing
+→ 401
+
+Authorization: Bearer invalid_token
+→ 401
+
+
+
+
+403 Forbidden
+-------------
+Meaning:
+"I know who you are, but you are not allowed."
+
+Triggered when:
+- User lacks required role/authority.
+- CSRF token missing/invalid.
+- Request rejected by security rules.
+- User authenticated but access denied.
+
+Examples:
+User role = USER
+Endpoint requires ADMIN
+→ 403
+
+POST request without CSRF token
+→ 403
+
+===========================================
+
+Why are you getting 403 instead of 401?
+
+From your earlier configuration:
+
+Java
+.csrf(csrf -> csrf.enable())
+.httpBasic(Customizer.withDefaults())
+.sessionManagement(...)
+
+For browser requests:
+
+Plain Text
+1. Browser sends JSESSIONID
+2. Spring loads Authentication from session
+3. User is already authenticated
+4. POST/PUT/DELETE request arrives
+5. CSRF token missing or invalid
+6. CsrfFilter rejects request
+7. Spring returns 403
+
+Here authentication succeeded.
+
+The failure is:
+
+Plain Text
+Authorization/CSRF failure
+
+Therefore:
+
+Plain Text
+403 Forbidden
+
+is correct.

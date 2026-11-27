@@ -1,0 +1,476 @@
+Great catch. The previous explanation started from HttpServletRequest/HttpServletResponse, but there is actually a layer even before that.
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║             WHAT EXISTS BEFORE HttpServletRequest ?                            ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+Browser sends raw bytes over network:
+
+POST /customers HTTP/1.1
+Host: localhost:8080
+Authorization: Bearer xyz
+
+{"name":"John"}
+
+        |
+        v
+
+TCP/IP Stack (Operating System)
+        |
+        v
+
+Tomcat Socket Listener
+        |
+        v
+
+Tomcat HTTP Parser
+        |
+        v
+
+HttpServletRequest
+HttpServletResponse
+
+So the REAL flow is:
+
+Browser
+   |
+TCP Packets
+   |
+Operating System
+   |
+Tomcat Network Socket
+   |
+Tomcat HTTP Parser
+   |
+HttpServletRequest
+HttpServletResponse
+   |
+Spring Security
+   |
+DispatcherServlet
+   |
+Controller
+
+Therefore:
+
+✅ Before HttpServletRequest = raw network packets
+✅ After HttpServletResponse = raw network packets again
+
+HttpServletRequest and HttpServletResponse are basically Java wrappers around
+the incoming and outgoing HTTP messages.
+
+══════════════════════════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║          ARE REQUEST/RESPONSE THE MAIN ENTRY-EXIT OBJECTS ?                    ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+For Servlet-based Spring Boot applications:
+
+YES.
+
+Everything eventually enters as:
+
+HttpServletRequest
+
+Everything eventually exits as:
+
+HttpServletResponse
+
+No matter whether your Controller returns:
+
+String
+Customer
+List<Customer>
+ResponseEntity
+ApiResponse
+Exception
+
+Eventually:
+
+Everything becomes HttpServletResponse.
+
+══════════════════════════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                    ACCESSING HttpServletRequest                               ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+1. INSIDE FILTERS
+
+protected void doFilterInternal(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain chain) {
+
+}
+
+Spring provides them directly.
+
+Example:
+
+String token =
+       request.getHeader("Authorization");
+
+══════════════════════════════════════════════════════════════════════════════════
+
+2. INSIDE CONTROLLER
+
+@GetMapping("/customers")
+public String customers(
+        HttpServletRequest request,
+        HttpServletResponse response) {
+
+    return "Success";
+}
+
+Spring automatically injects them.
+
+Example:
+
+@GetMapping("/test")
+public String test(HttpServletRequest request){
+
+    String uri =
+           request.getRequestURI();
+
+    return uri;
+}
+
+══════════════════════════════════════════════════════════════════════════════════
+
+3. INSIDE CONTROLLER USING @RequestHeader
+
+Instead of the entire request:
+
+@GetMapping("/test")
+public String test(
+     @RequestHeader("Authorization")
+     String authHeader) {
+
+}
+
+Internally Spring reads from
+HttpServletRequest.
+
+══════════════════════════════════════════════════════════════════════════════════
+
+4. INSIDE CONTROLLER USING @CookieValue
+
+@GetMapping("/test")
+public String test(
+      @CookieValue("JSESSIONID")
+      String sessionId){
+
+}
+
+Internally:
+
+request.getCookies()
+
+══════════════════════════════════════════════════════════════════════════════════
+
+5. INSIDE CONTROLLER USING @RequestParam
+
+@GetMapping("/test")
+public String test(
+      @RequestParam String id){
+
+}
+
+Internally:
+
+request.getParameter("id")
+
+══════════════════════════════════════════════════════════════════════════════════
+
+6. INSIDE CONTROLLER USING @RequestBody
+
+@PostMapping("/test")
+public void save(
+       @RequestBody Customer customer){
+
+}
+
+Internally:
+
+request.getInputStream()
+
+Spring reads request body from
+HttpServletRequest.
+
+══════════════════════════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                ACCESSING REQUEST IN SERVICE LAYER                             ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+Generally NOT recommended.
+
+Service layer should remain independent of HTTP.
+
+BAD:
+
+@Service
+public class CustomerService {
+
+   public void save(
+      HttpServletRequest request){
+
+   }
+}
+
+Reason:
+
+Service becomes tightly coupled to web layer.
+
+══════════════════════════════════════════════════════════════════════════════════
+
+Preferred:
+
+Controller extracts data.
+
+@GetMapping
+public void save(
+       HttpServletRequest request){
+
+    String user =
+       request.getUserPrincipal().getName();
+
+    service.save(user);
+}
+
+Service remains clean.
+
+@Service
+public void save(String user){
+
+}
+
+══════════════════════════════════════════════════════════════════════════════════
+
+BUT IF REALLY NEEDED
+
+Spring stores request internally in ThreadLocal.
+
+You can access it anywhere:
+
+ServletRequestAttributes attrs =
+   (ServletRequestAttributes)
+   RequestContextHolder.getRequestAttributes();
+
+HttpServletRequest request =
+   attrs.getRequest();
+
+Example:
+
+@Service
+public class TestService {
+
+    public void execute() {
+
+        HttpServletRequest request =
+           ((ServletRequestAttributes)
+            RequestContextHolder
+            .getRequestAttributes())
+            .getRequest();
+    }
+}
+
+Works because request is bound to current thread.
+
+══════════════════════════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║           HOW DOES SPRING SECURITY ACCESS REQUEST EVERYWHERE?                  ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+During request processing:
+
+SecurityContextHolder
+
+uses
+
+ThreadLocal
+
+Diagram:
+
+Request Thread
+      |
+      +--> HttpServletRequest
+      |
+      +--> HttpServletResponse
+      |
+      +--> SecurityContext
+      |
+      +--> Authentication
+
+Everything is attached to same thread.
+
+Thus anywhere:
+
+Authentication auth =
+     SecurityContextHolder
+     .getContext()
+     .getAuthentication();
+
+can retrieve logged-in user.
+
+══════════════════════════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                HOW DOES DISPATCHERSERVLET ACCESS THEM?                         ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+Internally:
+
+public void service(
+      HttpServletRequest request,
+      HttpServletResponse response)
+
+Tomcat invokes:
+
+DispatcherServlet.service(request,response)
+
+The exact same objects.
+
+Nothing new is created.
+
+Diagram:
+
+Tomcat
+   |
+request,response
+   |
+Security Filters
+   |
+same request,response
+   |
+DispatcherServlet
+   |
+same request,response
+   |
+Controller
+
+Same objects all the way.
+
+══════════════════════════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║               HOW DOES RESPONSE GET WRITTEN BACK ?                             ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+Suppose:
+
+@GetMapping("/test")
+public Customer test(){
+
+    return customer;
+}
+
+Controller returns:
+
+Customer Object
+
+        |
+        v
+
+HandlerAdapter
+
+        |
+        v
+
+HttpMessageConverter
+
+        |
+        v
+
+Jackson ObjectMapper
+
+        |
+        v
+
+JSON String
+
+        |
+        v
+
+response.getWriter().write(json)
+
+        |
+        v
+
+HttpServletResponse
+
+        |
+        v
+
+Tomcat
+
+        |
+        v
+
+Network Socket
+
+        |
+        v
+
+Browser
+
+══════════════════════════════════════════════════════════════════════════════════
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                COMPLETE END-TO-END PICTURE                                     ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+Browser
+   |
+Raw TCP Packets
+   |
+Operating System
+   |
+Tomcat Socket
+   |
+Tomcat HTTP Parser
+   |
+HttpServletRequest
+HttpServletResponse
+   |
+DelegatingFilterProxy
+   |
+Security Filter Chain
+   |
+DispatcherServlet
+   |
+HandlerMapping
+   |
+Controller
+   |
+Service
+   |
+Repository
+   |
+Database
+   |
+Repository
+   |
+Service
+   |
+Controller returns Object
+   |
+HandlerAdapter
+   |
+HttpMessageConverter
+   |
+Jackson ObjectMapper
+   |
+HttpServletResponse
+   |
+Tomcat
+   |
+TCP Packets
+   |
+Browser
+
+KEY INTERVIEW POINT:
+HttpServletRequest and HttpServletResponse are the primary entry and exit abstractions of the Servlet API. They are created by the servlet container (Tomcat) from raw HTTP network traffic and travel through the entire Spring Security filter chain, DispatcherServlet, controllers, and back. The same objects are reused throughout the request lifecycle. Controller return values never directly become network responses; Spring MVC converts them through HandlerAdapters and HttpMessageConverters into the existing HttpServletResponse, which Tomcat finally serializes into raw HTTP packets and sends to the client.
